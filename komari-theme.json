@@ -248,9 +248,9 @@
             {
                 "key": "footerCustomContent",
                 "name": "底栏自定义内容",
-                "type": "string",
+                "type": "richtext",
                 "default": "",
-                "help": "自定义底栏内容，使用 ${n} 分割多行，支持Markdown格式的链接 [文本](链接) 和图片 ![描述](图片链接)"
+                "help": "自定义底栏内容，支持直接换行，也兼容 ${n} 分割多行，支持Markdown格式的链接 [文本](链接) 和图片 ![描述](图片链接)"
             },
             {
                 "name": "内容设置",

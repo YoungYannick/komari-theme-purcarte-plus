@@ -192,9 +192,9 @@
   - **说明:** 自定义运行时间的显示格式，可用变量: {days}（天）、{hours}（时）、{minutes}（分）、{seconds}（秒），自由排列组合（eg: Running {days}d {hours}h {minutes}m {seconds}s）
 
 - **底栏自定义内容** (`footerCustomContent`)
-  - **类型:** `string`
+  - **类型:** `richtext`
   - **默认值:** `(空)`
-  - **说明:** 自定义底栏内容，使用 ${n} 分割多行，支持Markdown格式的链接 [文本](链接) 和图片 ![描述](图片链接)
+  - **说明:** 自定义底栏内容，支持直接换行，也兼容 ${n} 分割多行，支持Markdown格式的链接 [文本](链接) 和图片 ![描述](图片链接)
 
 #### 内容设置
 
@@ -384,6 +384,7 @@ komari-theme-purcarte-plus/
 │   │   ├── Home.tsx                         # 首页仪表盘，展示统计栏、节点网格/表格/紧凑视图
 │   │   ├── Private.tsx                      # 私有站点未认证提示页
 │   │   ├── NotFound.tsx                     # 404 页面
+│   │   ├── PingOverview.tsx                 # 全局延迟监测总览页面
 │   │   └── instance/                        # Instance 详情页
 │   │       ├── index.tsx                    # Instance 页面入口与路由包装
 │   │       ├── Instance.tsx                 # Instance 详情主视图（基本信息、系统指标、网络状态）

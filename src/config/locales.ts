@@ -147,6 +147,17 @@ export const defaultTexts = {
     resetRange: "重置范围",
     oneQuarter: "四分之一",
   },
+  pingOverview: {
+    _: "延迟总览",
+    title: "全局延迟监测总览",
+    loadingData: "正在获取所有服务器延迟数据...",
+    monitorNodes: "监测节点",
+    serverNodes: "服务器节点",
+    noData: "暂无延迟监测数据",
+    entry: "延迟总览",
+    selectAll: "全选",
+    deselectAll: "取消全选",
+  },
   notFoundPage: {
     _: "404页面",
     title: "404 - Not Found",

@@ -254,21 +254,6 @@
   padding-right: 5px;
   margin-bottom: 5px;
 }
-.finance-list::-webkit-scrollbar {
-  width: 5px !important;
-  height: 5px !important;
-}
-.finance-list::-webkit-scrollbar-track {
-  background-color: transparent !important;
-}
-.finance-list::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.55) !important;
-  border-radius: 8px !important;
-}
-.finance-list::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(148, 163, 184, 0.85) !important;
-}
-
 .finance-list-item {
   display: flex;
   justify-content: space-between;
@@ -392,21 +377,6 @@
 .server-trade-content {
   max-height: calc(85vh - 60px);
   overflow-y: auto;
-}
-
-.server-trade-content::-webkit-scrollbar {
-  width: 5px !important;
-  height: 5px !important;
-}
-.server-trade-content::-webkit-scrollbar-track {
-  background-color: transparent !important;
-}
-.server-trade-content::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.55) !important;
-  border-radius: 8px !important;
-}
-.server-trade-content::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(148, 163, 184, 0.85) !important;
 }
 
 .trade-section {
@@ -739,15 +709,6 @@
   max-height: 200px;
   overflow-y: auto;
   padding-right: 4px;
-}
-
-.earth-tooltip-content::-webkit-scrollbar {
-  width: 4px;
-}
-
-.earth-tooltip-content::-webkit-scrollbar-thumb {
-  background-color: var(--accent-9);
-  border-radius: 4px;
 }
 
 .earth-tooltip-item {

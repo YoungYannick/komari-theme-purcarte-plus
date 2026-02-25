@@ -107,11 +107,11 @@ const Footer = forwardRef<
     return () => clearInterval(timer);
   }, [enableServerUptime, startTime, serverUptimeTemplate]);
 
-  // 解析自定义内容
+  // 解析自定义内容（支持实际换行符和 ${n} 两种分隔方式）
   const customLines = useMemo(() => {
     if (!footerCustomContent) return [];
     return footerCustomContent
-      .split(/\$\{n\}/)
+      .split(/\$\{n\}|\n/)
       .filter((line) => line.trim() !== "");
   }, [footerCustomContent]);
 

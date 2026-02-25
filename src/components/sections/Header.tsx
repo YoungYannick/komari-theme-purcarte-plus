@@ -10,9 +10,10 @@ import {
   SunMoon,
   CircleUserIcon,
   Menu,
+  Activity,
 } from "lucide-react";
 import { forwardRef, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAppConfig } from "@/config";
 import { useTheme } from "@/hooks/useTheme";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -201,6 +202,26 @@ const AdminButton = ({ isMobile }: { isMobile?: boolean }) => {
   );
 };
 
+const PingOverviewButton = ({ isMobile }: { isMobile?: boolean }) => {
+  const { t } = useLocale();
+  const navigate = useNavigate();
+
+  if (isMobile) {
+    return (
+      <DropdownMenuItem onClick={() => navigate("/ping-overview")}>
+        <Activity className="size-4 mr-2 text-primary" />
+        <span>{t("pingOverview.entry")}</span>
+      </DropdownMenuItem>
+    );
+  }
+
+  return (
+    <Button variant="ghost" size="icon" onClick={() => navigate("/ping-overview")}>
+      <Activity className="size-5 text-primary" />
+    </Button>
+  );
+};
+
 const SearchBar = ({
   isMobile,
   searchTerm,
@@ -290,6 +311,8 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
   } = props;
   const location = useLocation();
   const isInstancePage = location.pathname.startsWith("/instance");
+  const isPingOverviewPage = location.pathname === "/ping-overview";
+  const isSubPage = isInstancePage || isPingOverviewPage;
   const {
     selectedHeaderStyle,
     enableTitle,
@@ -329,7 +352,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
             </a>
           </div>
 
-          {!isInstancePage &&
+          {!isSubPage &&
             isShowStatsInHeader &&
             !isMobile &&
             !isPrivate && (
@@ -341,7 +364,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
           <div className="flex items-center space-x-2">
             {isMobile ? (
               <>
-                {!isInstancePage && (
+                {!isSubPage && (
                   <SearchBar
                     isMobile
                     searchTerm={searchTerm!}
@@ -361,7 +384,8 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
                   <DropdownMenuContent
                     align="end"
                     className="purcarte-blur mt-[.5rem] border-(--accent-4)/50 rounded-xl">
-                    {!isInstancePage && <ViewModeSwitcher isMobile />}
+                    {!isSubPage && <ViewModeSwitcher isMobile />}
+                    <PingOverviewButton isMobile />
                     <ThemeSwitcher isMobile />
                     <AdminButton isMobile />
                   </DropdownMenuContent>
@@ -369,7 +393,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
               </>
             ) : (
               <>
-                {!isInstancePage && (
+                {!isSubPage && (
                   <>
                     <SearchBar
                       searchTerm={searchTerm!}
@@ -378,6 +402,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
                     <ViewModeSwitcher />
                   </>
                 )}
+                <PingOverviewButton />
                 <ThemeSwitcher />
                 <AdminButton />
               </>

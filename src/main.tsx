@@ -31,6 +31,7 @@ import {
 } from "@/components/enhanced/EnhancedFeatures";
 const HomePage = lazy(() => import("@/pages/Home"));
 const InstancePage = lazy(() => import("@/pages/instance"));
+const PingOverviewPage = lazy(() => import("@/pages/PingOverview"));
 const NotFoundPage = lazy(() => import("@/pages/NotFound"));
 const PrivatePage = lazy(() => import("@/pages/Private"));
 
@@ -180,6 +181,32 @@ const AppRoutes = ({
                             : 0,
                       }}>
                       <InstancePage />
+                    </main>
+                    {selectedFooterStyle === "followContent" && (
+                      <Footer isSettingsOpen={isSettingsOpen} ref={null} />
+                    )}
+                  </div>
+                </ScrollArea>
+              }
+            />
+            <Route
+              path="/ping-overview"
+              element={
+                <ScrollArea className="h-full">
+                  <div className="flex flex-col min-h-screen">
+                    <main
+                      className="w-(--main-width) max-w-screen-2xl h-full mx-auto flex-1"
+                      style={{
+                        paddingTop:
+                          selectedHeaderStyle === "levitation"
+                            ? headerHeight
+                            : 0,
+                        paddingBottom:
+                          selectedFooterStyle === "levitation"
+                            ? footerHeight
+                            : 0,
+                      }}>
+                      <PingOverviewPage />
                     </main>
                     {selectedFooterStyle === "followContent" && (
                       <Footer isSettingsOpen={isSettingsOpen} ref={null} />
