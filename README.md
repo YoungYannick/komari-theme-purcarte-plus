@@ -196,7 +196,7 @@
 - **底栏自定义内容** (`footerCustomContent`)
   - **类型:** `richtext`
   - **默认值:** `(空)`
-  - **说明:** 自定义底栏内容，支持直接换行，也兼容 ${n} 分割多行，支持Markdown格式的链接 [文本](链接) 和图片 ![描述](图片链接)
+  - **说明:** 自定义底栏内容，支持直接换行，也兼容 ${n} 分割多行，支持Markdown格式的链接 `[文本](链接)` 和图片 `![描述](图片链接)`
 
 #### 内容设置
 
@@ -514,8 +514,8 @@ komari-theme-purcarte-plus/
 1.  **克隆仓库**
 
     ```bash
-    git clone https://github.com/Montia37/komari-theme-purcarte.git
-    cd komari-theme-purcarte
+    git clone https://github.com/YoungYannick/komari-theme-purcarte-plus.git
+    cd komari-theme-purcarte-plus
     ```
 
 2.  **安装依赖**
