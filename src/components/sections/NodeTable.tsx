@@ -127,7 +127,7 @@ const NodeTableRow = ({
               to={`/instance/${node.uuid}`}
               onClick={(e) => e.stopPropagation()}
               className="hover:underline hover:text-(--accent-11)">
-              <div className="text-base font-bold">{node.name}</div>
+              <div className="text-base font-bold whitespace-normal break-all">{node.name}</div>
             </Link>
             <Tag className="text-xs" tags={tagList} />
             <div className="flex text-xs">

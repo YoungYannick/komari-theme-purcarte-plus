@@ -72,7 +72,7 @@ export const NodeCompact = ({ node, onShowDetails }: NodeCompactProps) => {
               className="size-4 object-contain"
               loading="lazy"
             />
-            <CardTitle className="text-sm font-bold">{node.name}</CardTitle>
+            <CardTitle className="text-sm font-bold whitespace-normal break-all">{node.name}</CardTitle>
           </div>
         </Link>
         <button onClick={onShowDetails}>

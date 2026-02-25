@@ -90,7 +90,7 @@ export const NodeGrid = ({
               className="w-6 h-6 object-contain"
               loading="lazy"
             />
-            <CardTitle className="text-base font-bold">{node.name}</CardTitle>
+            <CardTitle className="text-base font-bold whitespace-normal break-all">{node.name}</CardTitle>
           </div>
         </Link>
         <button onClick={onShowDetails}>
