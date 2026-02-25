@@ -12,6 +12,8 @@
 
 > [!NOTE]
 > 本主题在 [原作者:Montia37 v1.2.5](https://github.com/Montia37/komari-theme-purcarte/releases/tag/v1.2.5) 版本基础上进行二次开发的主题，且是在 Claude 的辅助下完成
+>
+> 本主题的增强功能（欢迎气泡、资产统计、3D 地球、访客保护等）源自 [KomariBeautify](https://github.com/YoungYannick/KomariBeautify) 自定义代码版本（后台 自定义头部 & 自定义 Body），后为便于使用与维护整合至本主题包中
 
 ## 🚀 快速开始
 
@@ -526,6 +528,13 @@ komari-theme-purcarte-plus/
     ```
 
 4.  在浏览器中打开 `http://localhost:5173` (或 Vite 提示的其他端口) 即可进行预览和调试。
+
+## 🔗 相关项目
+
+| 项目 | 说明 |
+|------|------|
+| [KomariBeautify](https://github.com/YoungYannick/KomariBeautify) | 本主题增强功能的前身，通过 Komari 后台自定义代码（后台 自定义头部 & 自定义 Body）实现，无需替换主题即可使用 |
+| [Komari Virtualizer](https://github.com/YoungYannick/Komari_Virtualizer) | 基于 Flask 的 Komari 虚拟探针模拟器，在物理 VPS 资源有限时模拟多个探针客户端，轻松实现"点亮全球" |
 
 ## 📄 许可证
 
