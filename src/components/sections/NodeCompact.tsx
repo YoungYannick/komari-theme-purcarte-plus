@@ -16,6 +16,7 @@ import { Tag } from "../ui/tag";
 import { useNodeCommons } from "@/hooks/useNodeCommons";
 import { useLocale } from "@/config/hooks";
 import { NodeDisplayContainer } from "./NodeDisplay";
+import { useAppConfig } from "@/config";
 
 interface NodeCompactContainerProps {
   nodes: NodeData[];
@@ -52,6 +53,7 @@ export const NodeCompact = ({ node, onShowDetails }: NodeCompactProps) => {
     expired_at,
   } = useNodeCommons(node);
   const { t } = useLocale();
+  const { compactExpiredAtDisplay, compactUptimeDisplay } = useAppConfig();
 
   return (
     <Card
@@ -138,22 +140,35 @@ export const NodeCompact = ({ node, onShowDetails }: NodeCompactProps) => {
             </div>
           </div>
         </div>
-        <div className="flex grid grid-cols-2">
-          <span className="col-span-1">
-            <span className="mr-1">{t("node.expiredAt")}</span>
-            <span>{expired_at}</span>
-          </span>
-          <span className="col-span-1">
-            {isOnline && stats ? (
-              <>
-                <span className="mr-1">{t("node.uptime")}</span>
-                <span>{formatUptime(stats.uptime)}</span>
-              </>
-            ) : (
-              t("node.offline")
-            )}
-          </span>
-        </div>
+        {(() => {
+          const showExpiry = compactExpiredAtDisplay === "show" ||
+            (compactExpiredAtDisplay === "hideUnset" && expired_at !== t("node.notSet"));
+          const showUptime = compactUptimeDisplay === "show" ||
+            (compactUptimeDisplay === "hideUnset" && isOnline && stats);
+          if (!showExpiry && !showUptime) return null;
+          return (
+            <div className={`flex grid ${showExpiry && showUptime ? "grid-cols-2" : "grid-cols-1"}`}>
+              {showExpiry && (
+                <span className="col-span-1">
+                  <span className="mr-1">{t("node.expiredAt")}</span>
+                  <span>{expired_at}</span>
+                </span>
+              )}
+              {showUptime && (
+                <span className="col-span-1">
+                  {isOnline && stats ? (
+                    <>
+                      <span className="mr-1">{t("node.uptime")}</span>
+                      <span>{formatUptime(stats.uptime)}</span>
+                    </>
+                  ) : (
+                    t("node.offline")
+                  )}
+                </span>
+              )}
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );

@@ -277,6 +277,42 @@
   - **默认值:** `true`
   - **说明:** 启用后列表视图中将会显示进度条来表示使用率
 
+- **网格视图 - 到期时间显示** (`gridExpiredAtDisplay`)
+  - **类型:** `select`
+  - **可选项:** `show`, `hideAll`, `hideUnset`
+  - **默认值:** `hideUnset`
+  - **说明:** 控制网格视图中到期时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置）
+
+- **网格视图 - 在线时间显示** (`gridUptimeDisplay`)
+  - **类型:** `select`
+  - **可选项:** `show`, `hideAll`, `hideUnset`
+  - **默认值:** `hideUnset`
+  - **说明:** 控制网格视图中在线时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置/离线）
+
+- **表格视图 - 到期时间显示** (`tableExpiredAtDisplay`)
+  - **类型:** `select`
+  - **可选项:** `show`, `hideAll`, `hideUnset`
+  - **默认值:** `hideUnset`
+  - **说明:** 控制表格视图中到期时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置）
+
+- **表格视图 - 在线时间显示** (`tableUptimeDisplay`)
+  - **类型:** `select`
+  - **可选项:** `show`, `hideAll`, `hideUnset`
+  - **默认值:** `hideUnset`
+  - **说明:** 控制表格视图中在线时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置/离线）
+
+- **紧凑视图 - 到期时间显示** (`compactExpiredAtDisplay`)
+  - **类型:** `select`
+  - **可选项:** `show`, `hideAll`, `hideUnset`
+  - **默认值:** `hideUnset`
+  - **说明:** 控制紧凑视图中到期时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置）
+
+- **紧凑视图 - 在线时间显示** (`compactUptimeDisplay`)
+  - **类型:** `select`
+  - **可选项:** `show`, `hideAll`, `hideUnset`
+  - **默认值:** `hideUnset`
+  - **说明:** 控制紧凑视图中在线时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置/离线）
+
 #### Instance 设置
 
 - **启用 Instance 详情信息** (`enableInstanceDetail`)

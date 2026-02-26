@@ -860,6 +860,114 @@
                 }
             },
             {
+                "key": "gridExpiredAtDisplay",
+                "name": {
+                    "zh-CN": "网格视图 - 到期时间显示",
+                    "zh-TW": "網格視圖 - 到期時間顯示",
+                    "en": "Grid View - Expiry Time Display",
+                    "ja": "グリッド表示 - 有効期限の表示"
+                },
+                "type": "select",
+                "options": "show,hideAll,hideUnset",
+                "default": "hideUnset",
+                "help": {
+                    "zh-CN": "控制网格视图中到期时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置）",
+                    "zh-TW": "控制網格視圖中到期時間的顯示：show（顯示）、hideAll（隱藏全部）、hideUnset（隱藏未設置）",
+                    "en": "Control expiry time display in grid view: show, hideAll, or hideUnset.",
+                    "ja": "グリッド表示での有効期限の表示を制御：show（表示）、hideAll（全て非表示）、hideUnset（未設定を非表示）"
+                }
+            },
+            {
+                "key": "gridUptimeDisplay",
+                "name": {
+                    "zh-CN": "网格视图 - 在线时间显示",
+                    "zh-TW": "網格視圖 - 在線時間顯示",
+                    "en": "Grid View - Uptime Display",
+                    "ja": "グリッド表示 - 稼働時間の表示"
+                },
+                "type": "select",
+                "options": "show,hideAll,hideUnset",
+                "default": "hideUnset",
+                "help": {
+                    "zh-CN": "控制网格视图中在线时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置/离线）",
+                    "zh-TW": "控制網格視圖中在線時間的顯示：show（顯示）、hideAll（隱藏全部）、hideUnset（隱藏未設置/離線）",
+                    "en": "Control uptime display in grid view: show, hideAll, or hideUnset (hides offline).",
+                    "ja": "グリッド表示での稼働時間の表示を制御：show（表示）、hideAll（全て非表示）、hideUnset（オフライン時非表示）"
+                }
+            },
+            {
+                "key": "tableExpiredAtDisplay",
+                "name": {
+                    "zh-CN": "表格视图 - 到期时间显示",
+                    "zh-TW": "表格視圖 - 到期時間顯示",
+                    "en": "Table View - Expiry Time Display",
+                    "ja": "テーブル表示 - 有効期限の表示"
+                },
+                "type": "select",
+                "options": "show,hideAll,hideUnset",
+                "default": "hideUnset",
+                "help": {
+                    "zh-CN": "控制表格视图中到期时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置）",
+                    "zh-TW": "控制表格視圖中到期時間的顯示：show（顯示）、hideAll（隱藏全部）、hideUnset（隱藏未設置）",
+                    "en": "Control expiry time display in table view: show, hideAll, or hideUnset.",
+                    "ja": "テーブル表示での有効期限の表示を制御：show（表示）、hideAll（全て非表示）、hideUnset（未設定を非表示）"
+                }
+            },
+            {
+                "key": "tableUptimeDisplay",
+                "name": {
+                    "zh-CN": "表格视图 - 在线时间显示",
+                    "zh-TW": "表格視圖 - 在線時間顯示",
+                    "en": "Table View - Uptime Display",
+                    "ja": "テーブル表示 - 稼働時間の表示"
+                },
+                "type": "select",
+                "options": "show,hideAll,hideUnset",
+                "default": "hideUnset",
+                "help": {
+                    "zh-CN": "控制表格视图中在线时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置/离线）",
+                    "zh-TW": "控制表格視圖中在線時間的顯示：show（顯示）、hideAll（隱藏全部）、hideUnset（隱藏未設置/離線）",
+                    "en": "Control uptime display in table view: show, hideAll, or hideUnset (hides offline).",
+                    "ja": "テーブル表示での稼働時間の表示を制御：show（表示）、hideAll（全て非表示）、hideUnset（オフライン時非表示）"
+                }
+            },
+            {
+                "key": "compactExpiredAtDisplay",
+                "name": {
+                    "zh-CN": "紧凑视图 - 到期时间显示",
+                    "zh-TW": "緊湊視圖 - 到期時間顯示",
+                    "en": "Compact View - Expiry Time Display",
+                    "ja": "コンパクト表示 - 有効期限の表示"
+                },
+                "type": "select",
+                "options": "show,hideAll,hideUnset",
+                "default": "hideUnset",
+                "help": {
+                    "zh-CN": "控制紧凑视图中到期时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置）",
+                    "zh-TW": "控制緊湊視圖中到期時間的顯示：show（顯示）、hideAll（隱藏全部）、hideUnset（隱藏未設置）",
+                    "en": "Control expiry time display in compact view: show, hideAll, or hideUnset.",
+                    "ja": "コンパクト表示での有効期限の表示を制御：show（表示）、hideAll（全て非表示）、hideUnset（未設定を非表示）"
+                }
+            },
+            {
+                "key": "compactUptimeDisplay",
+                "name": {
+                    "zh-CN": "紧凑视图 - 在线时间显示",
+                    "zh-TW": "緊湊視圖 - 在線時間顯示",
+                    "en": "Compact View - Uptime Display",
+                    "ja": "コンパクト表示 - 稼働時間の表示"
+                },
+                "type": "select",
+                "options": "show,hideAll,hideUnset",
+                "default": "hideUnset",
+                "help": {
+                    "zh-CN": "控制紧凑视图中在线时间的显示：show（显示）、hideAll（隐藏全部）、hideUnset（隐藏未设置/离线）",
+                    "zh-TW": "控制緊湊視圖中在線時間的顯示：show（顯示）、hideAll（隱藏全部）、hideUnset（隱藏未設置/離線）",
+                    "en": "Control uptime display in compact view: show, hideAll, or hideUnset (hides offline).",
+                    "ja": "コンパクト表示での稼働時間の表示を制御：show（表示）、hideAll（全て非表示）、hideUnset（オフライン時非表示）"
+                }
+            },
+            {
                 "name": {
                     "zh-CN": "Instance 设置",
                     "zh-TW": "Instance 設置",

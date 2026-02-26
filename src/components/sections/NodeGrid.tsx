@@ -68,7 +68,7 @@ export const NodeGrid = ({
     expired_at,
     trafficPercentage,
   } = useNodeCommons(node);
-  const { isShowHWBarInCard, isShowValueUnderProgressBar } = useAppConfig();
+  const { isShowHWBarInCard, isShowValueUnderProgressBar, gridExpiredAtDisplay, gridUptimeDisplay } = useAppConfig();
   const { t } = useLocale();
 
   return (
@@ -303,25 +303,40 @@ export const NodeGrid = ({
           <span>{t("node.load")}</span>
           <span>{load}</span>
         </div>
-        <div className="flex justify-between text-xs">
-          <div className="flex justify-start w-full">
-            <span className="mr-1">{t("node.expiredAt")}</span>
-            <span>{expired_at}</span>
-          </div>
-          <div className="border-l border-(--accent-4)/50 mx-2"></div>
-          <div className="flex justify-end w-full">
-            <span>
-              {isOnline && stats ? (
-                <>
-                  <span className="mr-1">{t("node.uptime")}</span>
-                  <span>{formatUptime(stats.uptime)}</span>
-                </>
-              ) : (
-                t("node.offline")
+        {(() => {
+          const showExpiry = gridExpiredAtDisplay === "show" ||
+            (gridExpiredAtDisplay === "hideUnset" && expired_at !== t("node.notSet"));
+          const showUptime = gridUptimeDisplay === "show" ||
+            (gridUptimeDisplay === "hideUnset" && isOnline && stats);
+          if (!showExpiry && !showUptime) return null;
+          return (
+            <div className="flex justify-between text-xs">
+              {showExpiry && (
+                <div className="flex justify-start w-full">
+                  <span className="mr-1">{t("node.expiredAt")}</span>
+                  <span>{expired_at}</span>
+                </div>
               )}
-            </span>
-          </div>
-        </div>
+              {showExpiry && showUptime && (
+                <div className="border-l border-(--accent-4)/50 mx-2"></div>
+              )}
+              {showUptime && (
+                <div className={`flex w-full ${showExpiry ? "justify-end" : "justify-start"}`}>
+                  <span>
+                    {isOnline && stats ? (
+                      <>
+                        <span className="mr-1">{t("node.uptime")}</span>
+                        <span>{formatUptime(stats.uptime)}</span>
+                      </>
+                    ) : (
+                      t("node.offline")
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );

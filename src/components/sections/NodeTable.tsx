@@ -101,7 +101,7 @@ const NodeTableRow = ({
     trafficPercentage,
   } = useNodeCommons(node);
   const gridCols = enableSwap ? "grid-cols-9" : "grid-cols-8";
-  const { pingChartTimeInPreview, enableInstanceDetail, enablePingChart } =
+  const { pingChartTimeInPreview, enableInstanceDetail, enablePingChart, tableExpiredAtDisplay, tableUptimeDisplay } =
     useAppConfig();
   const { t } = useLocale();
 
@@ -130,13 +130,28 @@ const NodeTableRow = ({
               <div className="text-base font-bold whitespace-normal break-all">{node.name}</div>
             </Link>
             <Tag className="text-xs" tags={tagList} />
-            <div className="flex text-xs">
-              <span>
-                {isOnline && stats
-                  ? `${expired_at} | ${formatUptime(stats.uptime)}`
-                  : t("node.offline")}
-              </span>
-            </div>
+            {(() => {
+              const showExpiry = tableExpiredAtDisplay === "show" ||
+                (tableExpiredAtDisplay === "hideUnset" && expired_at !== t("node.notSet"));
+              const showUptime = tableUptimeDisplay === "show" ||
+                (tableUptimeDisplay === "hideUnset" && isOnline && stats);
+              const parts: string[] = [];
+              if (isOnline && stats) {
+                if (showExpiry) parts.push(expired_at);
+                if (showUptime) parts.push(formatUptime(stats.uptime));
+              }
+              const text = parts.length > 0
+                ? parts.join(" | ")
+                : (!isOnline || !stats) && (showExpiry || showUptime)
+                  ? t("node.offline")
+                  : null;
+              if (!text) return null;
+              return (
+                <div className="flex text-xs">
+                  <span>{text}</span>
+                </div>
+              );
+            })()}
           </div>
         </div>
         <div className="col-span-1 flex items-center text-left">
