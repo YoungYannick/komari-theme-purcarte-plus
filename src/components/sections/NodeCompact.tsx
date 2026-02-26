@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatBytes, formatUptime, getOSImage } from "@/utils";
+import { formatBytes, formatUptime, formatLastSeen, getOSImage } from "@/utils";
 import type { NodeData } from "@/types/node";
 import { Link } from "react-router-dom";
 import {
@@ -144,7 +144,7 @@ export const NodeCompact = ({ node, onShowDetails }: NodeCompactProps) => {
           const showExpiry = compactExpiredAtDisplay === "show" ||
             (compactExpiredAtDisplay === "hideUnset" && expired_at !== t("node.notSet"));
           const showUptime = compactUptimeDisplay === "show" ||
-            (compactUptimeDisplay === "hideUnset" && isOnline && stats);
+            (compactUptimeDisplay === "hideUnset" && (isOnline ? stats : stats?.time));
           if (!showExpiry && !showUptime) return null;
           return (
             <div className={`flex grid ${showExpiry && showUptime ? "grid-cols-2" : "grid-cols-1"}`}>
@@ -160,6 +160,11 @@ export const NodeCompact = ({ node, onShowDetails }: NodeCompactProps) => {
                     <>
                       <span className="mr-1">{t("node.uptime")}</span>
                       <span>{formatUptime(stats.uptime)}</span>
+                    </>
+                  ) : stats?.time ? (
+                    <>
+                      <span className="mr-1">{t("node.lastSeen")}</span>
+                      <span>{formatLastSeen(stats.time)}</span>
                     </>
                   ) : (
                     t("node.offline")

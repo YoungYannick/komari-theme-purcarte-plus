@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   formatBytes,
   formatUptime,
+  formatLastSeen,
   getOSImage,
   formatTrafficLimit,
 } from "@/utils";
@@ -307,7 +308,7 @@ export const NodeGrid = ({
           const showExpiry = gridExpiredAtDisplay === "show" ||
             (gridExpiredAtDisplay === "hideUnset" && expired_at !== t("node.notSet"));
           const showUptime = gridUptimeDisplay === "show" ||
-            (gridUptimeDisplay === "hideUnset" && isOnline && stats);
+            (gridUptimeDisplay === "hideUnset" && (isOnline ? stats : stats?.time));
           if (!showExpiry && !showUptime) return null;
           return (
             <div className="flex justify-between text-xs">
@@ -327,6 +328,11 @@ export const NodeGrid = ({
                       <>
                         <span className="mr-1">{t("node.uptime")}</span>
                         <span>{formatUptime(stats.uptime)}</span>
+                      </>
+                    ) : stats?.time ? (
+                      <>
+                        <span className="mr-1">{t("node.lastSeen")}</span>
+                        <span>{formatLastSeen(stats.time)}</span>
                       </>
                     ) : (
                       t("node.offline")

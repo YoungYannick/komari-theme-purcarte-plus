@@ -14,6 +14,7 @@ export const defaultTexts = {
     network: "网络",
     load: "负载",
     uptime: "在线:",
+    lastSeen: "最后上线:",
     expiredAt: "到期:",
     offline: "离线",
     online: "在线",

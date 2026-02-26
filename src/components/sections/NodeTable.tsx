@@ -1,4 +1,4 @@
-import { cn, formatBytes, formatTrafficLimit, formatUptime } from "@/utils";
+import { cn, formatBytes, formatTrafficLimit, formatUptime, formatLastSeen } from "@/utils";
 import type { NodeData } from "@/types/node";
 import { Link } from "react-router-dom";
 import {
@@ -134,11 +134,14 @@ const NodeTableRow = ({
               const showExpiry = tableExpiredAtDisplay === "show" ||
                 (tableExpiredAtDisplay === "hideUnset" && expired_at !== t("node.notSet"));
               const showUptime = tableUptimeDisplay === "show" ||
-                (tableUptimeDisplay === "hideUnset" && isOnline && stats);
+                (tableUptimeDisplay === "hideUnset" && (isOnline ? stats : stats?.time));
               const parts: string[] = [];
               if (isOnline && stats) {
                 if (showExpiry) parts.push(expired_at);
                 if (showUptime) parts.push(formatUptime(stats.uptime));
+              } else if (!isOnline) {
+                if (showExpiry) parts.push(expired_at);
+                if (showUptime && stats?.time) parts.push(`${t("node.lastSeen")} ${formatLastSeen(stats.time)}`);
               }
               const text = parts.length > 0
                 ? parts.join(" | ")

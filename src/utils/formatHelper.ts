@@ -106,6 +106,29 @@ export const formatTrafficLimit = (
   return `总 ${limitText} (${typeText})`;
 };
 
+// 用于将最后出现时间格式化为相对时间的辅助函数
+export const formatLastSeen = (timestamp: string): string => {
+  const now = Date.now();
+  const then = new Date(timestamp).getTime();
+  if (isNaN(then)) return "N/A";
+
+  const diffSec = Math.floor((now - then) / 1000);
+  if (diffSec < 60) return "刚刚";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}分钟前`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}小时前`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 30) return `${diffDay}天前`;
+
+  return new Date(timestamp).toLocaleDateString(undefined, {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
 export const getProgressBarClass = (percentage: number) => {
   if (percentage > 90) return "bg-red-600";
   if (percentage > 50) return "bg-yellow-400";
