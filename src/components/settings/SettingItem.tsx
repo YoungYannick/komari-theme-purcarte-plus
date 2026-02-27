@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ConfigOptions } from "@/config/default";
+import { resolveI18n } from "./i18nHelper";
 
 interface SettingItemProps {
   item: any;
@@ -97,7 +98,7 @@ const SettingItem = ({
   };
 
   if (item.type === "title") {
-    return <h3 className="text-lg font-semibold mt-4 mb-2">{item.name}</h3>;
+    return <h3 className="text-lg font-semibold mt-4 mb-2">{resolveI18n(item.name)}</h3>;
   }
 
   if (item.type === "switch" || item.type === "select") {
@@ -105,11 +106,11 @@ const SettingItem = ({
       <div className="mb-4 flex items-center justify-between">
         <div>
           <span className="text-base font-bold">
-            {item.name}
+            {resolveI18n(item.name)}
             {isModified && <span className="text-yellow-500 ml-2">*</span>}
           </span>
           {item.help && (
-            <p className="text-sm text-gray-500 mt-1">{item.help}</p>
+            <p className="text-sm text-gray-500 mt-1">{resolveI18n(item.help)}</p>
           )}
         </div>
         <div className="mt-2">{renderInput()}</div>
@@ -121,11 +122,11 @@ const SettingItem = ({
     <div className="mb-4">
       <div className="flex items-center justify-between">
         <span className="text-base font-bold">
-          {item.name}
+          {resolveI18n(item.name)}
           {isModified && <span className="text-yellow-500 ml-2">*</span>}
         </span>
       </div>
-      {item.help && <p className="text-sm text-gray-500 mt-1">{item.help}</p>}
+      {item.help && <p className="text-sm text-gray-500 mt-1">{resolveI18n(item.help)}</p>}
       <div className="mt-2">{renderInput()}</div>
     </div>
   );

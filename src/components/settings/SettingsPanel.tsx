@@ -7,6 +7,7 @@ import { defaultTexts } from "@/config/locales";
 import { apiService } from "@/services/api";
 import SettingItem from "./SettingItem";
 import CustomTextsEditor from "./CustomTextsEditor";
+import { resolveI18n } from "./i18nHelper";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMobile";
 import { toast } from "sonner";
@@ -262,21 +263,21 @@ const SettingsPanel = ({ isOpen, onClose }: SettingsPanelProps) => {
               <span className="mx-1">/</span>
               <span
                 className={
-                  currentPage === t("setting.customUI") &&
+                  resolveI18n(currentPage) === t("setting.customUI") &&
                   customTextsPage !== "main"
                     ? "cursor-pointer hover:underline"
                     : "cursor-default"
                 }
                 onClick={() => {
-                  if (currentPage === t("setting.customUI")) {
+                  if (resolveI18n(currentPage) === t("setting.customUI")) {
                     setCustomTextsPage("main");
                   }
                 }}>
-                {currentPage}
+                {resolveI18n(currentPage)}
               </span>
             </>
           )}
-          {currentPage === t("setting.customUI") &&
+          {resolveI18n(currentPage) === t("setting.customUI") &&
             customTextsPage !== "main" && (
               <>
                 <span className="mx-1">/</span>
@@ -297,10 +298,10 @@ const SettingsPanel = ({ isOpen, onClose }: SettingsPanelProps) => {
             .filter((item) => item.type === "title")
             .map((item) => (
               <Button
-                key={item.name}
+                key={resolveI18n(item.name)}
                 onClick={() => setCurrentPage(item.name)}
                 className="w-full justify-start">
-                {item.name}
+                {resolveI18n(item.name)}
               </Button>
             ))
         ) : (
@@ -338,7 +339,7 @@ const SettingsPanel = ({ isOpen, onClose }: SettingsPanelProps) => {
                   />
                 ) : (
                   <SettingItem
-                    key={item.key || item.name}
+                    key={item.key || resolveI18n(item.name)}
                     item={item}
                     editingConfig={editingConfig}
                     onConfigChange={handleConfigChange}

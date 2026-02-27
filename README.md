@@ -61,6 +61,7 @@
 <summary><b>🐛 Bug 修复</b></summary>
 
 - 修复部分设备/环境下 React error #130 崩溃问题（配置空值覆盖默认值）
+- 修复前端设置面板 React error #31 页面空白问题（i18n 对象未解析为字符串直接渲染）
 - 修复进入探针后服务器卡片闪烁问题（WebSocket 数据未到达时的离线误判）
 - 修复 3D 地球 THREE.js 控制台警告（alpha 通道、Clock 弃用）
 - 修复延迟总览 Tooltip 过高的显示问题
@@ -563,6 +564,7 @@ komari-theme-purcarte-plus/
 │   │   ├── settings/                        # 设置面板组件
 │   │   │   ├── SettingsPanel.tsx             # 主题配置设置面板（管理员使用）
 │   │   │   ├── SettingItem.tsx              # 单项设置控件（switch/select/string/number）
+│   │   │   ├── i18nHelper.ts               # 配置项 i18n 多语言对象解析工具
 │   │   │   ├── EditButton.tsx               # 配置编辑按钮（标题栏触发入口）
 │   │   │   └── CustomTextsEditor.tsx        # 自定义 UI 文本可视化编辑器
 │   │   │
