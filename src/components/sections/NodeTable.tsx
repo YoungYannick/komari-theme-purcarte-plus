@@ -108,7 +108,7 @@ const NodeTableRow = ({
   return (
     <Card
       className={
-        !isOnline
+        stats && !isOnline
           ? "striped-bg-red-translucent-diagonal ring-2 ring-red-500/50"
           : ""
       }>

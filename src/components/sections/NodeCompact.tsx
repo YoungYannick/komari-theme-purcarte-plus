@@ -58,9 +58,9 @@ export const NodeCompact = ({ node, onShowDetails }: NodeCompactProps) => {
   return (
     <Card
       className={`flex flex-col mx-auto w-full max-w-sm ${
-        isOnline
-          ? ""
-          : "striped-bg-red-translucent-diagonal ring-2 ring-red-500/50"
+        stats && !isOnline
+          ? "striped-bg-red-translucent-diagonal ring-2 ring-red-500/50"
+          : ""
       }`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
         <Link
