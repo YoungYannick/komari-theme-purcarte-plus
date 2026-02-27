@@ -89,7 +89,7 @@ const HomePage: React.FC<HomePageProps> = ({
   };
 
   return (
-    <div className="fade-in my-4">
+    <div className="my-4">
       {enableStatsBar && (!isShowStatsInHeader || isMobile) && (
         <StatsBar
           displayOptions={statusCardsVisibility}

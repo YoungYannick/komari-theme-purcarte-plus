@@ -180,7 +180,7 @@ const InstancePage = () => {
   }
 
   return (
-    <div className="text-card-foreground space-y-4 my-4 fade-in @container">
+    <div className="text-card-foreground space-y-4 my-4 @container">
       <Card className="flex items-center justify-between p-4 mb-4 text-primary">
         <div className="flex items-center gap-2 min-w-0">
           <Button
