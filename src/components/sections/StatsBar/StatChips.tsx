@@ -36,7 +36,7 @@ export const StatChip = memo(
             {label}
           </div>
           <div
-            className={`text-xs font-semibold leading-tight ${
+            className={`text-xs font-semibold leading-tight whitespace-nowrap ${
               textLeft ? "text-left" : ""
             }`}>
             {lines.map((line, index) => (
@@ -51,7 +51,7 @@ export const StatChip = memo(
       <div className="w-full py-1">
         <div className="flex flex-col gap-2 items-center">
           <label>{label}</label>
-          <div className={`font-medium -mt-2 ${textLeft ? "text-left" : ""}`}>
+          <div className={`font-medium -mt-2 whitespace-nowrap ${textLeft ? "text-left" : ""}`}>
             {lines.map((line, index) => (
               <div key={index}>{line}</div>
             ))}
