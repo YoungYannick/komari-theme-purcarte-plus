@@ -369,7 +369,11 @@ const PingOverview = memo(() => {
     if (selectedGroups.has(allLabel)) return uniqueServerNodes;
     return uniqueServerNodes.filter((s) => {
       if (!s.group && selectedGroups.size > 0) return false;
-      return selectedGroups.has(s.group);
+      if (!s.group) return false;
+
+      const nodeGroups = s.group.split(";").map(g => g.trim());
+      // 只要该节点的任意一个分组被选中，就展示
+      return nodeGroups.some(g => selectedGroups.has(g));
     });
   }, [uniqueServerNodes, selectedGroups]);
 

@@ -94,9 +94,18 @@ function useNodesInternal() {
   );
 
   const getGroups = useCallback(() => {
-    return Array.from(
-      new Set(staticNodes.map((node) => node.group).filter(Boolean))
-    );
+    const groupsSet = new Set<string>();
+    staticNodes.forEach((node) => {
+      if (node.group) {
+        node.group.split(";").forEach((g) => {
+          const trimmedGroup = g.trim();
+          if (trimmedGroup) {
+            groupsSet.add(trimmedGroup);
+          }
+        });
+      }
+    });
+    return Array.from(groupsSet);
   }, [staticNodes]);
 
   return {
