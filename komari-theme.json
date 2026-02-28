@@ -796,7 +796,7 @@
                     "id": "Aktifkan Kontrol Pengurutan"
                 },
                 "type": "switch",
-                "default": false,
+                "default": true,
                 "help": {
                     "zh-CN": "在统计栏添加排序控制下拉菜单（流量/网速排序）",
                     "zh-TW": "在統計欄添加排序控制下拉菜單（流量/網速排序）",
@@ -1290,13 +1290,13 @@
                     "id": "Logo Gelembung Selamat Datang"
                 },
                 "type": "string",
-                "default": "",
+                "default": "/assets/logo.png",
                 "help": {
-                    "zh-CN": "欢迎气泡标题栏的 Logo 图片链接，留空则使用 /assets/logo.png",
-                    "zh-TW": "歡迎氣泡標題欄的 Logo 圖片連結，留空則使用 /assets/logo.png",
-                    "en": "Logo image URL for welcome bubble header. Uses /assets/logo.png if empty.",
-                    "ja": "ウェルカムバブルヘッダーのロゴ画像URL。空の場合は /assets/logo.png を使用。",
-                    "id": "URL gambar logo untuk header gelembung selamat datang. Menggunakan /assets/logo.png jika kosong."
+                    "zh-CN": "欢迎气泡标题栏的 Logo 图片链接，留空则不展示",
+                    "zh-TW": "歡迎氣泡標題欄的 Logo 圖片連結，留空則不展示",
+                    "en": "Logo image URL for welcome bubble header. Leave empty to hide.",
+                    "ja": "ウェルカムバブルヘッダーのロゴ画像URL。空の場合は非表示。",
+                    "id": "URL gambar logo untuk header gelembung selamat datang. Kosongkan untuk menyembunyikan."
                 }
             },
             {

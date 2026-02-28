@@ -86,7 +86,8 @@
 <summary><b>前端管理开关</b></summary>
 
 - **是否在登录时显示配置编辑按钮** (`isShowConfigEditButtonInLogined`)
-  - **类型:** `switch` | **默认值:** `false`
+  - **类型:** `switch`
+  - **默认值:** `false`
   - **说明:** 启用后将在登录时在标题栏最右侧显示配置编辑按钮，方便管理员进行主题配置
 
 </details>
@@ -304,7 +305,7 @@
 
 - **启用排序控制** (`enableSortControl`)
   - **类型:** `switch`
-  - **默认值:** `false`
+  - **默认值:** `true`
   - **说明:** 启用后在统计栏添加排序控制下拉菜单选项，分别对流量上下行和网速上下行进行升降排序，仅在启用统计栏时有效
 
 - **启用离线节点置后显示** (`isOfflineNodesBehind`)
@@ -447,8 +448,8 @@
 
 - **欢迎气泡 Logo** (`welcomeBubbleLogoUrl`)
   - **类型:** `string`
-  - **默认值:** `(空)`
-  - **说明:** 欢迎气泡标题栏的 Logo 图片链接，留空则使用 `/assets/logo.png`
+  - **默认值:** `/assets/logo.png`
+  - **说明:** 欢迎气泡标题栏的 Logo 图片链接，留空则不展示
 
 - **启用资产统计** (`enableFinanceWidget`)
   - **类型:** `switch`

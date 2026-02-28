@@ -101,7 +101,7 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   enableLogo: true,
   logoUrl: "/assets/logo.png",
   enableTitle: true,
-  titleText: "Komari",
+  titleText: "",
   enableSearchButton: true,
   enableAdvancedSearch: true,
   enableAdminButton: true,
@@ -115,7 +115,7 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   isShowStatsInHeader: false,
   mergeGroupsWithStats: false,
   enableStatsBar: true,
-  enableSortControl: false,
+  enableSortControl: true,
   isOfflineNodesBehind: false,
   enableGroupedBar: true,
   defaultSelectedGroup: "",
@@ -145,7 +145,7 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   enableProtection: true,
   // 欢迎气泡配置
   welcomeBubbleSiteName: "阿米诺斯",
-  welcomeBubbleLogoUrl: "",
+  welcomeBubbleLogoUrl: "/assets/logo.png",
   // 地球组件配置
   earthLightBgImage: "",
   earthDarkBgImage: "//upload.wikimedia.org/wikipedia/commons/6/60/ESO_-_Milky_Way.jpg",

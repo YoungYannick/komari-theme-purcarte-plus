@@ -104,7 +104,6 @@ export function WelcomeBubble() {
   const [ispHidden, setIspHidden] = useState(false);
 
   const siteName = welcomeBubbleSiteName || titleText || "Komari";
-  const bubbleLogoSrc = welcomeBubbleLogoUrl || "/assets/logo.png";
   const osName = useMemo(() => {
     const os = getOperatingSystem(navigator.userAgent);
     return os || t("enhanced.welcome.unknownDevice");
@@ -145,7 +144,7 @@ export function WelcomeBubble() {
       className={`welcome-bubble${visible ? " show" : ""}`}>
       <div className="bubble-header">
         <h3 className="bubble-title">
-          <img src={bubbleLogoSrc} className="bubble-logo-image" alt="logo" />
+          {welcomeBubbleLogoUrl && <img src={welcomeBubbleLogoUrl} className="bubble-logo-image" alt="logo" />}
           {siteName}
         </h3>
         <button className="bubble-close" onClick={() => setVisible(false)}>
