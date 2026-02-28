@@ -77,3 +77,26 @@ export const CustomTooltip = ({
 
   return null;
 };
+
+export const ScrollableTooltip = (props: any) => {
+  const { active, payload, ...rest } = props;
+  if (!active || !payload || !payload.length) return null;
+  const filtered = payload.filter(
+    (item: any) => item.value !== null && item.value !== undefined
+  );
+  if (!filtered.length) return null;
+  return (
+    <div
+      id="tooltip-scroll-container"
+      style={{
+        maxHeight: "300px",
+        overflowY: "auto",
+        pointerEvents: "auto",
+        paddingRight: "4px",
+      }}
+      onWheel={(e) => e.stopPropagation()}
+    >
+      <CustomTooltip {...rest} active={true} payload={filtered} />
+    </div>
+  );
+};

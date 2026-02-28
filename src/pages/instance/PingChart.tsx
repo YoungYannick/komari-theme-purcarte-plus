@@ -25,7 +25,8 @@ import {
   interpolateNullsLinear,
 } from "@/utils/RecordHelper";
 import { useAppConfig } from "@/config";
-import { CustomTooltip } from "@/components/ui/tooltip";
+import { ScrollableTooltip } from "@/components/ui/tooltip";
+import { useTooltipScrollLock } from "@/hooks/useTooltipScrollLock";
 import Tips from "@/components/ui/tips";
 import { generateColor, lableFormatter } from "@/utils/chartHelper";
 import { useLocale } from "@/config/hooks";
@@ -49,6 +50,7 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
   const [isResetting, setIsResetting] = useState(false);
   const isMobile = useIsMobile();
   const { t } = useLocale();
+  const { chartContentRef, handleChartMouseMove, tooltipProps } = useTooltipScrollLock();
 
   useEffect(() => {
     if (pingHistory?.tasks) {
@@ -399,13 +401,13 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0 flex-grow flex flex-col">
+        <CardContent className="pt-0 flex-grow flex flex-col" ref={chartContentRef}>
           {pingHistory?.tasks && pingHistory.tasks.length > 0 ? (
             <ResponsiveContainer
               width="100%"
               height="100%"
               className={"min-h-90"}>
-              <LineChart data={chartData} margin={chartMargin}>
+              <LineChart data={chartData} margin={chartMargin} onMouseMove={handleChartMouseMove}>
                 <CartesianGrid
                   strokeDasharray="2 4"
                   stroke="var(--theme-line-muted-color)"
@@ -447,9 +449,11 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
                 />
                 <Tooltip
                   cursor={false}
+                  wrapperStyle={{ zIndex: 100, pointerEvents: "none" }}
+                  {...tooltipProps}
                   content={
-                    <CustomTooltip
-                      labelFormatter={(value) => lableFormatter(value, hours)}
+                    <ScrollableTooltip
+                      labelFormatter={(value: any) => lableFormatter(value, hours)}
                     />
                   }
                 />

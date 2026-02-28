@@ -35,7 +35,8 @@ import {
   interpolateNullsLinear,
 } from "@/utils/RecordHelper";
 import { useAppConfig } from "@/config";
-import { CustomTooltip } from "@/components/ui/tooltip";
+import { ScrollableTooltip } from "@/components/ui/tooltip";
+import { useTooltipScrollLock } from "@/hooks/useTooltipScrollLock";
 import Tips from "@/components/ui/tips";
 import { lableFormatter } from "@/utils/chartHelper";
 import { useLocale } from "@/config/hooks";
@@ -132,21 +133,6 @@ const generateCombinedColor = (
   return hslFallback;
 };
 
-// 过滤 Tooltip（固定高度，新增滚动条）
-const FilteredTooltip = (props: any) => {
-  const { active, payload, ...rest } = props;
-  if (!active || !payload || !payload.length) return null;
-  const filtered = payload.filter(
-      (item: any) => item.value !== null && item.value !== undefined
-  );
-  if (!filtered.length) return null;
-  return (
-      <div id="tooltip-scroll-container" style={{ maxHeight: "300px", overflowY: "auto", pointerEvents: "auto", paddingRight: "4px" }} onWheel={(e) => e.stopPropagation()}>
-        <CustomTooltip {...rest} active={true} payload={filtered} />
-      </div>
-  );
-};
-
 // 组件
 const PingOverview = memo(() => {
   const {
@@ -178,6 +164,8 @@ const PingOverview = memo(() => {
     setServerSort(newSort);
     saveSort(SERVER_SORT_KEY, key, dir);
   };
+
+  const { chartContentRef, handleChartMouseMove, tooltipProps } = useTooltipScrollLock();
 
   // 首页分组
   const allGroups = useMemo(() => {
@@ -1147,23 +1135,14 @@ const PingOverview = memo(() => {
           </div>
         </CardHeader>
         <CardContent className="pt-0 flex-grow flex flex-col"
-         onWheel={(e) => {
-           const tooltipEl = document.getElementById("tooltip-scroll-container");
-           if (tooltipEl && tooltipEl.scrollHeight > tooltipEl.clientHeight) {
-             if (e.cancelable) {
-               e.preventDefault();
-               e.stopPropagation();
-             }
-             tooltipEl.scrollTop += e.deltaY;
-           }
-         }}
+         ref={chartContentRef}
         >
           {chartData.length > 0 ? (
             <ResponsiveContainer
               width="100%"
               height="100%"
               className="min-h-110">
-              <LineChart data={chartData} margin={chartMargin}>
+              <LineChart data={chartData} margin={chartMargin} onMouseMove={handleChartMouseMove}>
                 <CartesianGrid
                   strokeDasharray="2 4"
                   stroke="var(--theme-line-muted-color)"
@@ -1199,8 +1178,9 @@ const PingOverview = memo(() => {
                 <Tooltip
                   cursor={false}
                   wrapperStyle={{ zIndex: 100, pointerEvents: "none" }}
+                  {...tooltipProps}
                   content={
-                    <FilteredTooltip
+                    <ScrollableTooltip
                       labelFormatter={(value: any) => lableFormatter(value, hours)}
                     />
                   }

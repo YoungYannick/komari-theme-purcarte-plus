@@ -64,14 +64,10 @@
 <summary><b>🐛 Bug 修复</b></summary>
 
 - 修复部分设备/环境下 React error #130 崩溃问题（配置空值覆盖默认值）
-- 修复前端设置面板 React error #31 页面空白问题（i18n 对象未解析为字符串直接渲染）
-- 修复前端设置面板 richtext 类型组件未渲染的问题（底栏自定义内容等多行输入框无法显示）
+- 新增前端设置面板 richtext 类型设置项支持（底栏自定义内容等多行输入框可正常渲染）
 - 修复进入探针后服务器卡片闪烁问题（WebSocket 数据未到达时的离线误判）
-- 修复 3D 地球 THREE.js 控制台警告（alpha 通道、Clock 弃用）
-- 修复延迟总览 Tooltip 过高的显示问题
 - 修复多视图下服务器节点长名称溢出不换行问题
 - 修复加载动画不垂直居中问题
-- 修复首页切换语言后"所有"分组失效导致显示空数据的问题（分组标识符从翻译文本改为常量）
 
 </details>
 
@@ -556,7 +552,7 @@ komari-theme-purcarte-plus/
 │   │   │   ├── tag.tsx                      # 标签/徽章组件
 │   │   │   ├── textarea.tsx                 # 多行文本输入组件
 │   │   │   ├── tips.tsx                     # 提示气泡组件
-│   │   │   └── tooltip.tsx                  # 工具提示组件
+│   │   │   └── tooltip.tsx                  # 工具提示组件（含 ScrollableTooltip 可滚动提示框）
 │   │   │
 │   │   ├── sections/                        # 页面区块组件
 │   │   │   ├── Header.tsx                   # 标题栏（Logo、标题、搜索、视图切换、主题切换、语言切换、管理入口）
@@ -627,6 +623,7 @@ komari-theme-purcarte-plus/
 │   │   ├── useNodeCommons.ts                # 节点通用工具 Hook（状态判断、运行时间、颜色映射）
 │   │   ├── useAdvancedSearch.ts             # 高级搜索状态管理 Hook（URL同步、校验、搜索执行）
 │   │   ├── useAdvancedSearchFilter.ts       # 高级搜索过滤逻辑（纯函数，多条件匹配）
+│   │   ├── useTooltipScrollLock.ts          # 图表 Tooltip 滚动锁定 Hook（wheel 事件 + 位置冻结）
 │   │   ├── useTheme.ts                      # 主题管理 Hook（切换亮色/暗色/自动模式）
 │   │   └── useMobile.ts                     # 移动端响应式检测 Hook
 │   │
