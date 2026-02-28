@@ -7,13 +7,17 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import type { NodeDataContextType } from "@/contexts/NodeDataContext";
 import type { LiveDataContextType } from "@/contexts/LiveDataContext";
 import { useLocale, useAppConfig } from "@/config/hooks";
+import type { AdvancedSearchState } from "@/types/advancedSearch";
+import { isStateDefault } from "@/types/advancedSearch";
+import { applyAdvancedFilters } from "@/hooks/useAdvancedSearchFilter";
+import { useExchangeRates } from "@/components/enhanced/useExchangeRates";
 
 type SortKey = "trafficUp" | "trafficDown" | "speedUp" | "speedDown" | null;
 type SortOrder = "asc" | "desc";
 
 export const ALL_GROUP = "__all__";
 
-export const useNodeListCommons = (searchTerm: string) => {
+export const useNodeListCommons = (searchTerm: string, advancedSearchState?: AdvancedSearchState | null) => {
   const {
     nodes: staticNodes,
     loading,
@@ -21,6 +25,7 @@ export const useNodeListCommons = (searchTerm: string) => {
   } = useNodeData() as NodeDataContextType;
   const { liveData } = useLiveData() as LiveDataContextType;
   const { isOfflineNodesBehind, defaultSelectedGroup } = useAppConfig();
+  const { rates } = useExchangeRates();
   const [selectedGroup, setSelectedGroup] = useState(
     defaultSelectedGroup || ALL_GROUP
   );
@@ -53,14 +58,21 @@ export const useNodeListCommons = (searchTerm: string) => {
   );
 
   const filteredNodes = useMemo(() => {
-    let nodes = combinedNodes
-      .filter(
-        (node: NodeData & { stats?: any }) =>
-          selectedGroup === ALL_GROUP || (node.group && node.group.split(";").map(g => g.trim()).includes(selectedGroup))
-      )
-      .filter((node: NodeData) =>
+    // 先按分组过滤
+    let nodes = combinedNodes.filter(
+      (node: NodeData & { stats?: any }) =>
+        selectedGroup === ALL_GROUP || (node.group && node.group.split(";").map(g => g.trim()).includes(selectedGroup))
+    );
+
+    // 高级搜索激活时，使用高级过滤替代简单名称搜索
+    if (advancedSearchState && !isStateDefault(advancedSearchState)) {
+      nodes = applyAdvancedFilters(nodes, advancedSearchState, rates) as typeof nodes;
+    } else {
+      // 简单搜索：名称模糊匹配
+      nodes = nodes.filter((node: NodeData) =>
         node.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
+    }
 
     if (isOfflineNodesBehind || sortKey) {
       nodes.sort((a, b) => {
@@ -100,6 +112,8 @@ export const useNodeListCommons = (searchTerm: string) => {
     combinedNodes,
     selectedGroup,
     searchTerm,
+    advancedSearchState,
+    rates,
     sortKey,
     sortOrder,
     isOfflineNodesBehind,

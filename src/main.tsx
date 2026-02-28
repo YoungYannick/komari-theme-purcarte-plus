@@ -30,6 +30,9 @@ import {
   EnhancedFeatures,
   EnhancedFeaturesPrivate,
 } from "@/components/enhanced/EnhancedFeatures";
+import { useAdvancedSearch } from "@/hooks/useAdvancedSearch";
+import { AdvancedSearchModal } from "@/components/enhanced/AdvancedSearchModal";
+import type { AdvancedSearchState } from "@/types/advancedSearch";
 const HomePage = lazy(() => import("@/pages/Home"));
 const InstancePage = lazy(() => import("@/pages/instance"));
 const PingOverviewPage = lazy(() => import("@/pages/PingOverview"));
@@ -48,6 +51,11 @@ const AppRoutes = ({
   headerRef,
   headerHeight,
   footerHeight,
+  advancedSearchState,
+  enableAdvancedSearch,
+  isAdvancedSearchActive,
+  onOpenAdvancedSearch,
+  onClearAdvancedSearch,
 }: {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
@@ -56,6 +64,11 @@ const AppRoutes = ({
   headerRef: React.RefObject<HTMLElement | null>;
   headerHeight: number;
   footerHeight: number;
+  advancedSearchState: AdvancedSearchState | null;
+  enableAdvancedSearch: boolean;
+  isAdvancedSearchActive: boolean;
+  onOpenAdvancedSearch: () => void;
+  onClearAdvancedSearch: () => void;
 }) => {
   const location = useLocation();
   const {
@@ -66,7 +79,7 @@ const AppRoutes = ({
     selectedGroup,
     setSelectedGroup,
     handleSort,
-  } = useNodeListCommons(searchTerm);
+  } = useNodeListCommons(searchTerm, advancedSearchState);
   const { statusCardsVisibility, setStatusCardsVisibility } = useTheme();
   const { enableGroupedBar, selectedHeaderStyle, selectedFooterStyle } =
     useAppConfig();
@@ -119,6 +132,9 @@ const AppRoutes = ({
         setSearchTerm={setSearchTerm}
         setIsSettingsOpen={setIsSettingsOpen}
         isSettingsOpen={isSettingsOpen}
+        enableAdvancedSearch={enableAdvancedSearch}
+        isAdvancedSearchActive={isAdvancedSearchActive}
+        onOpenAdvancedSearch={onOpenAdvancedSearch}
         {...statsBarProps}
       />
       <div className="flex-1 min-h-0">
@@ -153,6 +169,8 @@ const AppRoutes = ({
                         stats={stats}
                         groups={groups}
                         handleSort={handleSort}
+                        isAdvancedSearchActive={isAdvancedSearchActive}
+                        onClearAdvancedSearch={onClearAdvancedSearch}
                       />
                     </main>
                     {selectedFooterStyle === "followContent" && (
@@ -237,7 +255,7 @@ const AppRoutes = ({
 };
 
 export const AppContent = () => {
-  const { siteStatus, mainWidth, selectedFooterStyle } = useAppConfig();
+  const { siteStatus, mainWidth, selectedFooterStyle, enableAdvancedSearch } = useAppConfig();
   const { appearance, color } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -246,6 +264,11 @@ export const AppContent = () => {
   const [footerHeight, setFooterHeight] = useState(0);
   const headerRef = useRef<HTMLElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+
+  // 高级搜索 hook（必须无条件调用，遵循 React hooks 规则）
+  const advancedSearch = useAdvancedSearch();
+  const isAuthenticated =
+    siteStatus === "authenticated" || siteStatus === "private-authenticated";
 
   useEffect(() => {
     const header = headerRef.current;
@@ -332,6 +355,17 @@ export const AppContent = () => {
                 headerRef={headerRef}
                 headerHeight={headerHeight}
                 footerHeight={footerHeight}
+                advancedSearchState={
+                  enableAdvancedSearch && advancedSearch.isSearchApplied
+                    ? advancedSearch.confirmedState
+                    : null
+                }
+                enableAdvancedSearch={enableAdvancedSearch}
+                isAdvancedSearchActive={
+                  enableAdvancedSearch && advancedSearch.isSearchApplied
+                }
+                onOpenAdvancedSearch={() => advancedSearch.setIsModalOpen(true)}
+                onClearAdvancedSearch={() => advancedSearch.resetSearch()}
               />
             )}
             {selectedFooterStyle !== "followContent" &&
@@ -348,6 +382,19 @@ export const AppContent = () => {
           <EnhancedFeaturesPrivate />
         ) : (
           <EnhancedFeatures />
+        )}
+        {/* 高级搜索模态框 */}
+        {enableAdvancedSearch && advancedSearch.isModalOpen && (
+          <AdvancedSearchModal
+            state={advancedSearch.state}
+            setState={advancedSearch.setState}
+            onSearch={advancedSearch.executeSearch}
+            onReset={advancedSearch.resetSearch}
+            onClose={() => advancedSearch.setIsModalOpen(false)}
+            isAuthenticated={isAuthenticated}
+            validationErrors={advancedSearch.validationErrors}
+            setValidationErrors={advancedSearch.setValidationErrors}
+          />
         )}
       </DynamicContent>
     </Theme>

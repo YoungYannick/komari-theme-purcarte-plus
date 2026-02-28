@@ -29,6 +29,7 @@
 - **滚动辅助 (ScrollHelpers)** — 页面右下角回到顶部/底部按钮
 - **多语言支持 (i18n)** — 集成 i18next 国际化框架，标题栏内置语言切换器，支持简中/繁中/英/日/印尼五种语言，增强组件（欢迎气泡、资产统计、交易面板、3D地球、访客保护）全面接入 i18n
 - **访客保护 (Protection)** — 对未登录用户启用反调试保护，禁止右键菜单与开发者工具
+- **高级搜索 (AdvancedSearch)** — 多条件搜索模态框，支持统一全文模糊搜索（一个输入框搜索 UUID/名称/CPU/系统/地区/分组/标签等13个字段，AND/OR逻辑）、布尔/枚举下拉、价格与CPU核心数精确/范围双模式切换（默认精确匹配，可切换范围搜索）、价格货币选择与汇率自动转换（支持 CNY/USD/HKD/EUR/GBP/JPY，自动按实时汇率跨币种匹配）、价格免费切换、日期精确/范围、内存/磁盘/流量范围+单位选择，搜索参数同步至URL实现链接分享，后台可配置开关；开启高级搜索时自动隐藏普通搜索栏
 
 </details>
 
@@ -231,6 +232,11 @@
   - **类型:** `switch`
   - **默认值:** `true`
   - **说明:** 启用后默认在标题栏右侧显示搜索按钮
+
+- **启用高级搜索** (`enableAdvancedSearch`)
+  - **类型:** `switch`
+  - **默认值:** `true`
+  - **说明:** 启用后在标题栏显示高级搜索按钮（替代普通搜索栏），支持多条件筛选、URL参数同步等功能
 
 - **启用管理按钮** (`enableAdminButton`)
   - **类型:** `switch`
@@ -581,6 +587,8 @@ komari-theme-purcarte-plus/
 │   │       ├── WelcomeBubble.tsx             # 欢迎气泡（展示访客 IP、地理位置、浏览器信息）
 │   │       ├── FinanceWidget.tsx             # 资产统计悬浮球（服务器总价值、月均支出、剩余价值）
 │   │       ├── ServerTradeModal.tsx          # 服务器交易计算弹窗
+│   │       ├── AdvancedSearchModal.tsx       # 高级搜索模态框（多条件筛选、URL同步）
+│   │       ├── AdvancedSearchModal.css       # 高级搜索模态框样式
 │   │       ├── EarthGlobe.tsx               # 3D 地球组件入口（懒加载）
 │   │       ├── GlobeRenderer.tsx            # Globe.gl 3D 地球渲染器
 │   │       ├── ScrollHelpers.tsx            # 滚动到顶部/底部辅助按钮
@@ -617,6 +625,8 @@ komari-theme-purcarte-plus/
 │   │   ├── useLoadCharts.ts                 # CPU/负载 历史图表数据获取 Hook
 │   │   ├── usePingChart.ts                  # 延迟/丢包 历史图表数据获取 Hook
 │   │   ├── useNodeCommons.ts                # 节点通用工具 Hook（状态判断、运行时间、颜色映射）
+│   │   ├── useAdvancedSearch.ts             # 高级搜索状态管理 Hook（URL同步、校验、搜索执行）
+│   │   ├── useAdvancedSearchFilter.ts       # 高级搜索过滤逻辑（纯函数，多条件匹配）
 │   │   ├── useTheme.ts                      # 主题管理 Hook（切换亮色/暗色/自动模式）
 │   │   └── useMobile.ts                     # 移动端响应式检测 Hook
 │   │
@@ -626,7 +636,8 @@ komari-theme-purcarte-plus/
 │   ├── types/                               # TypeScript 类型定义
 │   │   ├── node.d.ts                        # 节点数据结构类型（NodeData、NodeStats、ApiResponse 等）
 │   │   ├── rpc.d.ts                         # JSON-RPC2 响应类型
-│   │   └── LiveData.ts                      # WebSocket 实时数据流类型
+│   │   ├── LiveData.ts                      # WebSocket 实时数据流类型
+│   │   └── advancedSearch.ts                # 高级搜索类型定义（搜索状态、过滤器、校验）
 │   │
 │   └── utils/                               # 工具函数
 │       ├── index.ts                         # 工具模块统一导出（cn、formatBytes 等）

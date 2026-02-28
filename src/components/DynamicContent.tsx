@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useEffect } from "react";
+import { type ReactNode, useCallback, useMemo, useEffect, useRef } from "react";
 import { useAppConfig } from "@/config/hooks";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useTheme } from "@/hooks/useTheme";
@@ -8,9 +8,19 @@ export function DynamicContent({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
   const { appearance } = useTheme();
 
+  // 缓存随机选择的背景 URL，避免每次父组件重渲染时重新随机导致背景闪烁
+  const cachedUrlsRef = useRef<Record<string, string>>({});
+
   const getUrlFromConfig = useCallback(
     (urls: string) => {
       if (!urls) return "";
+
+      // 使用 urls + appearance 作为缓存 key，只有配置值真正变化时才重新随机
+      const cacheKey = `${urls}|${appearance}`;
+      if (cacheKey in cachedUrlsRef.current) {
+        return cachedUrlsRef.current[cacheKey];
+      }
+
       const themes = urls.split("|").map((theme) => theme.trim());
       const themeIndex = appearance === "dark" ? 1 : 0;
       const selectedTheme =
@@ -20,37 +30,46 @@ export function DynamicContent({ children }: { children: ReactNode }) {
         .map((u) => u.trim())
         .filter(Boolean);
       const randomIndex = Math.floor(Math.random() * themeUrls.length);
-      return themeUrls[randomIndex] || "";
+      const result = themeUrls[randomIndex] || "";
+      cachedUrlsRef.current[cacheKey] = result;
+      return result;
     },
     [appearance]
   );
 
   const backgroundMode = config.backgroundMode || "image";
 
+  // 使用具体的原始值作为依赖，而非整个 config 对象，避免无关配置变化触发重计算
+  const bgImage = config.backgroundImage;
+  const bgImageMobile = config.backgroundImageMobile;
+  const videoBgUrl = config.videoBackgroundUrl;
+  const videoBgUrlMobile = config.videoBackgroundUrlMobile;
+  const solidColorBg = config.solidColorBackground;
+  const mainWidth = config.mainWidth;
+  const blurValue = config.blurValue;
+  const blurBackgroundColor = config.blurBackgroundColor;
+  const bgAlignment = config.backgroundAlignment;
+
   const imageUrl = useMemo(() => {
-    if (!config || backgroundMode !== "image") return "";
-    const { backgroundImage, backgroundImageMobile } = config;
-    return isMobile && backgroundImageMobile
-      ? getUrlFromConfig(backgroundImageMobile)
-      : getUrlFromConfig(backgroundImage);
-  }, [config, isMobile, getUrlFromConfig, backgroundMode]);
+    if (backgroundMode !== "image") return "";
+    return isMobile && bgImageMobile
+      ? getUrlFromConfig(bgImageMobile)
+      : getUrlFromConfig(bgImage);
+  }, [bgImage, bgImageMobile, isMobile, getUrlFromConfig, backgroundMode]);
 
   const videoUrl = useMemo(() => {
-    if (!config || backgroundMode !== "video") return "";
-    const { videoBackgroundUrl, videoBackgroundUrlMobile } = config;
-    return isMobile && videoBackgroundUrlMobile
-      ? getUrlFromConfig(videoBackgroundUrlMobile)
-      : getUrlFromConfig(videoBackgroundUrl);
-  }, [config, isMobile, getUrlFromConfig, backgroundMode]);
+    if (backgroundMode !== "video") return "";
+    return isMobile && videoBgUrlMobile
+      ? getUrlFromConfig(videoBgUrlMobile)
+      : getUrlFromConfig(videoBgUrl);
+  }, [videoBgUrl, videoBgUrlMobile, isMobile, getUrlFromConfig, backgroundMode]);
 
   const solidColor = useMemo(() => {
-    if (!config || backgroundMode !== "solidColor") return "";
-    return config.solidColorBackground || "";
-  }, [config, backgroundMode]);
+    if (backgroundMode !== "solidColor") return "";
+    return solidColorBg || "";
+  }, [solidColorBg, backgroundMode]);
 
   const dynamicStyles = useMemo(() => {
-    if (!config) return "";
-    const { mainWidth, blurValue, blurBackgroundColor } = config;
     const styles: string[] = [];
 
     styles.push(`--main-width: ${mainWidth}vw;`);
@@ -67,14 +86,14 @@ export function DynamicContent({ children }: { children: ReactNode }) {
     }
 
     return `:root { ${styles.join(" ")} }`;
-  }, [config, imageUrl]);
+  }, [mainWidth, blurValue, blurBackgroundColor, imageUrl]);
 
   useEffect(() => {
     const imageBackground = document.getElementById("image-background");
     const videoBackground = document.getElementById(
       "video-background"
     ) as HTMLVideoElement;
-    const [size, position] = config.backgroundAlignment
+    const [size, position] = bgAlignment
       .split(",")
       .map((s) => s.trim());
 
@@ -109,7 +128,7 @@ export function DynamicContent({ children }: { children: ReactNode }) {
     videoUrl,
     solidColor,
     backgroundMode,
-    config.backgroundAlignment,
+    bgAlignment,
   ]);
 
   return (

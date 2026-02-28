@@ -1,0 +1,272 @@
+/* ========== 高级搜索模态框样式 ========== */
+/* 遵循 enhanced.css 的设计规范，使用 Radix 主题 CSS 变量 */
+
+/* 遮罩层 */
+.advanced-search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: advSearchFadeIn 0.2s ease-out;
+}
+
+@keyframes advSearchFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes advSearchSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 模态框容器 */
+.advanced-search-modal {
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  border-radius: 16px;
+  background-color: var(--purcarte-card-color);
+  border: 1px solid var(--gray-a5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--gray-a5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  z-index: 2001;
+  color: var(--gray-12);
+  animation: advSearchSlideIn 0.25s ease-out;
+}
+
+/* 内容区域 */
+.advanced-search-content {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(85vh - 130px);
+  padding: 16px 20px;
+}
+
+/* 自定义滚动条 */
+.advanced-search-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.advanced-search-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.advanced-search-content::-webkit-scrollbar-thumb {
+  background: var(--gray-a5);
+  border-radius: 3px;
+}
+
+.advanced-search-content::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-a7);
+}
+
+/* 底部操作栏 */
+.advanced-search-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--gray-a5);
+}
+
+/* ========== 分区样式 ========== */
+/* 遵循 ServerTradeModal 的 trade-section 设计 */
+
+.search-section {
+  margin-bottom: 20px;
+}
+
+.search-section:last-child {
+  margin-bottom: 0;
+}
+
+.search-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--accent-11);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gray-a4);
+}
+
+/* ========== 字段网格布局 ========== */
+/* 桌面端两列，移动端单列 */
+
+.search-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 20px;
+}
+
+/* ========== 单个字段项样式 ========== */
+
+.search-field-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-11);
+  user-select: none;
+}
+
+.search-field-error {
+  font-size: 0.75rem;
+  color: var(--red-11);
+  margin-top: 2px;
+}
+
+.search-field-help {
+  font-size: 0.75rem;
+  color: var(--gray-11);
+  margin-top: 1px;
+  opacity: 0.85;
+}
+
+/* ========== 范围字段行布局 ========== */
+
+.search-range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-range-separator {
+  color: var(--gray-9);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.search-range-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-range-unit {
+  flex-shrink: 0;
+  width: 80px;
+}
+
+/* ========== 价格/日期切换行 ========== */
+
+.search-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.search-toggle-label {
+  font-size: 0.8rem;
+  color: var(--gray-11);
+  user-select: none;
+}
+
+/* ========== 日期字段 ========== */
+
+.search-date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-date-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ========== 输入框错误状态 ========== */
+
+.search-input-error {
+  border-color: var(--red-8) !important;
+  box-shadow: 0 0 0 1px var(--red-8) !important;
+}
+
+/* ========== 响应式设计 ========== */
+
+/* 平板 */
+@media (max-width: 768px) {
+  .search-fields-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .advanced-search-modal {
+    width: 95%;
+    max-height: 92vh;
+  }
+
+  .advanced-search-content {
+    max-height: calc(88vh - 130px);
+    padding: 12px 16px;
+  }
+}
+
+/* 手机 */
+@media (max-width: 576px) {
+  .advanced-search-modal {
+    width: 98%;
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+
+  .advanced-search-content {
+    max-height: calc(92vh - 120px);
+    padding: 10px 12px;
+  }
+
+  .advanced-search-footer {
+    padding: 10px 12px;
+  }
+
+  .search-range-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .search-range-input {
+    flex: 1 1 calc(50% - 20px);
+    min-width: 80px;
+  }
+
+  .search-range-unit {
+    width: 70px;
+  }
+
+  .search-date-inputs {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .search-date-input {
+    flex: 1 1 100%;
+  }
+}

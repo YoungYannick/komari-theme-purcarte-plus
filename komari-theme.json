@@ -538,6 +538,25 @@
                 }
             },
             {
+                "key": "enableAdvancedSearch",
+                "name": {
+                    "zh-CN": "启用高级搜索",
+                    "zh-TW": "啟用進階搜尋",
+                    "en": "Enable Advanced Search",
+                    "ja": "高度な検索を有効化",
+                    "id": "Aktifkan Pencarian Lanjutan"
+                },
+                "type": "switch",
+                "default": true,
+                "help": {
+                    "zh-CN": "启用后将在搜索区域旁显示高级搜索按钮，支持多条件筛选、URL参数同步等功能",
+                    "zh-TW": "啟用後將在搜尋區域旁顯示進階搜尋按鈕，支援多條件篩選、URL參數同步等功能",
+                    "en": "Enable to show advanced search button next to the search bar. Supports multi-condition filtering and URL parameter sync.",
+                    "ja": "有効にすると、検索バーの横に高度な検索ボタンが表示されます。複数条件フィルタリングとURLパラメータ同期をサポートします。",
+                    "id": "Aktifkan untuk menampilkan tombol pencarian lanjutan di samping bilah pencarian. Mendukung penyaringan multi-kondisi dan sinkronisasi parameter URL."
+                }
+            },
+            {
                 "key": "enableAdminButton",
                 "name": {
                     "zh-CN": "启用管理按钮",

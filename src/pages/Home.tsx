@@ -29,6 +29,8 @@ interface HomePageProps {
   stats: any;
   groups: string[];
   handleSort: (key: any) => void;
+  isAdvancedSearchActive?: boolean;
+  onClearAdvancedSearch?: () => void;
 }
 
 const HomePage: React.FC<HomePageProps> = ({
@@ -40,6 +42,8 @@ const HomePage: React.FC<HomePageProps> = ({
   stats,
   groups,
   handleSort,
+  isAdvancedSearchActive,
+  onClearAdvancedSearch,
 }) => {
   const { viewMode, statusCardsVisibility, setStatusCardsVisibility } =
     useTheme();
@@ -129,14 +133,14 @@ const HomePage: React.FC<HomePageProps> = ({
             <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold">
-                  {hasSearchTerm
+                  {isAdvancedSearchActive || hasSearchTerm
                     ? t("search.notFound")
                     : error
                     ? t("homePage.errorFetchingNodes")
                     : t("homePage.noNodes")}
                 </CardTitle>
                 <CardDescription>
-                  {hasSearchTerm
+                  {isAdvancedSearchActive || hasSearchTerm
                     ? t("search.tryChangingFilters")
                     : error
                     ? t("homePage.retryFetchingNodes")
@@ -144,7 +148,11 @@ const HomePage: React.FC<HomePageProps> = ({
                 </CardDescription>
               </CardHeader>
               <CardFooter>
-                {hasSearchTerm ? (
+                {isAdvancedSearchActive && onClearAdvancedSearch ? (
+                  <Button onClick={onClearAdvancedSearch} className="w-full">
+                    {t("advancedSearch.clearAdvancedSearch")}
+                  </Button>
+                ) : hasSearchTerm ? (
                   <Button onClick={() => setSearchTerm("")} className="w-full">
                     {t("search.clear")}
                   </Button>

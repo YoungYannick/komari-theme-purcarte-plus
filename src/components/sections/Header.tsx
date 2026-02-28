@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search,
+  SlidersHorizontal,
   Grid3X3,
   Table2,
   Rows3,
@@ -41,6 +42,9 @@ interface HeaderProps extends Partial<StatsBarProps> {
   setSearchTerm?: (term: string) => void;
   setIsSettingsOpen?: (isOpen: boolean) => void;
   isSettingsOpen?: boolean;
+  enableAdvancedSearch?: boolean;
+  isAdvancedSearchActive?: boolean;
+  onOpenAdvancedSearch?: () => void;
 }
 
 const ViewModeIcons = {
@@ -227,10 +231,16 @@ const SearchBar = ({
   isMobile,
   searchTerm,
   setSearchTerm,
+  enableAdvancedSearch,
+  isAdvancedSearchActive,
+  onOpenAdvancedSearch,
 }: {
   isMobile?: boolean;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  enableAdvancedSearch?: boolean;
+  isAdvancedSearchActive?: boolean;
+  onOpenAdvancedSearch?: () => void;
 }) => {
   const { t } = useLocale();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -242,62 +252,96 @@ const SearchBar = ({
 
   if (isMobile) {
     return (
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative group">
-            <Search className="size-5 text-primary" />
-            {searchTerm && (
+      <>
+        {/* 高级搜索启用时隐藏普通搜索，两者互斥 */}
+        {enableAdvancedSearch && onOpenAdvancedSearch ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative group"
+            onClick={onOpenAdvancedSearch}
+          >
+            <SlidersHorizontal className="size-5 text-primary" />
+            {isAdvancedSearchActive && (
               <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-(--accent-indicator) transform -translate-x-1/2"></span>
             )}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          className="purcarte-blur border-(--accent-4)/50 rounded-xl w-[90vw] translate-x-[5vw] mt-[.5rem] max-w-screen-2xl">
-          <div className="p-2">
+        ) : (
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative group">
+                <Search className="size-5 text-primary" />
+                {searchTerm && (
+                  <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-(--accent-indicator) transform -translate-x-1/2"></span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="purcarte-blur border-(--accent-4)/50 rounded-xl w-[90vw] translate-x-[5vw] mt-[.5rem] max-w-screen-2xl">
+              <div className="p-2">
+                <Input
+                  type="search"
+                  placeholder={t("search.placeholder")}
+                  className="w-full"
+                  value={searchTerm}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setSearchTerm(e.target.value)
+                  }
+                />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/* 高级搜索启用时隐藏普通搜索，两者互斥 */}
+      {enableAdvancedSearch && onOpenAdvancedSearch ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative group"
+          onClick={onOpenAdvancedSearch}
+        >
+          <SlidersHorizontal className="size-5 text-primary" />
+          {isAdvancedSearchActive && (
+            <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-(--accent-indicator) transform -translate-x-1/2"></span>
+          )}
+        </Button>
+      ) : (
+        <>
+          <div
+            className={`flex items-center transition-all duration-300 ease-in-out overflow-hidden transform ${
+              isSearchOpen ? "w-48 opacity-100" : "w-0 opacity-0"
+            }`}>
             <Input
               type="search"
               placeholder={t("search.placeholder")}
-              className="w-full"
+              className={`transition-all duration-300 ease-in-out ${
+                !isSearchOpen && "invisible"
+              }`}
               value={searchTerm}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setSearchTerm(e.target.value)
               }
             />
           </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
-
-  return (
-    <>
-      <div
-        className={`flex items-center transition-all duration-300 ease-in-out overflow-hidden transform ${
-          isSearchOpen ? "w-48 opacity-100" : "w-0 opacity-0"
-        }`}>
-        <Input
-          type="search"
-          placeholder={t("search.placeholder")}
-          className={`transition-all duration-300 ease-in-out ${
-            !isSearchOpen && "invisible"
-          }`}
-          value={searchTerm}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setSearchTerm(e.target.value)
-          }
-        />
-      </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="relative group"
-        onClick={() => setIsSearchOpen(!isSearchOpen)}>
-        <Search className="size-5 text-primary" />
-        {searchTerm && (
-          <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-(--accent-indicator) transform -translate-x-1/2"></span>
-        )}
-      </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative group"
+            onClick={() => setIsSearchOpen(!isSearchOpen)}>
+            <Search className="size-5 text-primary" />
+            {searchTerm && (
+              <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full bg-(--accent-indicator) transform -translate-x-1/2"></span>
+            )}
+          </Button>
+        </>
+      )}
     </>
   );
 };
@@ -309,6 +353,9 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
     setSearchTerm,
     setIsSettingsOpen,
     isSettingsOpen,
+    enableAdvancedSearch,
+    isAdvancedSearchActive,
+    onOpenAdvancedSearch,
   } = props;
   const location = useLocation();
   const isInstancePage = location.pathname.startsWith("/instance");
@@ -370,6 +417,9 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
                     isMobile
                     searchTerm={searchTerm!}
                     setSearchTerm={setSearchTerm!}
+                    enableAdvancedSearch={enableAdvancedSearch}
+                    isAdvancedSearchActive={isAdvancedSearchActive}
+                    onOpenAdvancedSearch={onOpenAdvancedSearch}
                   />
                 )}
                 <DropdownMenu modal={false}>
@@ -400,6 +450,9 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
                     <SearchBar
                       searchTerm={searchTerm!}
                       setSearchTerm={setSearchTerm!}
+                      enableAdvancedSearch={enableAdvancedSearch}
+                      isAdvancedSearchActive={isAdvancedSearchActive}
+                      onOpenAdvancedSearch={onOpenAdvancedSearch}
                     />
                     <ViewModeSwitcher />
                   </>

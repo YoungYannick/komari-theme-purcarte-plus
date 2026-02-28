@@ -24,6 +24,7 @@ export interface ConfigOptions {
   enableTitle: boolean; // 是否启用标题
   titleText: string; // 标题文本
   enableSearchButton: boolean; // 是否启用搜索按钮
+  enableAdvancedSearch: boolean; // 是否启用高级搜索
   enableAdminButton: boolean; // 是否启用管理员按钮
   selectedFooterStyle: FooterStyle; // 页脚样式
   hideFooterOriginal: boolean; // 是否隐藏底栏原始内容（Powered by...）
@@ -102,6 +103,7 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   enableTitle: true,
   titleText: "Komari",
   enableSearchButton: true,
+  enableAdvancedSearch: true,
   enableAdminButton: true,
   selectedFooterStyle: "followContent",
   hideFooterOriginal: false,
