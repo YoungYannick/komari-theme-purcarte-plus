@@ -419,7 +419,7 @@
 - **延迟图表最大渲染点数** (`pingChartMaxPoints`)
   - **类型:** `number`
   - **默认值:** `0`
-  - **说明:** 设置延迟图表的最大渲染点数来优化图表渲染，0 表示不限制，推荐值为 2000 或更小的值
+  - **说明:** 设置延迟图表的最大渲染点数，0 表示使用自动智能降采样（根据数据量和线条数自动计算最佳点数，使用 LTTB 算法保留视觉形状），设置正整数则强制使用该值
 
 </details>
 
@@ -645,6 +645,7 @@ komari-theme-purcarte-plus/
 │       ├── regionHelper.ts                  # 地区 Emoji → 名称映射
 │       ├── localeUtils.ts                   # 国际化工具（深度对象合并、扁平化还原）
 │       ├── osImageHelper.ts                 # 操作系统 Logo 查找工具
+│       ├── downsample.ts                    # LTTB 降采样算法与自动降采样点数计算
 │       └── RecordHelper.tsx                 # 图表数据处理（削峰、插值、空值填充）
 │
 ├── index.html                               # HTML 入口文件（含 PWA 元数据）

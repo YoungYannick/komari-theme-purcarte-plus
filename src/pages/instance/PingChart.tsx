@@ -30,6 +30,7 @@ import { useTooltipScrollLock } from "@/hooks/useTooltipScrollLock";
 import Tips from "@/components/ui/tips";
 import { generateColor, lableFormatter } from "@/utils/chartHelper";
 import { useLocale } from "@/config/hooks";
+import { lttbDownsample, calculateAutoMaxPoints } from "@/utils/downsample";
 
 interface PingChartProps {
   node: NodeData;
@@ -90,45 +91,51 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
       6000,
       Math.max(800, Math.floor(fallbackIntervalSec * 1000 * 0.25))
     );
+
+    // 使用分桶匹配替代线性扫描 O(n*m) -> O(n)
+    const bucketSize = toleranceMs * 2;
     const grouped: Record<number, any> = {};
-    const anchors: number[] = [];
+    const bucketToAnchor = new Map<number, number>();
+
     for (const rec of data) {
       const ts = new Date(rec.time).getTime();
+      const bucket = Math.floor(ts / bucketSize);
+
       let anchor: number | null = null;
-      for (const a of anchors) {
-        if (Math.abs(a - ts) <= toleranceMs) {
-          anchor = a;
+      for (const b of [bucket - 1, bucket, bucket + 1]) {
+        const candidate = bucketToAnchor.get(b);
+        if (candidate !== undefined && Math.abs(candidate - ts) <= toleranceMs) {
+          anchor = candidate;
           break;
         }
       }
+
       const use = anchor ?? ts;
       if (!grouped[use]) {
-        grouped[use] = { time: new Date(use).toISOString() };
-        if (anchor === null) anchors.push(use);
+        grouped[use] = { time: new Date(use).toISOString(), __ts: use };
+        if (anchor === null) {
+          bucketToAnchor.set(bucket, use);
+        }
       }
       grouped[use][rec.task_id] = rec.value < 0 ? null : rec.value;
     }
+
     const merged = Object.values(grouped).sort(
-      (a: any, b: any) =>
-        new Date(a.time).getTime() - new Date(b.time).getTime()
+      (a: any, b: any) => a.__ts - b.__ts
     );
 
     if (!merged.length) return [];
 
-    const lastTs = new Date(
-      (merged as any[])[(merged as any[]).length - 1].time
-    ).getTime();
+    const lastTs = (merged as any[])[(merged as any[]).length - 1].__ts;
     const fromTs = lastTs - hours * 3600_000;
     let startIdx = 0;
     for (let i = 0; i < (merged as any[]).length; i++) {
-      const ts = new Date((merged as any[])[i].time).getTime();
-      if (ts >= fromTs) {
+      if ((merged as any[])[i].__ts >= fromTs) {
         startIdx = Math.max(0, i - 1);
         break;
       }
     }
-    const clipped = (merged as any[]).slice(startIdx);
-    return clipped;
+    return (merged as any[]).slice(startIdx);
   }, [pingHistory, hours]);
 
   const chartData = useMemo(() => {
@@ -143,15 +150,16 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
 
     const keys = tasks.map((t) => String(t.id));
 
-    // 暂存-1导致的null值
-    const preservedNulls = new Set<string>();
-    full.forEach((d, i) => {
-      keys.forEach((key) => {
-        if (d[key] === null) {
-          preservedNulls.add(`${i}-${key}`);
+    // 使用 Uint8Array 替代 Set<string> 标记 null 值
+    const keyCount = keys.length;
+    const preservedNulls = new Uint8Array(full.length * keyCount);
+    for (let i = 0; i < full.length; i++) {
+      for (let ki = 0; ki < keyCount; ki++) {
+        if (full[i][keys[ki]] === null) {
+          preservedNulls[i * keyCount + ki] = 1;
         }
-      });
-    });
+      }
+    }
 
     full = interpolateNullsLinear(full, keys, {
       maxGapMultiplier: 6,
@@ -159,27 +167,30 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
       maxCapMs: 30 * 60_000,
     });
 
-    // 恢复-1导致的null值
-    full.forEach((d, i) => {
-      keys.forEach((key) => {
-        if (preservedNulls.has(`${i}-${key}`)) {
-          d[key] = null;
+    // 恢复原始 null 值
+    for (let i = 0; i < full.length; i++) {
+      for (let ki = 0; ki < keyCount; ki++) {
+        if (preservedNulls[i * keyCount + ki] === 1) {
+          full[i][keys[ki]] = null;
         }
-      });
-    });
-
-    if (full.length > pingChartMaxPoints && pingChartMaxPoints > 0) {
-      const samplingFactor = Math.ceil(full.length / pingChartMaxPoints);
-      const sampledData = [];
-      for (let i = 0; i < full.length; i += samplingFactor) {
-        sampledData.push(full[i]);
       }
-      full = sampledData;
+    }
+
+    // 自动智能降采样
+    const autoMax = calculateAutoMaxPoints(full.length, keys.length);
+    const effectiveMax = pingChartMaxPoints > 0 ? pingChartMaxPoints : autoMax;
+
+    if (effectiveMax > 0 && full.length > effectiveMax) {
+      const withTs = full.map((d: any) => ({
+        ...d,
+        time: d.__ts ?? new Date(d.time).getTime(),
+      }));
+      return lttbDownsample(withTs, effectiveMax, keys);
     }
 
     return full.map((d: any) => ({
       ...d,
-      time: new Date(d.time).getTime(),
+      time: d.__ts ?? new Date(d.time).getTime(),
     }));
   }, [midData, cutPeak, pingHistory?.tasks, pingChartMaxPoints]);
 
@@ -209,13 +220,16 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
     if (!connectBreaks || !chartData || chartData.length < 2) {
       return [];
     }
+    const MAX_BREAKPOINTS = 200;
     const points: { x: number; color: string }[] = [];
     for (const task of sortedTasks) {
       if (!visiblePingTasks.includes(task.id)) {
         continue;
       }
+      if (points.length >= MAX_BREAKPOINTS) break;
       const taskKey = String(task.id);
       for (let i = 1; i < chartData.length; i++) {
+        if (points.length >= MAX_BREAKPOINTS) break;
         const prevPoint = chartData[i - 1];
         const currentPoint = chartData[i];
 
@@ -254,6 +268,12 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
       };
     });
   }, [pingHistory?.records, sortedTasks, timeRange]);
+
+  // 仅可见的任务（条件渲染替代 hide 属性）
+  const visibleSortedTasks = useMemo(
+    () => sortedTasks.filter((t) => visiblePingTasks.includes(t.id)),
+    [sortedTasks, visiblePingTasks]
+  );
 
   return (
     <div className="relative space-y-4 h-full flex flex-col min-h-114">
@@ -467,7 +487,7 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
                       strokeOpacity={0.6}
                     />
                   ))}
-                {sortedTasks.map((task) => (
+                {visibleSortedTasks.map((task) => (
                   <Line
                     key={task.id}
                     type={"monotone"}
@@ -475,9 +495,9 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
                     name={task.name}
                     stroke={generateColor(task.name, sortedTasks)}
                     strokeWidth={2}
-                    hide={!visiblePingTasks.includes(task.id)}
                     dot={false}
                     connectNulls={connectBreaks}
+                    isAnimationActive={visibleSortedTasks.length <= 10}
                   />
                 ))}
                 <Brush

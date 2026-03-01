@@ -48,6 +48,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/utils";
+import { lttbDownsample, calculateAutoMaxPoints } from "@/utils/downsample";
 
 // 排序类型定义
 type MonitorSortKey = "target" | "name";
@@ -255,24 +256,32 @@ const PingOverview = memo(() => {
     if (!nodes || nodes.length === 0) return;
     setDataLoading(true);
     setDataError(null);
+
+    const BATCH_SIZE = 5;
+    const map = new Map<string, PingHistoryResponse>();
+
     try {
-      const results = await Promise.all(
-        nodes.map(async (node) => {
-          try {
-            const data = await getPingHistory(node.uuid, hours);
-            return { uuid: node.uuid, data };
-          } catch {
-            return { uuid: node.uuid, data: null };
+      for (let i = 0; i < nodes.length; i += BATCH_SIZE) {
+        const batch = nodes.slice(i, i + BATCH_SIZE);
+        const results = await Promise.all(
+          batch.map(async (node) => {
+            try {
+              const data = await getPingHistory(node.uuid, hours);
+              return { uuid: node.uuid, data };
+            } catch {
+              return { uuid: node.uuid, data: null };
+            }
+          })
+        );
+        for (const result of results) {
+          if (result.data) {
+            map.set(result.uuid, result.data);
           }
-        })
-      );
-      const map = new Map<string, PingHistoryResponse>();
-      for (const result of results) {
-        if (result.data) {
-          map.set(result.uuid, result.data);
         }
+        // 渐进式更新：每批到达即刷新
+        setAllPingData(new Map(map));
+        if (i === 0) setDataLoading(false);
       }
-      setAllPingData(map);
     } catch (err: any) {
       setDataError(err.message || "Failed to fetch ping data");
     } finally {
@@ -462,24 +471,33 @@ const PingOverview = memo(() => {
       Math.max(800, Math.floor(fallbackIntervalSec * 1000 * 0.25))
     );
 
+    // 使用分桶匹配替代线性扫描 O(n*m) -> O(n)
+    const bucketSize = toleranceMs * 2;
     const grouped: Record<number, any> = {};
-    const anchors: number[] = [];
+    const bucketToAnchor = new Map<number, number>();
 
     for (const [uuid, pingData] of allPingData.entries()) {
       if (!pingData?.records) continue;
       for (const rec of pingData.records) {
         const ts = new Date(rec.time).getTime();
+        const bucket = Math.floor(ts / bucketSize);
+
+        // 检查当前桶和相邻桶
         let anchor: number | null = null;
-        for (const a of anchors) {
-          if (Math.abs(a - ts) <= toleranceMs) {
-            anchor = a;
+        for (const b of [bucket - 1, bucket, bucket + 1]) {
+          const candidate = bucketToAnchor.get(b);
+          if (candidate !== undefined && Math.abs(candidate - ts) <= toleranceMs) {
+            anchor = candidate;
             break;
           }
         }
+
         const use = anchor ?? ts;
         if (!grouped[use]) {
-          grouped[use] = { time: new Date(use).toISOString() };
-          if (anchor === null) anchors.push(use);
+          grouped[use] = { time: new Date(use).toISOString(), __ts: use };
+          if (anchor === null) {
+            bucketToAnchor.set(bucket, use);
+          }
         }
         const lineKey = `${uuid}_${rec.task_id}`;
         grouped[use][lineKey] = rec.value < 0 ? null : rec.value;
@@ -487,20 +505,16 @@ const PingOverview = memo(() => {
     }
 
     const merged = Object.values(grouped).sort(
-      (a: any, b: any) =>
-        new Date(a.time).getTime() - new Date(b.time).getTime()
+      (a: any, b: any) => a.__ts - b.__ts
     );
 
     if (!merged.length) return [];
 
-    const lastTs = new Date(
-      (merged as any[])[(merged as any[]).length - 1].time
-    ).getTime();
+    const lastTs = (merged as any[])[(merged as any[]).length - 1].__ts;
     const fromTs = lastTs - hours * 3600_000;
     let startIdx = 0;
     for (let i = 0; i < (merged as any[]).length; i++) {
-      const ts = new Date((merged as any[])[i].time).getTime();
-      if (ts >= fromTs) {
+      if ((merged as any[])[i].__ts >= fromTs) {
         startIdx = Math.max(0, i - 1);
         break;
       }
@@ -519,15 +533,16 @@ const PingOverview = memo(() => {
       full = cutPeakValues(full, keys);
     }
 
-    // 暂存-1导致的null值
-    const preservedNulls = new Set<string>();
-    full.forEach((d, i) => {
-      keys.forEach((key) => {
-        if (d[key] === null) {
-          preservedNulls.add(`${i}-${key}`);
+    // 使用 Uint8Array 替代 Set<string> 标记 null 值（避免字符串拼接开销）
+    const keyCount = keys.length;
+    const preservedNulls = new Uint8Array(full.length * keyCount);
+    for (let i = 0; i < full.length; i++) {
+      for (let ki = 0; ki < keyCount; ki++) {
+        if (full[i][keys[ki]] === null) {
+          preservedNulls[i * keyCount + ki] = 1;
         }
-      });
-    });
+      }
+    }
 
     full = interpolateNullsLinear(full, keys, {
       maxGapMultiplier: 6,
@@ -535,27 +550,31 @@ const PingOverview = memo(() => {
       maxCapMs: 30 * 60_000,
     });
 
-    // 恢复-1导致的null值
-    full.forEach((d, i) => {
-      keys.forEach((key) => {
-        if (preservedNulls.has(`${i}-${key}`)) {
-          d[key] = null;
+    // 恢复原始 null 值
+    for (let i = 0; i < full.length; i++) {
+      for (let ki = 0; ki < keyCount; ki++) {
+        if (preservedNulls[i * keyCount + ki] === 1) {
+          full[i][keys[ki]] = null;
         }
-      });
-    });
-
-    if (full.length > pingChartMaxPoints && pingChartMaxPoints > 0) {
-      const samplingFactor = Math.ceil(full.length / pingChartMaxPoints);
-      const sampledData = [];
-      for (let i = 0; i < full.length; i += samplingFactor) {
-        sampledData.push(full[i]);
       }
-      full = sampledData;
+    }
+
+    // 自动智能降采样：优先用户配置，否则自动计算
+    const autoMax = calculateAutoMaxPoints(full.length, keys.length);
+    const effectiveMax = pingChartMaxPoints > 0 ? pingChartMaxPoints : autoMax;
+
+    if (effectiveMax > 0 && full.length > effectiveMax) {
+      // 先转换时间戳，再用 LTTB 降采样
+      const withTs = full.map((d: any) => ({
+        ...d,
+        time: d.__ts ?? new Date(d.time).getTime(),
+      }));
+      return lttbDownsample(withTs, effectiveMax, keys);
     }
 
     return full.map((d: any) => ({
       ...d,
-      time: new Date(d.time).getTime(),
+      time: d.__ts ?? new Date(d.time).getTime(),
     }));
   }, [midData, cutPeak, allLines, pingChartMaxPoints]);
 
@@ -626,15 +645,19 @@ const PingOverview = memo(() => {
   };
 
   // 断点标记
+  // 断点标记（上限 200 个，避免渲染过多 ReferenceLine）
   const breakPoints = useMemo(() => {
     if (!connectBreaks || !chartData || chartData.length < 2) {
       return [];
     }
+    const MAX_BREAKPOINTS = 200;
     const points: { x: number; color: string }[] = [];
     for (const line of allLines) {
       if (!isLineVisible(line)) continue;
+      if (points.length >= MAX_BREAKPOINTS) break;
       const lineKey = line.key;
       for (let i = 1; i < chartData.length; i++) {
+        if (points.length >= MAX_BREAKPOINTS) break;
         const prevPoint = chartData[i - 1];
         const currentPoint = chartData[i];
 
@@ -731,6 +754,12 @@ const PingOverview = memo(() => {
       setHiddenLines(new Set());
     }
   };
+
+  // 仅可见的线条（条件渲染替代 hide 属性，减少 Recharts 内部处理）
+  const visibleLines = useMemo(
+    () => allLines.filter(isLineVisible),
+    [allLines, isLineVisible]
+  );
 
   const allVisible =
     visibleMonitorNodes.size === uniqueMonitorNodes.length &&
@@ -1195,7 +1224,7 @@ const PingOverview = memo(() => {
                       strokeOpacity={0.6}
                     />
                   ))}
-                {allLines.map((line) => (
+                {visibleLines.map((line) => (
                   <Line
                     key={line.key}
                     type="monotone"
@@ -1203,9 +1232,9 @@ const PingOverview = memo(() => {
                     name={line.name}
                     stroke={lineColors.get(line.key) || "#000"}
                     strokeWidth={2}
-                    hide={!isLineVisible(line)}
                     dot={false}
                     connectNulls={connectBreaks}
+                    isAnimationActive={visibleLines.length <= 20}
                   />
                 ))}
                 <Brush

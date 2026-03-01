@@ -1196,11 +1196,11 @@
                 "type": "number",
                 "default": 0,
                 "help": {
-                    "zh-CN": "设置延迟图表的最大渲染点数，0 表示不限制",
-                    "zh-TW": "設置延遲圖表的最大渲染點數，0 表示不限制",
-                    "en": "Max points for ping chart rendering. 0 for unlimited.",
-                    "ja": "Pingチャートの最大描画点数を設定。0は無制限。",
-                    "id": "Titik maksimum untuk rendering grafik ping. 0 untuk tanpa batas."
+                    "zh-CN": "设置延迟图表的最大渲染点数，0 表示使用自动智能降采样（根据数据量和线条数自动计算，使用 LTTB 算法保留视觉形状），设置正整数则强制使用该值",
+                    "zh-TW": "設置延遲圖表的最大渲染點數，0 表示使用自動智能降採樣（根據資料量和線條數自動計算，使用 LTTB 演算法保留視覺形狀），設置正整數則強制使用該值",
+                    "en": "Max points for ping chart. 0 = auto smart downsampling (auto-calculated based on data volume and line count, using LTTB algorithm to preserve visual shape). Set a positive number to override.",
+                    "ja": "Pingチャートの最大描画点数。0＝自動スマートダウンサンプリング（データ量とライン数から自動計算、LTTBアルゴリズムで視覚形状を維持）。正の整数を設定すると強制適用。",
+                    "id": "Titik maksimum grafik ping. 0 = downsampling otomatis cerdas (dihitung otomatis berdasarkan volume data dan jumlah garis, menggunakan algoritma LTTB untuk mempertahankan bentuk visual). Atur angka positif untuk menimpa."
                 }
             },
             {

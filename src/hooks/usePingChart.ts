@@ -2,7 +2,13 @@ import { useState, useEffect } from "react";
 import { useNodeData } from "@/contexts/NodeDataContext";
 import type { PingHistoryResponse, NodeData } from "@/types/node";
 
-const cache = new Map<string, PingHistoryResponse>();
+interface CacheEntry {
+  data: PingHistoryResponse;
+  timestamp: number;
+}
+
+const cache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 分钟
 
 export const usePingChart = (node: NodeData | null, hours: number) => {
   const { getPingHistory } = useNodeData();
@@ -20,9 +26,10 @@ export const usePingChart = (node: NodeData | null, hours: number) => {
     }
 
     const cacheKey = `${node.uuid}-${hours}`;
+    const cached = cache.get(cacheKey);
 
-    if (cache.has(cacheKey)) {
-      setPingHistory(cache.get(cacheKey)!);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      setPingHistory(cached.data);
       setLoading(false);
       return;
     }
@@ -34,7 +41,7 @@ export const usePingChart = (node: NodeData | null, hours: number) => {
       try {
         const data = await getPingHistory(node.uuid, hours);
         if (data) {
-          cache.set(cacheKey, data);
+          cache.set(cacheKey, { data, timestamp: Date.now() });
         }
         setPingHistory(data);
       } catch (err: any) {
