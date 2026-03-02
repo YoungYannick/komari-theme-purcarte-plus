@@ -48,6 +48,8 @@ export interface ConfigOptions {
   enableCutPeak: boolean; // 是否启用平滑
   enableConnectBreaks: boolean; // 是否启用连接断点
   pingChartMaxPoints: number; // 延迟图表最大点数
+  monitorNodeSortMode: MonitorNodeSortMode; // 监测节点排序方式
+  monitorNodeCustomOrder: string; // 监测节点自定义排序（换行分割名称）
   isShowHWBarInCard: boolean; // 是否在卡片中显示硬件信息栏
   isShowValueUnderProgressBar: boolean; // 是否在流量进度条下方显示数值
   selectTrafficProgressStyle: "circular" | "linear"; // 流量进度条样式
@@ -128,6 +130,8 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   enableCutPeak: true,
   enableConnectBreaks: false,
   pingChartMaxPoints: 0,
+  monitorNodeSortMode: "id_asc",
+  monitorNodeCustomOrder: "",
   isShowHWBarInCard: true,
   isShowValueUnderProgressBar: true,
   selectTrafficProgressStyle: "circular",
@@ -228,3 +232,4 @@ export type HeaderStyle = "fixed" | "levitation";
 export type FooterStyle = "fixed" | "levitation" | "followContent" | "hidden";
 export type DisplayMode = "show" | "hideAll" | "hideUnset";
 export type BackgroundMode = "solidColor" | "image" | "video";
+export type MonitorNodeSortMode = "name_asc" | "name_desc" | "id_asc" | "id_desc" | "target_asc" | "target_desc" | "type_asc" | "type_desc" | "custom";

@@ -1223,6 +1223,45 @@
                 }
             },
             {
+                "key": "monitorNodeSortMode",
+                "name": {
+                    "zh-CN": "监测节点排序方式",
+                    "zh-TW": "監測節點排序方式",
+                    "en": "Monitor Node Sort Mode",
+                    "ja": "監視ノードソートモード",
+                    "id": "Mode Urutan Node Monitor"
+                },
+                "type": "select",
+                "options": "id_asc,id_desc,name_asc,name_desc,target_asc,target_desc,type_asc,type_desc,custom",
+                "default": "id_asc",
+                "help": {
+                    "zh-CN": "设置延迟总览页面和服务器详情页延迟监测的监测节点排序方式。按目标/按类型排序需要管理员登录（使用管理员API获取完整任务数据），未登录时回退为按ID排序。选择自定义后在下方输入框填写节点名称",
+                    "zh-TW": "設定延遲總覽頁面和伺服器詳情頁延遲監測的監測節點排序方式。按目標/按類型排序需要管理員登入（使用管理員API取得完整任務資料），未登入時回退為按ID排序。選擇自訂後在下方輸入框填寫節點名稱",
+                    "en": "Set the sort mode for monitor nodes on the Ping Overview page and server detail page. Sort by target/type requires admin login (uses admin API for full task data), falls back to ID sort when not logged in. Select custom to enter node names below",
+                    "ja": "レイテンシ概要ページとサーバー詳細ページの監視ノードソートモード。ターゲット/タイプソートには管理者ログインが必要（管理者APIで完全なタスクデータを取得）、未ログイン時はIDソートにフォールバック。カスタムを選択して下の入力欄にノード名を入力",
+                    "id": "Atur mode urutan node monitor di halaman Ikhtisar Ping dan halaman detail server. Urutkan berdasarkan target/tipe memerlukan login admin (menggunakan API admin untuk data tugas lengkap), kembali ke urutan ID saat tidak login. Pilih kustom untuk memasukkan nama node di bawah"
+                }
+            },
+            {
+                "key": "monitorNodeCustomOrder",
+                "name": {
+                    "zh-CN": "监测节点自定义排序",
+                    "zh-TW": "監測節點自訂排序",
+                    "en": "Custom Monitor Node Order",
+                    "ja": "監視ノードカスタム順序",
+                    "id": "Urutan Kustom Node Monitor"
+                },
+                "type": "richtext",
+                "default": "",
+                "help": {
+                    "zh-CN": "仅在排序方式为'自定义'时生效。每行填写一个监测节点名称（与后台设置的名称一致），按填写顺序排序。未列出的节点将按ID正序排列在最后",
+                    "zh-TW": "僅在排序方式為「自訂」時生效。每行填寫一個監測節點名稱（與後台設定的名稱一致），按填寫順序排序。未列出的節點將按ID正序排列在最後",
+                    "en": "Only effective when sort mode is 'custom'. Enter one monitor node name per line (matching the name configured in the backend). Nodes are sorted in the order entered. Unlisted nodes are appended in ID ascending order",
+                    "ja": "ソートモードが「カスタム」の場合のみ有効。1行に1つの監視ノード名を入力（バックエンドで設定した名前と一致）。入力順にソートされます。未記載のノードはID昇順で末尾に追加",
+                    "id": "Hanya berlaku saat mode urutan adalah 'kustom'. Masukkan satu nama node monitor per baris (sesuai nama yang dikonfigurasi di backend). Node diurutkan sesuai urutan input. Node yang tidak tercantum ditambahkan di akhir berdasarkan ID naik"
+                }
+            },
+            {
                 "name": {
                     "zh-CN": "UI 自定义",
                     "zh-TW": "UI 自定義",

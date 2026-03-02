@@ -5,6 +5,7 @@ import type {
   PublicInfo,
   HistoryRecord,
   PingHistoryResponse,
+  PingTaskFull,
   Me,
   NodeStats,
 } from "@/types/node";
@@ -177,6 +178,19 @@ class ApiService {
       `/api/records/ping?uuid=${uuid}&hours=${hours}`
     );
     return response.status === "success" ? response.data : null;
+  }
+
+  // 获取监测节点任务列表（管理员API）
+  async getPingTasks(): Promise<PingTaskFull[]> {
+    try {
+      const response = await this.get<PingTaskFull[]>("/api/admin/ping/");
+      if (response.status === "success" && Array.isArray(response.data)) {
+        return response.data;
+      }
+      return [];
+    } catch {
+      return [];
+    }
   }
 
   // 获取公开设置

@@ -26,7 +26,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@radix-ui/react-label";
-import type { PingHistoryResponse } from "@/types/node";
+import type { PingHistoryResponse, PingTaskFull } from "@/types/node";
 import Loading from "@/components/loading";
 import { useNodeData } from "@/contexts/NodeDataContext";
 import {
@@ -49,14 +49,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/utils";
 import { lttbDownsample, calculateAutoMaxPoints } from "@/utils/downsample";
+import { apiService } from "@/services/api";
 
 // 排序类型定义
-type MonitorSortKey = "target" | "name";
 type ServerSortKey = "weight" | "name";
 type SortDirection = "asc" | "desc";
 
 // localStorage 键
-const MONITOR_SORT_KEY = "pingOverview_monitorSort";
 const SERVER_SORT_KEY = "pingOverview_serverSort";
 
 // 读写 localStorage 排序配置
@@ -141,31 +140,33 @@ const PingOverview = memo(() => {
     enableConnectBreaks,
     pingChartMaxPoints,
     publicSettings,
+    monitorNodeSortMode,
+    monitorNodeCustomOrder,
   } = useAppConfig();
   const { nodes, loading: nodesLoading, getPingHistory, getGroups } = useNodeData();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { t } = useLocale();
 
-  // 排序状态（从 localStorage 恢复）
-  const [monitorSort, setMonitorSort] = useState(() =>
-    loadSort<MonitorSortKey>(MONITOR_SORT_KEY, "name", "asc")
-  );
+  // 服务器排序状态（从 localStorage 恢复）
   const [serverSort, setServerSort] = useState(() =>
     loadSort<ServerSortKey>(SERVER_SORT_KEY, "weight", "asc")
   );
-
-  const handleMonitorSort = (key: MonitorSortKey, dir: SortDirection) => {
-    const newSort = { key, dir };
-    setMonitorSort(newSort);
-    saveSort(MONITOR_SORT_KEY, key, dir);
-  };
 
   const handleServerSort = (key: ServerSortKey, dir: SortDirection) => {
     const newSort = { key, dir };
     setServerSort(newSort);
     saveSort(SERVER_SORT_KEY, key, dir);
   };
+
+  // 管理员 Ping 任务数据（用于按 target/type 排序）
+  const [pingTasksFull, setPingTasksFull] = useState<PingTaskFull[]>([]);
+  useEffect(() => {
+    const needsAdminData = ["target_asc", "target_desc", "type_asc", "type_desc"].includes(monitorNodeSortMode);
+    if (needsAdminData) {
+      apiService.getPingTasks().then((tasks) => setPingTasksFull(tasks));
+    }
+  }, [monitorNodeSortMode]);
 
   const { chartContentRef, handleChartMouseMove, tooltipProps } = useTooltipScrollLock();
 
@@ -317,20 +318,79 @@ const PingOverview = memo(() => {
     return lines.sort((a, b) => a.key.localeCompare(b.key));
   }, [nodes, allPingData]);
 
-  // 去重的监测节点（按任务名）+ 排序
+  // 去重的监测节点（按任务名）+ 基于后台配置排序
   const uniqueMonitorNodes = useMemo(() => {
-    const nameSet = new Set<string>();
+    // 收集去重的监测节点信息（name + taskId）
+    const taskMap = new Map<string, number>(); // name → taskId
     for (const line of allLines) {
-      nameSet.add(line.taskName);
+      if (!taskMap.has(line.taskName)) {
+        taskMap.set(line.taskName, line.taskId);
+      }
     }
-    const arr = Array.from(nameSet);
-    const { dir: sortDir } = monitorSort;
-    arr.sort((a, b) => {
-      const cmp = a.localeCompare(b);
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-    return arr;
-  }, [allLines, monitorSort]);
+    const arr = Array.from(taskMap.entries()).map(([name, taskId]) => ({ name, taskId }));
+
+    // 构建 admin API 数据查找表（用于 target/type 排序）
+    const adminTaskMap = new Map<number, PingTaskFull>();
+    for (const task of pingTasksFull) {
+      adminTaskMap.set(task.id, task);
+    }
+
+    const mode = monitorNodeSortMode;
+
+    if (mode === "custom") {
+      // 自定义排序：按用户填写的名称顺序排列，未列出的按 ID 正序
+      const customLines = monitorNodeCustomOrder
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const orderMap = new Map<string, number>();
+      customLines.forEach((name, idx) => orderMap.set(name, idx));
+
+      arr.sort((a, b) => {
+        const aIdx = orderMap.get(a.name);
+        const bIdx = orderMap.get(b.name);
+        if (aIdx !== undefined && bIdx !== undefined) return aIdx - bIdx;
+        if (aIdx !== undefined) return -1;
+        if (bIdx !== undefined) return 1;
+        return a.taskId - b.taskId; // 未列出的按 ID 正序
+      });
+    } else if (mode === "name_asc" || mode === "name_desc") {
+      const dir = mode === "name_asc" ? 1 : -1;
+      arr.sort((a, b) => dir * a.name.localeCompare(b.name));
+    } else if (mode === "id_asc" || mode === "id_desc") {
+      const dir = mode === "id_asc" ? 1 : -1;
+      arr.sort((a, b) => dir * (a.taskId - b.taskId));
+    } else if (mode === "target_asc" || mode === "target_desc") {
+      const dir = mode === "target_asc" ? 1 : -1;
+      if (adminTaskMap.size > 0) {
+        arr.sort((a, b) => {
+          const at = adminTaskMap.get(a.taskId)?.target ?? "";
+          const bt = adminTaskMap.get(b.taskId)?.target ?? "";
+          return dir * at.localeCompare(bt);
+        });
+      } else {
+        // 回退：按 ID 排序
+        arr.sort((a, b) => dir * (a.taskId - b.taskId));
+      }
+    } else if (mode === "type_asc" || mode === "type_desc") {
+      const dir = mode === "type_asc" ? 1 : -1;
+      if (adminTaskMap.size > 0) {
+        arr.sort((a, b) => {
+          const at = adminTaskMap.get(a.taskId)?.type ?? "";
+          const bt = adminTaskMap.get(b.taskId)?.type ?? "";
+          return dir * at.localeCompare(bt);
+        });
+      } else {
+        // 回退：按 ID 排序
+        arr.sort((a, b) => dir * (a.taskId - b.taskId));
+      }
+    } else {
+      // 默认按 ID 正序
+      arr.sort((a, b) => a.taskId - b.taskId);
+    }
+
+    return arr.map((item) => item.name);
+  }, [allLines, monitorNodeSortMode, monitorNodeCustomOrder, pingTasksFull]);
 
   // 去重的服务器节点 + 排序
   const uniqueServerNodes = useMemo(() => {
@@ -817,52 +877,9 @@ const PingOverview = memo(() => {
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm">
-                  {t("pingOverview.monitorNodes")}
-                </span>
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0 rounded-full cursor-pointer">
-                      <ArrowDownUp className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {(
-                      [
-                        { key: "target" as MonitorSortKey, dir: "asc" as SortDirection, label: t("pingOverview.sortByTargetAsc") },
-                        { key: "target" as MonitorSortKey, dir: "desc" as SortDirection, label: t("pingOverview.sortByTargetDesc") },
-                        { key: "name" as MonitorSortKey, dir: "asc" as SortDirection, label: t("pingOverview.sortByNameAsc") },
-                        { key: "name" as MonitorSortKey, dir: "desc" as SortDirection, label: t("pingOverview.sortByNameDesc") },
-                      ] as const
-                    ).map((opt) => (
-                      <DropdownMenuItem
-                        key={`${opt.key}-${opt.dir}`}
-                        className="flex items-center justify-between cursor-pointer"
-                        onSelect={() => handleMonitorSort(opt.key, opt.dir)}>
-                        <span
-                          className={cn(
-                            monitorSort.key === opt.key &&
-                              monitorSort.dir === opt.dir &&
-                              "text-primary font-semibold"
-                          )}>
-                          {opt.label}
-                        </span>
-                        {monitorSort.key === opt.key &&
-                          monitorSort.dir === opt.dir &&
-                          (opt.dir === "asc" ? (
-                            <ArrowUp className="h-4 w-4 ml-2" />
-                          ) : (
-                            <ArrowDown className="h-4 w-4 ml-2" />
-                          ))}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <span className="font-semibold text-sm">
+                {t("pingOverview.monitorNodes")}
+              </span>
               <Button
                 variant="ghost"
                 size="sm"

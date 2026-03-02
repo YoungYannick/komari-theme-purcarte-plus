@@ -105,6 +105,15 @@ export interface PingTask {
   loss: number;
 }
 
+export interface PingTaskFull {
+  id: number;
+  name: string;
+  clients: string[];
+  type: string;
+  target: string;
+  interval: number;
+}
+
 export interface PingHistoryResponse {
   count: number;
   records: PingHistoryRecord[];

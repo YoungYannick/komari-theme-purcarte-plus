@@ -16,7 +16,8 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@radix-ui/react-label";
-import type { NodeData } from "@/types/node";
+import type { NodeData, PingTaskFull } from "@/types/node";
+import { apiService } from "@/services/api";
 import Loading from "@/components/loading";
 import { usePingChart } from "@/hooks/usePingChart";
 import {
@@ -38,7 +39,7 @@ interface PingChartProps {
 }
 
 const PingChart = memo(({ node, hours }: PingChartProps) => {
-  const { enableCutPeak, enableConnectBreaks, pingChartMaxPoints } = useAppConfig();
+  const { enableCutPeak, enableConnectBreaks, pingChartMaxPoints, monitorNodeSortMode, monitorNodeCustomOrder } = useAppConfig();
   const { loading, error, pingHistory } = usePingChart(node, hours);
   const [visiblePingTasks, setVisiblePingTasks] = useState<number[]>([]);
   const [timeRange, setTimeRange] = useState<[number, number] | null>(null);
@@ -52,6 +53,15 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
   const isMobile = useIsMobile();
   const { t } = useLocale();
   const { chartContentRef, handleChartMouseMove, tooltipProps } = useTooltipScrollLock();
+
+  // 管理员 Ping 任务数据（用于按 target/type 排序）
+  const [pingTasksFull, setPingTasksFull] = useState<PingTaskFull[]>([]);
+  useEffect(() => {
+    const needsAdminData = ["target_asc", "target_desc", "type_asc", "type_desc"].includes(monitorNodeSortMode);
+    if (needsAdminData) {
+      apiService.getPingTasks().then((tasks) => setPingTasksFull(tasks));
+    }
+  }, [monitorNodeSortMode]);
 
   useEffect(() => {
     if (pingHistory?.tasks) {
@@ -213,8 +223,65 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
 
   const sortedTasks = useMemo(() => {
     if (!pingHistory?.tasks) return [];
-    return [...pingHistory.tasks].sort((a, b) => a.id - b.id);
-  }, [pingHistory?.tasks]);
+    const tasks = [...pingHistory.tasks];
+
+    // 构建 admin API 数据查找表（用于 target/type 排序）
+    const adminTaskMap = new Map<number, PingTaskFull>();
+    for (const task of pingTasksFull) {
+      adminTaskMap.set(task.id, task);
+    }
+
+    const mode = monitorNodeSortMode;
+
+    if (mode === "custom") {
+      const customLines = monitorNodeCustomOrder
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const orderMap = new Map<string, number>();
+      customLines.forEach((name, idx) => orderMap.set(name, idx));
+      tasks.sort((a, b) => {
+        const aIdx = orderMap.get(a.name);
+        const bIdx = orderMap.get(b.name);
+        if (aIdx !== undefined && bIdx !== undefined) return aIdx - bIdx;
+        if (aIdx !== undefined) return -1;
+        if (bIdx !== undefined) return 1;
+        return a.id - b.id;
+      });
+    } else if (mode === "name_asc" || mode === "name_desc") {
+      const dir = mode === "name_asc" ? 1 : -1;
+      tasks.sort((a, b) => dir * a.name.localeCompare(b.name));
+    } else if (mode === "id_asc" || mode === "id_desc") {
+      const dir = mode === "id_asc" ? 1 : -1;
+      tasks.sort((a, b) => dir * (a.id - b.id));
+    } else if (mode === "target_asc" || mode === "target_desc") {
+      const dir = mode === "target_asc" ? 1 : -1;
+      if (adminTaskMap.size > 0) {
+        tasks.sort((a, b) => {
+          const at = adminTaskMap.get(a.id)?.target ?? "";
+          const bt = adminTaskMap.get(b.id)?.target ?? "";
+          return dir * at.localeCompare(bt);
+        });
+      } else {
+        tasks.sort((a, b) => dir * (a.id - b.id));
+      }
+    } else if (mode === "type_asc" || mode === "type_desc") {
+      const dir = mode === "type_asc" ? 1 : -1;
+      if (adminTaskMap.size > 0) {
+        tasks.sort((a, b) => {
+          const at = adminTaskMap.get(a.id)?.type ?? "";
+          const bt = adminTaskMap.get(b.id)?.type ?? "";
+          return dir * at.localeCompare(bt);
+        });
+      } else {
+        tasks.sort((a, b) => dir * (a.id - b.id));
+      }
+    } else {
+      tasks.sort((a, b) => a.id - b.id);
+    }
+
+    return tasks;
+  }, [pingHistory?.tasks, monitorNodeSortMode, monitorNodeCustomOrder, pingTasksFull]);
 
   const breakPoints = useMemo(() => {
     if (!connectBreaks || !chartData || chartData.length < 2) {
