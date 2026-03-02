@@ -12,6 +12,8 @@ import {
   CircleUserIcon,
   Menu,
   Activity,
+  DollarSign,
+  Globe,
 } from "lucide-react";
 import { forwardRef, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -204,6 +206,58 @@ const AdminButton = ({ isMobile }: { isMobile?: boolean }) => {
         <CircleUserIcon className="size-5 text-primary" />
       </Button>
     </a>
+  );
+};
+
+const FinanceWidgetButton = ({ isMobile }: { isMobile?: boolean }) => {
+  const { t } = useLocale();
+  const { enableFinanceWidget } = useAppConfig();
+
+  if (!enableFinanceWidget) return null;
+
+  const handleClick = () => {
+    window.dispatchEvent(new CustomEvent("toggle-finance-widget"));
+  };
+
+  if (isMobile) {
+    return (
+      <DropdownMenuItem onClick={handleClick}>
+        <DollarSign className="size-4 mr-2 text-primary" />
+        <span>{t("header.financeWidget")}</span>
+      </DropdownMenuItem>
+    );
+  }
+
+  return (
+    <Button variant="ghost" size="icon" onClick={handleClick}>
+      <DollarSign className="size-5 text-primary" />
+    </Button>
+  );
+};
+
+const EarthGlobeButton = ({ isMobile }: { isMobile?: boolean }) => {
+  const { t } = useLocale();
+  const { enableEarthGlobe } = useAppConfig();
+
+  if (!enableEarthGlobe) return null;
+
+  const handleClick = () => {
+    window.dispatchEvent(new CustomEvent("toggle-earth-globe"));
+  };
+
+  if (isMobile) {
+    return (
+      <DropdownMenuItem onClick={handleClick}>
+        <Globe className="size-4 mr-2 text-primary" />
+        <span>{t("header.earthGlobe")}</span>
+      </DropdownMenuItem>
+    );
+  }
+
+  return (
+    <Button variant="ghost" size="icon" onClick={handleClick}>
+      <Globe className="size-5 text-primary" />
+    </Button>
   );
 };
 
@@ -436,6 +490,8 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
                     align="end"
                     className="purcarte-blur mt-[.5rem] border-(--accent-4)/50 rounded-xl">
                     {!isSubPage && <ViewModeSwitcher isMobile />}
+                    <FinanceWidgetButton isMobile />
+                    <EarthGlobeButton isMobile />
                     <PingOverviewButton isMobile />
                     <ThemeSwitcher isMobile />
                     <LanguageSwitcher isMobile />
@@ -457,6 +513,8 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
                     <ViewModeSwitcher />
                   </>
                 )}
+                <FinanceWidgetButton />
+                <EarthGlobeButton />
                 <PingOverviewButton />
                 <ThemeSwitcher />
                 <LanguageSwitcher />

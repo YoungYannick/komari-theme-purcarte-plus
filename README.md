@@ -23,8 +23,8 @@
 <summary><b>✨ 新增功能</b></summary>
 
 - **欢迎气泡 (WelcomeBubble)** — 左下角展示访客 IP、地理位置及 ISP 信息，支持自定义站点名称与 Logo
-- **资产统计 (FinanceWidget)** — 右上角悬浮球，查看服务器总价值、月均支出、剩余价值，支持多币种汇率换算与交易溢价计算
-- **3D 地球 (EarthGlobe)** — 集成 globe.gl 可视化节点地理分布，支持亮暗模式独立贴图/背景、"伪点亮全球"演示模式
+- **资产统计 (FinanceWidget)** — 标题栏入口按钮（延迟总览左侧），查看服务器总价值、月均支出、剩余价值，支持多币种汇率换算与交易溢价计算
+- **3D 地球 (EarthGlobe)** — 标题栏入口按钮（延迟总览左侧），集成 globe.gl 可视化节点地理分布，支持亮暗模式独立贴图/背景、"伪点亮全球"演示模式
 - **全局延迟总览 (PingOverview)** — 同时展示所有服务器和监测节点的延迟数据，支持时间范围筛选、排序、分组筛选与统计联动
 - **滚动辅助 (ScrollHelpers)** — 页面右下角回到顶部/底部按钮
 - **多语言支持 (i18n)** — 集成 i18next 国际化框架，标题栏内置语言切换器，支持简中/繁中/英/日/印尼五种语言，增强组件（欢迎气泡、资产统计、交易面板、3D地球、访客保护）全面接入 i18n
@@ -241,6 +241,8 @@
   - **说明:** 启用后默认在标题栏右侧显示管理按钮
 
 - **语言切换** — 标题栏内置语言切换按钮，支持简体中文、繁体中文、English、日本語、Bahasa Indonesia 五种语言，选择后自动保存到浏览器
+
+- **资产统计 & 3D 地球入口** — 标题栏内置资产统计和 3D 地球按钮（位于延迟总览按钮左侧），移动端集成到汉堡菜单中，受后台 `enableFinanceWidget` 和 `enableEarthGlobe` 配置控制
 
 </details>
 
@@ -562,7 +564,7 @@ komari-theme-purcarte-plus/
 │   │   │   └── tooltip.tsx                  # 工具提示组件（含 ScrollableTooltip 可滚动提示框）
 │   │   │
 │   │   ├── sections/                        # 页面区块组件
-│   │   │   ├── Header.tsx                   # 标题栏（Logo、标题、搜索、视图切换、主题切换、语言切换、管理入口）
+│   │   │   ├── Header.tsx                   # 标题栏（Logo、标题、搜索、视图切换、资产统计、3D地球、延迟总览、主题切换、语言切换、管理入口）
 │   │   │   ├── LanguageSwitcher.tsx          # 语言切换组件（i18next 多语言切换）
 │   │   │   ├── Footer.tsx                   # 底栏（自定义内容、服务器运行时间、Markdown 渲染）
 │   │   │   ├── Flag.tsx                     # 国家旗帜展示组件
@@ -588,11 +590,11 @@ komari-theme-purcarte-plus/
 │   │   └── enhanced/                        # 增强功能组件集（KomariBeautify）
 │   │       ├── EnhancedFeatures.tsx         # 增强功能总入口（统一管理各增强组件的挂载）
 │   │       ├── WelcomeBubble.tsx             # 欢迎气泡（展示访客 IP、地理位置、浏览器信息）
-│   │       ├── FinanceWidget.tsx             # 资产统计悬浮球（服务器总价值、月均支出、剩余价值）
+│   │       ├── FinanceWidget.tsx             # 资产统计面板（服务器总价值、月均支出、剩余价值，入口在标题栏）
 │   │       ├── ServerTradeModal.tsx          # 服务器交易计算弹窗
 │   │       ├── AdvancedSearchModal.tsx       # 高级搜索模态框（多条件筛选、URL同步）
 │   │       ├── AdvancedSearchModal.css       # 高级搜索模态框样式
-│   │       ├── EarthGlobe.tsx               # 3D 地球组件入口（懒加载）
+│   │       ├── EarthGlobe.tsx               # 3D 地球组件入口（懒加载，入口在标题栏）
 │   │       ├── GlobeRenderer.tsx            # Globe.gl 3D 地球渲染器
 │   │       ├── ScrollHelpers.tsx            # 滚动到顶部/底部辅助按钮
 │   │       ├── Protection.tsx               # 访客反调试保护（禁止右键、开发者工具等）

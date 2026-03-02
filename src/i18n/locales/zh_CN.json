@@ -552,7 +552,9 @@
     "table": "表格视图",
     "toggleLanguage": "切换语言",
     "toggleTheme": "切换主题",
-    "toggleView": "切换视图"
+    "toggleView": "切换视图",
+    "financeWidget": "资产统计",
+    "earthGlobe": "3D 地球"
   },
   "homePage": {
     "_": "主页",

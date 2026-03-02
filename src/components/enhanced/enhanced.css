@@ -175,6 +175,7 @@
   opacity: 0;
   transform: translateY(-20px);
   pointer-events: none;
+  max-height: calc(100vh - 90px);
 }
 
 .finance-widget.show {
@@ -182,6 +183,12 @@
   transform: translateY(0);
   pointer-events: auto;
   z-index: 1040;
+}
+
+.finance-widget .bubble-content {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 /* 资产悬浮球 */
@@ -813,13 +820,8 @@
   .finance-widget {
     width: calc(100vw - 40px);
     right: 20px;
-    top: 160px;
-  }
-  .finance-ball {
-    top: 160px;
-  }
-  #earth-ball {
-    top: 220px;
+    top: 60px;
+    max-height: calc(100vh - 80px);
   }
   .scroll-helper-btn {
     right: 15px;
@@ -872,15 +874,10 @@
     height: 28px;
   }
   .finance-widget {
-    top: 160px;
+    top: 60px;
     width: calc(100vw - 40px);
     right: 20px;
-  }
-  .finance-ball {
-    top: 160px;
-  }
-  #earth-ball {
-    top: 220px;
+    max-height: calc(100vh - 80px);
   }
 }
 

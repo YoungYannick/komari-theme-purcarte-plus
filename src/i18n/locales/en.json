@@ -552,7 +552,9 @@
     "table": "Table View",
     "toggleLanguage": "Language",
     "toggleTheme": "Toggle Theme",
-    "toggleView": "Toggle View"
+    "toggleView": "Toggle View",
+    "financeWidget": "Asset Statistics",
+    "earthGlobe": "3D Globe"
   },
   "homePage": {
     "_": "Home",

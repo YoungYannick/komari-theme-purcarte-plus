@@ -552,7 +552,9 @@
     "table": "Tabel",
     "toggleLanguage": "Bahasa",
     "toggleTheme": "Ganti Tema",
-    "toggleView": "Ganti Tampilan"
+    "toggleView": "Ganti Tampilan",
+    "financeWidget": "Statistik Aset",
+    "earthGlobe": "Globe 3D"
   },
   "homePage": {
     "_": "Beranda",

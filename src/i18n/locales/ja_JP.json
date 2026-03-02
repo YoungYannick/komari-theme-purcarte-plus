@@ -552,7 +552,9 @@
     "table": "テーブル",
     "toggleLanguage": "言語",
     "toggleTheme": "テーマ切替",
-    "toggleView": "表示切替"
+    "toggleView": "表示切替",
+    "financeWidget": "資産統計",
+    "earthGlobe": "3D 地球儀"
   },
   "homePage": {
     "_": "ホーム",

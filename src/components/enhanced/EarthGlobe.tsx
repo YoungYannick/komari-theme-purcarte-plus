@@ -102,14 +102,14 @@ export function EarthGlobe() {
   const { appearance } = useTheme();
   const { t } = useLocale();
 
-  const [ballVisible, setBallVisible] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [globeReady, setGlobeReady] = useState(false);
 
-  // 延迟显示悬浮球
+  // 监听来自 Header 按钮的自定义事件
   useEffect(() => {
-    const timer = setTimeout(() => setBallVisible(true), 600);
-    return () => clearTimeout(timer);
+    const handler = () => setModalOpen((prev) => !prev);
+    window.addEventListener("toggle-earth-globe", handler);
+    return () => window.removeEventListener("toggle-earth-globe", handler);
   }, []);
 
   // 判断当前是否是暗色模式
@@ -174,10 +174,6 @@ export function EarthGlobe() {
     return processData(nodes, userLat, userLng, userCity);
   }, [nodes, geo, enableSoloPlay]);
 
-  const handleBallClick = useCallback(() => {
-    setModalOpen(true);
-  }, []);
-
   const handleCloseModal = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (
@@ -191,26 +187,6 @@ export function EarthGlobe() {
 
   return (
     <>
-      {/* 地球悬浮球 */}
-      <div
-        id="earth-ball"
-        className={`finance-ball${ballVisible && !modalOpen ? " show" : ""}`}
-        onClick={handleBallClick}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-        </svg>
-      </div>
-
       {/* 地球模态框 */}
       {modalOpen && (
         <div

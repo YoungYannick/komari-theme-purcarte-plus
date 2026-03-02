@@ -132,7 +132,6 @@ export function FinanceWidget() {
   const { rates, lastUpdated, refreshRates } = useExchangeRates();
   const { t } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
-  const [ballVisible, setBallVisible] = useState(false);
   const [userCurrency, setUserCurrency] = useState<string>(
     () => localStorage.getItem("fin_currency") || "CNY"
   );
@@ -147,10 +146,11 @@ export function FinanceWidget() {
   const [tradeNode, setTradeNode] = useState<NodeData | null>(null);
   const [showRatesInfo, setShowRatesInfo] = useState(false);
 
-  // 延迟显示悬浮球
+  // 监听来自 Header 按钮的自定义事件
   useEffect(() => {
-    const timer = setTimeout(() => setBallVisible(true), 500);
-    return () => clearTimeout(timer);
+    const handler = () => setIsOpen((prev) => !prev);
+    window.addEventListener("toggle-finance-widget", handler);
+    return () => window.removeEventListener("toggle-finance-widget", handler);
   }, []);
 
   const financeData = useMemo(
@@ -191,14 +191,8 @@ export function FinanceWidget() {
     refreshRates();
   }, [refreshRates]);
 
-  const handleBallClick = useCallback(() => {
-    setBallVisible(false);
-    setIsOpen(true);
-  }, []);
-
   const handleClose = useCallback(() => {
     setIsOpen(false);
-    setBallVisible(true);
   }, []);
 
   // 汇率列表
@@ -215,27 +209,6 @@ export function FinanceWidget() {
 
   return (
     <>
-      {/* 资产悬浮球 */}
-      <div
-        id="finance-ball"
-        className={`finance-ball${ballVisible && !isOpen ? " show" : ""}`}
-        onClick={handleBallClick}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
-          <path d="M12 18V6" />
-        </svg>
-      </div>
-
       {/* 资产面板 */}
       <div
         id="finance-widget"
