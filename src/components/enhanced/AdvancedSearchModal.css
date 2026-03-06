@@ -29,6 +29,15 @@
   }
 }
 
+@keyframes advSearchFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 @keyframes advSearchSlideIn {
   from {
     opacity: 0;
@@ -38,6 +47,27 @@
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+
+@keyframes advSearchSlideOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+}
+
+/* 遮罩层关闭动画 */
+.advanced-search-overlay.closing {
+  animation: advSearchFadeOut 0.2s ease-in forwards;
+}
+
+/* 模态框关闭动画 */
+.advanced-search-modal.closing {
+  animation: advSearchSlideOut 0.2s ease-in forwards;
 }
 
 /* 模态框容器 */

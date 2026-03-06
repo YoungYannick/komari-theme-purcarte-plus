@@ -31,6 +31,7 @@ export function ServerTradeModal({
   initialTradeAmount,
 }: ServerTradeModalProps) {
   const { t, i18n } = useLocale();
+  const [isClosing, setIsClosing] = useState(false);
   const targetRate = rates[userCurrency] || 1;
   const sym = CURRENCY_SYMBOLS[userCurrency] || userCurrency;
   const regionCode = EMOJI_MAP[node.region] || node.region || "UN";
@@ -148,13 +149,24 @@ export function ServerTradeModal({
     };
   }, []);
 
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+  }, []);
+
+  const handleAnimationEnd = useCallback(() => {
+    if (isClosing) {
+      setIsClosing(false);
+      onClose();
+    }
+  }, [isClosing, onClose]);
+
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
       if (e.target === e.currentTarget) {
-        onClose();
+        handleClose();
       }
     },
-    [onClose]
+    [handleClose]
   );
 
   const handleShare = useCallback(() => {
@@ -359,7 +371,7 @@ export function ServerTradeModal({
   return (
     <div
       id="server-trade-overlay"
-      className="custom-alert-overlay"
+      className={`custom-alert-overlay trade-overlay${isClosing ? " closing" : ""}`}
       style={{
         display: "flex",
         opacity: 1,
@@ -375,8 +387,9 @@ export function ServerTradeModal({
       <div
         ref={modalRef}
         id="server-trade-modal"
-        className="server-trade-modal"
-        style={{ pointerEvents: "auto", transform: "scale(1)" }}>
+        className={`server-trade-modal${isClosing ? " closing" : ""}`}
+        style={{ pointerEvents: "auto" }}
+        onAnimationEnd={handleAnimationEnd}>
         <div
           className="bubble-header server-trade-header"
           onMouseDown={handleDragStart}
@@ -460,7 +473,7 @@ export function ServerTradeModal({
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
             </button>
-            <button className="bubble-close" onClick={onClose}>
+            <button className="bubble-close" onClick={handleClose}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"

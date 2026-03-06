@@ -103,6 +103,7 @@ export function EarthGlobe() {
   const { t } = useLocale();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [globeReady, setGlobeReady] = useState(false);
 
   // 监听来自 Header 按钮的自定义事件
@@ -180,10 +181,17 @@ export function EarthGlobe() {
       target.id === "earth-modal-overlay" ||
       target.id === "earth-modal-content"
     ) {
-      setModalOpen(false);
-      setGlobeReady(false);
+      setIsClosing(true);
     }
   }, []);
+
+  const handleAnimationEnd = useCallback(() => {
+    if (isClosing) {
+      setModalOpen(false);
+      setIsClosing(false);
+      setGlobeReady(false);
+    }
+  }, [isClosing]);
 
   return (
     <>
@@ -191,13 +199,13 @@ export function EarthGlobe() {
       {modalOpen && (
         <div
           id="earth-modal-overlay"
-          className="custom-alert-overlay"
-          style={{ display: "flex", opacity: 1 }}
-          onClick={handleCloseModal}>
+          className={`custom-alert-overlay earth-modal-overlay${isClosing ? " closing" : ""}`}
+          style={{ display: "flex" }}
+          onClick={handleCloseModal}
+          onAnimationEnd={handleAnimationEnd}>
           <div
             id="earth-modal-content"
-            className="custom-alert-modal"
-            style={{ transform: "scale(1)" }}>
+            className={`custom-alert-modal earth-modal-content${isClosing ? " closing" : ""}`}>
             <div className="earth-overlay-counter">
               <span className="counter-label">{t("enhanced.earth.totalServers")}</span>
               <span className="counter-value">{totalCount}</span>

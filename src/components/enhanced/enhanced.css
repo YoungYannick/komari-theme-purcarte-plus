@@ -597,6 +597,63 @@
 }
 
 /* ========== 地球组件 ========== */
+
+/* 地球模态框 打开/关闭动画 */
+.earth-modal-overlay {
+  animation: earthOverlayFadeIn 0.3s ease-out forwards;
+}
+
+.earth-modal-overlay.closing {
+  animation: earthOverlayFadeOut 0.25s ease-in forwards;
+}
+
+.earth-modal-content {
+  animation: earthModalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.earth-modal-content.closing {
+  animation: earthModalSlideOut 0.25s ease-in forwards;
+}
+
+@keyframes earthOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes earthOverlayFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes earthModalSlideIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes earthModalSlideOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.9); }
+}
+
+/* 服务器交易模态框 打开/关闭动画 */
+.server-trade-modal {
+  animation: tradeModalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.server-trade-modal.closing {
+  animation: tradeModalSlideOut 0.25s ease-in forwards;
+}
+
+@keyframes tradeModalSlideIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes tradeModalSlideOut {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.95) translateY(10px); }
+}
+
 #earth-ball {
   top: 125px;
   z-index: 1039;

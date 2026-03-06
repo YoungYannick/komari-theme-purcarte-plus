@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { NodeData } from "@/types/node";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAppConfig } from "@/config";
@@ -13,18 +13,18 @@ interface NodeDetailModalProps {
 }
 
 export const NodeDetailModal = ({ node, onClose }: NodeDetailModalProps) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
-  useEffect(() => {
-    setIsOpen(true);
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
   }, []);
 
-  const handleClose = () => {
-    setIsClosing(true);
-    setIsOpen(false);
-    setTimeout(onClose, 300);
-  };
+  const handleAnimationEnd = useCallback(() => {
+    if (isClosing) {
+      setIsClosing(false);
+      onClose();
+    }
+  }, [isClosing, onClose]);
 
   const { pingChartTimeInPreview, enableInstanceDetail, enablePingChart } =
     useAppConfig();
@@ -32,15 +32,12 @@ export const NodeDetailModal = ({ node, onClose }: NodeDetailModalProps) => {
 
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-300 ${
-        isOpen && !isClosing ? "opacity-100" : "opacity-0"
-      }`}
+      className={`node-detail-overlay${isClosing ? " closing" : ""}`}
       onClick={handleClose}>
       <div
-        className={`purcarte-blur theme-card-style p-5 w-full max-w-4xl max-h-[80vh] transition-transform duration-300 ${
-          isOpen && !isClosing ? "scale-100" : "scale-95"
-        }`}
-        onClick={(e) => e.stopPropagation()}>
+        className={`node-detail-modal purcarte-blur theme-card-style${isClosing ? " closing" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+        onAnimationEnd={handleAnimationEnd}>
         <div className="flex justify-between items-center mb-2 h-full">
           <h2 className="text-xl font-bold">
             {t("node.details", { name: node.name })}

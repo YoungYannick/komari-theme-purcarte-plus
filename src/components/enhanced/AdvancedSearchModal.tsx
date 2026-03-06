@@ -6,7 +6,7 @@
  * 每个子组件均标注作用及限制。
  */
 
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -107,25 +107,37 @@ export function AdvancedSearchModal({
 }: AdvancedSearchModalProps) {
   const { t } = useLocale();
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+  }, []);
+
+  const handleAnimationEnd = useCallback(() => {
+    if (isClosing) {
+      setIsClosing(false);
+      onClose();
+    }
+  }, [isClosing, onClose]);
 
   // 点击遮罩层关闭
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent) => {
       if (e.target === e.currentTarget) {
-        onClose();
+        handleClose();
       }
     },
-    [onClose]
+    [handleClose]
   );
 
   // ESC 键关闭
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [handleClose]);
 
   // 搜索按钮点击
   const handleSearch = useCallback(() => {
@@ -173,12 +185,13 @@ export function AdvancedSearchModal({
 
   return (
     <div
-      className="advanced-search-overlay"
+      className={`advanced-search-overlay${isClosing ? " closing" : ""}`}
       onClick={handleOverlayClick}
     >
       <div
         ref={modalRef}
-        className="advanced-search-modal"
+        className={`advanced-search-modal${isClosing ? " closing" : ""}`}
+        onAnimationEnd={handleAnimationEnd}
       >
         {/* ========== 头部：标题 + 关闭按钮 ========== */}
         <div className="bubble-header">
@@ -186,7 +199,7 @@ export function AdvancedSearchModal({
             <Search size={18} />
             {t("advancedSearch.title")}
           </h3>
-          <button className="bubble-close" onClick={onClose}>
+          <button className="bubble-close" onClick={handleClose}>
             <X size={16} />
           </button>
         </div>

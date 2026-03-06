@@ -248,3 +248,50 @@
     transform: scale(0.95);
   }
 }
+
+/* ========== 节点详情模态框 ========== */
+.node-detail-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: nodeDetailOverlayIn 0.25s ease-out forwards;
+}
+
+.node-detail-overlay.closing {
+  animation: nodeDetailOverlayOut 0.2s ease-in forwards;
+}
+
+.node-detail-modal {
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 56rem;
+  max-height: 80vh;
+  animation: nodeDetailModalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.node-detail-modal.closing {
+  animation: nodeDetailModalOut 0.2s ease-in forwards;
+}
+
+@keyframes nodeDetailOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes nodeDetailOverlayOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes nodeDetailModalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes nodeDetailModalOut {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to { opacity: 0; transform: scale(0.95) translateY(10px); }
+}
