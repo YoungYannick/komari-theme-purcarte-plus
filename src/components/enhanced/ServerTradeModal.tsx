@@ -10,6 +10,7 @@ import {
   getBillingCycleText,
 } from "./financeUtils";
 import { useLocale } from "@/config/hooks";
+import { Tag } from "@/components/ui/tag";
 import { toast } from "sonner";
 import html2canvas from "html2canvas-pro";
 
@@ -223,6 +224,8 @@ export function ServerTradeModal({
     const inputPairs: { input: HTMLInputElement; placeholder: HTMLDivElement }[] = [];
     // 旗帜：用内联 <svg> 替换 <img>，截图后再换回
     const flagPairs: { img: HTMLImageElement; svgEl: Element; parent: Node }[] = [];
+    // 标签元素（try 内赋值，finally 内恢复）
+    let tagEls: HTMLElement[] = [];
 
     try {
       // 1) 将 SVG flag <img> 替换为内联 <svg> 元素
@@ -271,7 +274,17 @@ export function ServerTradeModal({
         inputPairs.push({ input, placeholder: div });
       });
 
-      // 3) 样式覆盖 — CSS 用了 !important，必须用 setProperty 才能覆盖
+      // 3) 标签去省略：Tag 组件带 overflow-hidden + text-ellipsis，截图时宽度偏差会截断文字
+      tagEls = Array.from(
+          modal.querySelectorAll<HTMLElement>(".rt-Badge")
+      );
+      tagEls.forEach((el) => {
+        el.style.setProperty("overflow", "visible", "important");
+        el.style.setProperty("text-overflow", "clip", "important");
+        el.style.setProperty("white-space", "nowrap", "important");
+      });
+
+      // 4) 样式覆盖 — CSS 用了 !important，必须用 setProperty 才能覆盖
       modal.style.setProperty("background-color", opaqueBg, "important");
       modal.style.setProperty("backdrop-filter", "none", "important");
       modal.style.setProperty("-webkit-backdrop-filter", "none", "important");
@@ -364,6 +377,12 @@ export function ServerTradeModal({
       // 恢复旗帜：内联 <svg> 换回 <img>
       flagPairs.forEach(({ img, svgEl, parent }) => {
         parent.replaceChild(img, svgEl);
+      });
+      // 恢复标签省略样式
+      tagEls.forEach((el) => {
+        el.style.removeProperty("overflow");
+        el.style.removeProperty("text-overflow");
+        el.style.removeProperty("white-space");
       });
     }
   }, [node.name, tradeDate, t]);
@@ -591,13 +610,7 @@ export function ServerTradeModal({
             {tags.length > 0 && (
               <div className="trade-tags-container">
                 <span className="trade-tags-label">{t("enhanced.trade.tags")}</span>
-                <div className="trade-tags-list">
-                  {tags.map((tag, i) => (
-                    <span key={i} className="trade-tag">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
+                <Tag tags={tags} />
               </div>
             )}
 
@@ -605,13 +618,7 @@ export function ServerTradeModal({
             {remarks.length > 0 && (
               <div className="trade-remark-container">
                 <span className="trade-remark-label">{t("enhanced.trade.remarks")}</span>
-                <div className="trade-remark-list">
-                  {remarks.map((remark, i) => (
-                    <span key={i} className="trade-remark-tag">
-                      {remark}
-                    </span>
-                  ))}
-                </div>
+                <Tag tags={remarks} />
               </div>
             )}
           </div>
