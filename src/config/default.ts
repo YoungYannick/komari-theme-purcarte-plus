@@ -122,7 +122,7 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   serverStartTime: "",
   serverUptimeTemplate: "已不稳定运行 {days} 天 {hours} 小时 {minutes} 分钟 {seconds} 秒",
   footerCustomContent: "",
-  enableJsonRPC2Api: false,
+  enableJsonRPC2Api: true,
   isShowStatsInHeader: false,
   mergeGroupsWithStats: false,
   enableStatsBar: true,

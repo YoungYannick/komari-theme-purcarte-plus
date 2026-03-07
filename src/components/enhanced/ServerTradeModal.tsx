@@ -38,10 +38,9 @@ export function ServerTradeModal({
   const regionCode = EMOJI_MAP[node.region] || node.region || "UN";
 
   // 日期和金额
-  const today = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Asia/Shanghai" })
-  );
-  const todayStr = today.toISOString().split("T")[0];
+  const now = new Date();
+  const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  const todayStr = `${utc8.getUTCFullYear()}-${String(utc8.getUTCMonth() + 1).padStart(2, "0")}-${String(utc8.getUTCDate()).padStart(2, "0")}`;
   const [tradeDate, setTradeDate] = useState(initialTradeDate || todayStr);
   const [tradeAmount, setTradeAmount] = useState(initialTradeAmount || "");
 
@@ -345,7 +344,7 @@ export function ServerTradeModal({
         const a = document.createElement("a");
         a.href = url;
         const safeName = (node.name || "server").replace(/[^\w\u4e00-\u9fff-]/g, "_");
-        a.download = `trade-${safeName}-${tradeDate}.png`;
+        a.download = `trade-${safeName}-${Date.now()}.png`;
         a.click();
         URL.revokeObjectURL(url);
         toast.success(t("enhanced.trade.exportSuccess"));
@@ -385,7 +384,7 @@ export function ServerTradeModal({
         el.style.removeProperty("white-space");
       });
     }
-  }, [node.name, tradeDate, t]);
+  }, [node.name, t]);
 
   return (
     <div

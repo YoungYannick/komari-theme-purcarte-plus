@@ -796,7 +796,7 @@
                     "id": "Aktifkan API JSON-RPC2"
                 },
                 "type": "switch",
-                "default": false,
+                "default": true,
                 "help": {
                     "zh-CN": "启用后将在支持的 Komari 版本（>=1.0.7）优先使用 JSON-RPC2 API 获取数据，以提升兼容性和性能，若出现问题请关闭此选项",
                     "zh-TW": "啟用後將在支持的 Komari 版本（>=1.0.7）優先使用 JSON-RPC2 API 獲取數據，以提升兼容性和性能，若出現問題請關閉此選項",

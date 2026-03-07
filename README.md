@@ -307,7 +307,7 @@
 
 - **启用 JSON-RPC2 API 适配** (`enableJsonRPC2Api`)
   - **类型:** `switch`
-  - **默认值:** `false`
+  - **默认值:** `true`
   - **说明:** 启用后将在支持的 Komari 版本（>=1.0.7）优先使用 JSON-RPC2 API 获取数据，以提升兼容性和性能，若出现问题请关闭此选项
 
 - **是否在标题栏中显示统计信息** (`isShowStatsInHeader`)
