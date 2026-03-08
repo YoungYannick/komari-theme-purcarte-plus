@@ -481,6 +481,7 @@
       "trafficInfinite": "∞TB/mo",
       "share": "Share Link",
       "shareCopied": "Share link copied to clipboard",
+      "shareDisabled": "Advanced search is disabled, sharing trade links is not allowed",
       "exportImage": "Export Image",
       "exportSuccess": "Image saved",
       "exportFail": "Export failed"

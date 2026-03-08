@@ -1,3 +1,4 @@
+import { useAppConfig } from "@/config";
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { NodeData } from "@/types/node.d";
 import type { ExchangeRates } from "./useExchangeRates";
@@ -32,6 +33,8 @@ export function ServerTradeModal({
   initialTradeAmount,
 }: ServerTradeModalProps) {
   const { t, i18n } = useLocale();
+  const { enableSearchButton, enableAdvancedSearch } = useAppConfig();
+  const isAdvancedSearchEnabled = enableSearchButton && enableAdvancedSearch;
   const [isClosing, setIsClosing] = useState(false);
   const targetRate = rates[userCurrency] || 1;
   const sym = CURRENCY_SYMBOLS[userCurrency] || userCurrency;
@@ -170,6 +173,11 @@ export function ServerTradeModal({
   );
 
   const handleShare = useCallback(() => {
+    // 如果没有开启高级搜索功能，禁止分享并弹出 Toast 提示
+    if (!isAdvancedSearchEnabled) {
+      toast.warning(t("enhanced.trade.shareDisabled"));
+      return;
+    }
     const params = new URLSearchParams();
     // 使用 t_q=uuid 实现唯一搜索
     params.set("t_q", node.uuid);
@@ -199,7 +207,7 @@ export function ServerTradeModal({
       document.body.removeChild(textarea);
       toast.success(t("enhanced.trade.shareCopied"));
     });
-  }, [node.uuid, tradeDate, tradeAmount, userCurrency, t]);
+  }, [isAdvancedSearchEnabled, node.uuid, tradeDate, tradeAmount, userCurrency, t]);
 
   const handleExportImage = useCallback(async () => {
     const modal = modalRef.current;

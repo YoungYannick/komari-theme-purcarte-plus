@@ -481,6 +481,7 @@
       "trafficInfinite": "∞TB/bln",
       "share": "Bagikan Tautan",
       "shareCopied": "Tautan dibagikan telah disalin ke clipboard",
+      "shareDisabled": "Pencarian lanjutan belum diaktifkan, berbagi tautan transaksi dilarang",
       "exportImage": "Ekspor Gambar",
       "exportSuccess": "Gambar disimpan",
       "exportFail": "Ekspor gagal"

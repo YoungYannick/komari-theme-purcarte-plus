@@ -481,6 +481,7 @@
       "trafficInfinite": "∞TB/月",
       "share": "リンクを共有",
       "shareCopied": "共有リンクがクリップボードにコピーされました",
+      "shareDisabled": "高度な検索が有効になっていないため、取引リンクの共有は禁止されています",
       "exportImage": "画像を出力",
       "exportSuccess": "画像を保存しました",
       "exportFail": "エクスポート失敗"

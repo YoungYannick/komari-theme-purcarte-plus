@@ -8,6 +8,7 @@
  * 4. 搜索执行和重置
  */
 
+import { useAppConfig } from "@/config";
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import type {
@@ -571,6 +572,10 @@ export function useAdvancedSearch() {
   const location = useLocation();
   const isInitialized = useRef(false);
 
+  // 获取配置，判断是否真正开启高级搜索
+  const { enableSearchButton, enableAdvancedSearch } = useAppConfig();
+  const isFeatureEnabled = enableSearchButton && enableAdvancedSearch;
+
   // 从 URL 初始化状态
   const [state, setState] = useState<AdvancedSearchState>(() =>
     parseUrlToState(window.location.search)
@@ -588,15 +593,20 @@ export function useAdvancedSearch() {
   useEffect(() => {
     if (!isInitialized.current) {
       isInitialized.current = true;
-      const parsed = parseUrlToState(location.search);
-      if (!isStateDefault(parsed)) {
-        setState(parsed);
+      if (isFeatureEnabled) {
+        const parsed = parseUrlToState(location.search);
+        if (!isStateDefault(parsed)) {
+          setState(parsed);
+        }
       }
     }
-  }, []);
+  }, [isFeatureEnabled, location.search]);
 
   // 计算是否有活跃的搜索条件
-  const isActive = useMemo(() => !isStateDefault(state), [state]);
+  const isActive = useMemo(
+      () => isFeatureEnabled && !isStateDefault(state),
+      [state, isFeatureEnabled]
+  );
 
   // 用于搜索后判断的已确认搜索状态
   const [confirmedState, setConfirmedState] =
@@ -655,7 +665,7 @@ export function useAdvancedSearch() {
     /** 更新搜索状态 */
     setState,
     /** 已确认的搜索状态（点击搜索后） */
-    confirmedState,
+    confirmedState: isFeatureEnabled ? confirmedState : null,
     /** 模态框是否打开 */
     isModalOpen,
     /** 设置模态框打开状态 */
@@ -663,7 +673,7 @@ export function useAdvancedSearch() {
     /** 是否有活跃的搜索条件（基于编辑状态） */
     isActive,
     /** 是否有已确认的搜索结果 */
-    isSearchApplied: confirmedState !== null,
+    isSearchApplied: isFeatureEnabled && confirmedState !== null,
     /** 执行搜索 */
     executeSearch,
     /** 重置搜索 */

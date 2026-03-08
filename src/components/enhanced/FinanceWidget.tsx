@@ -1,3 +1,4 @@
+import { useAppConfig } from "@/config";
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useNodeData } from "@/contexts/NodeDataContext";
 import {
@@ -131,6 +132,8 @@ export function FinanceWidget() {
   const { nodes } = useNodeData();
   const { rates, lastUpdated, refreshRates } = useExchangeRates();
   const { t } = useLocale();
+  const { enableSearchButton, enableAdvancedSearch } = useAppConfig();
+  const isAdvancedSearchEnabled = enableSearchButton && enableAdvancedSearch;
   const [isOpen, setIsOpen] = useState(false);
   const [userCurrency, setUserCurrency] = useState<string>(
     () => localStorage.getItem("fin_currency") || "CNY"
@@ -161,6 +164,11 @@ export function FinanceWidget() {
   // 从 URL 加载交易模态框参数（仅在首次加载时执行）
   useEffect(() => {
     if (urlTradeHandled.current || nodes.length === 0) return;
+    // 如果没有同时开启【搜索按钮】和【高级搜索】，直接中止，不打开交易面板
+    if (!isAdvancedSearchEnabled) {
+      urlTradeHandled.current = true;
+      return;
+    }
     const params = new URLSearchParams(window.location.search);
     const tmCur = params.get("tm_cur");
     const tmDate = params.get("tm_date");
