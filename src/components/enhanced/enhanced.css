@@ -144,7 +144,7 @@
 .welcome-bubble {
   position: fixed;
   left: 5px;
-  bottom: 15px;
+  bottom: calc(15px + var(--footer-height, 0px));
   z-index: 1050;
   max-width: 320px;
   border-radius: 16px;
@@ -861,7 +861,7 @@
   .welcome-bubble {
     max-width: calc(100vw - 30px);
     left: 15px;
-    bottom: 15px;
+    bottom: calc(15px + var(--footer-height, 0px));
   }
   .finance-widget {
     width: calc(100vw - 40px);

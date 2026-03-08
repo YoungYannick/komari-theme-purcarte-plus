@@ -292,13 +292,16 @@ export const AppContent = () => {
     if (!footer) return;
 
     const resizeObserver = new ResizeObserver(() => {
-      setFooterHeight(footer.offsetHeight);
+      const h = footer.offsetHeight;
+      setFooterHeight(h);
+      document.documentElement.style.setProperty("--footer-height", `${h}px`);
     });
 
     resizeObserver.observe(footer);
 
     return () => {
       resizeObserver.disconnect();
+      document.documentElement.style.setProperty("--footer-height", "0px");
     };
   }, []);
 
