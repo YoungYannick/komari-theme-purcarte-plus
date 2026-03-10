@@ -79,6 +79,8 @@ export interface ConfigOptions {
   welcomeBubbleLogoUrl: string; // 欢迎气泡Logo图片URL
   welcomeBubbleLogoShape: LogoShapeType; // 欢迎气泡Logo样式
   // 地球组件配置
+  earthGlobeLogoUrl: string; // 地球组件Logo图片URL
+  earthGlobeLogoShape: LogoShapeType; // 地球组件Logo样式
   earthLightBgImage: string; // 地球组件亮色模式背景图
   earthDarkBgImage: string; // 地球组件暗色模式背景图
   earthLightGlobeImage: string; // 地球组件亮色模式地球贴图
@@ -169,6 +171,8 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   welcomeBubbleLogoUrl: "/assets/logo.png",
   welcomeBubbleLogoShape: "circle",
   // 地球组件配置
+  earthGlobeLogoUrl: "/assets/logo.png",
+  earthGlobeLogoShape: "circle",
   earthLightBgImage: "",
   earthDarkBgImage: "//upload.wikimedia.org/wikipedia/commons/6/60/ESO_-_Milky_Way.jpg",
   earthLightGlobeImage: "//upload.wikimedia.org/wikipedia/commons/0/04/Solarsystemscope_texture_8k_earth_daymap.jpg",

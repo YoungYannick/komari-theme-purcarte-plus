@@ -1512,6 +1512,45 @@
                 }
             },
             {
+                "key": "earthGlobeLogoUrl",
+                "name": {
+                    "zh-CN": "地球组件 Logo",
+                    "zh-TW": "地球組件 Logo",
+                    "en": "Earth Globe Logo",
+                    "ja": "地球儀ロゴ",
+                    "id": "Logo Globe Bumi"
+                },
+                "type": "string",
+                "default": "/assets/logo.png",
+                "help": {
+                    "zh-CN": "地球组件中用户位置标记的 Logo 图片链接，留空则显示 YOU 文字标记",
+                    "zh-TW": "地球組件中用戶位置標記的 Logo 圖片連結，留空則顯示 YOU 文字標記",
+                    "en": "Logo image URL for user location marker on Earth Globe. Shows 'YOU' text if empty.",
+                    "ja": "地球儀のユーザー位置マーカーのロゴ画像URL。空の場合は「YOU」テキストを表示。",
+                    "id": "URL gambar logo untuk penanda lokasi pengguna di Globe Bumi. Menampilkan teks 'YOU' jika kosong."
+                }
+            },
+            {
+                "key": "earthGlobeLogoShape",
+                "name": {
+                    "zh-CN": "地球组件 Logo 样式",
+                    "zh-TW": "地球組件 Logo 樣式",
+                    "en": "Earth Globe Logo Shape",
+                    "ja": "地球儀ロゴスタイル",
+                    "id": "Bentuk Logo Globe Bumi"
+                },
+                "type": "select",
+                "options": "circle,original",
+                "default": "circle",
+                "help": {
+                    "zh-CN": "circle: 圆形固定缩放（32×32）；original: 原图等比缩放（高32px，宽度自适应）",
+                    "zh-TW": "circle: 圓形固定縮放（32×32）；original: 原圖等比縮放（高32px，寬度自適應）",
+                    "en": "circle: Circular fixed scale (32×32); original: Proportional scale (height 32px, auto width).",
+                    "ja": "circle: 円形固定スケール（32×32）；original: 等比スケール（高さ32px、幅自動）。",
+                    "id": "circle: Skala tetap bulat (32×32); original: Skala proporsional (tinggi 32px, lebar otomatis)."
+                }
+            },
+            {
                 "key": "earthLightBgImage",
                 "name": {
                     "zh-CN": "地球组件亮色模式背景图",

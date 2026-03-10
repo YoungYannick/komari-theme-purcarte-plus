@@ -691,8 +691,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0 15px var(--accent-9), 0 0 30px var(--accent-9);
+  background: transparent;
   cursor: pointer;
   z-index: 1002;
   animation: userPulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
@@ -700,7 +699,6 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 2px solid var(--accent-9);
 }
 
 .earth-user-marker img {
@@ -708,6 +706,27 @@
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+}
+
+/* 原图等比缩放样式 */
+.earth-user-marker.earth-user-marker-shape-original {
+  width: auto;
+  border-radius: 8px;
+}
+
+.earth-user-marker img.earth-user-marker-original {
+  width: auto;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+/* Logo 留空时的文字标记 */
+.earth-user-marker-text {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--accent-9);
+  user-select: none;
 }
 
 @keyframes userPulse {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import Globe from "globe.gl";
+import type { LogoShapeType } from "@/config/default";
 
 interface PointData {
   code: string;
@@ -31,6 +32,8 @@ interface GlobeRendererProps {
   themeColor: string;
   userLat: number;
   userLng: number;
+  earthGlobeLogoUrl: string;
+  earthGlobeLogoShape: LogoShapeType;
   onReady: () => void;
 }
 
@@ -62,6 +65,8 @@ export default function GlobeRenderer({
   themeColor,
   userLat,
   userLng,
+  earthGlobeLogoUrl,
+  earthGlobeLogoShape,
   onReady,
 }: GlobeRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -145,7 +150,15 @@ export default function GlobeRenderer({
         if (d.type === "user") {
           const marker = document.createElement("div");
           marker.className = "earth-user-marker";
-          marker.innerHTML = `<img src="/favicon.ico" alt="You">`;
+          if (earthGlobeLogoUrl) {
+            const isOriginal = earthGlobeLogoShape === "original";
+            marker.innerHTML = `<img src="${earthGlobeLogoUrl}" alt="You"${isOriginal ? ' class="earth-user-marker-original"' : ""}>`;
+            if (isOriginal) {
+              marker.classList.add("earth-user-marker-shape-original");
+            }
+          } else {
+            marker.innerHTML = `<span class="earth-user-marker-text">YOU</span>`;
+          }
           marker.onclick = (e) => {
             e.stopPropagation();
             hideTooltip();

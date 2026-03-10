@@ -524,6 +524,17 @@
   - **默认值:** `true`
   - **说明:** 启用后将在标题栏显示 3D 地球入口按钮，可查看服务器地理分布
 
+- **地球组件 Logo** (`earthGlobeLogoUrl`)
+  - **类型:** `string`
+  - **默认值:** `/assets/logo.png`
+  - **说明:** 地球组件中用户位置标记的 Logo 图片链接，留空则显示 YOU 文字标记
+
+- **地球组件 Logo 样式** (`earthGlobeLogoShape`)
+  - **类型:** `select`
+  - **可选项:** `circle`, `original`
+  - **默认值:** `circle`
+  - **说明:** circle: 圆形固定缩放（32×32）；original: 原图等比缩放（高32px，宽度自适应）
+
 - **地球组件亮色模式背景图** (`earthLightBgImage`)
   - **类型:** `string`
   - **默认值:** `(空)`

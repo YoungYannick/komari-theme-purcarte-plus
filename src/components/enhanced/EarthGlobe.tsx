@@ -98,6 +98,8 @@ export function EarthGlobe() {
     earthDarkBgImage,
     earthLightGlobeImage,
     earthDarkGlobeImage,
+    earthGlobeLogoUrl,
+    earthGlobeLogoShape,
   } = useAppConfig();
   const { appearance } = useTheme();
   const { t } = useLocale();
@@ -233,6 +235,8 @@ export function EarthGlobe() {
                   themeColor={themeColor}
                   userLat={geo.lat || 35.8617}
                   userLng={geo.lng || 104.1954}
+                  earthGlobeLogoUrl={earthGlobeLogoUrl}
+                  earthGlobeLogoShape={earthGlobeLogoShape}
                   onReady={() => {
                     setTimeout(() => setGlobeReady(true), 100);
                   }}
