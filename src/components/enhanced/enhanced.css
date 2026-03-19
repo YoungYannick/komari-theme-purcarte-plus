@@ -354,6 +354,7 @@
   padding: 8px 0;
   max-height: 120px;
   overflow-y: auto;
+  padding-right: 5px;
 }
 
 .finance-rate-item {

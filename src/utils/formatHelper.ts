@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { normalizeCurrencyToCode } from "@/components/enhanced/financeUtils";
+import { CURRENCY_SYMBOLS } from "@/components/enhanced/useExchangeRates";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -64,14 +66,18 @@ export const formatPrice = (
   if (price === 0) return "";
   if (!currency || !billingCycle) return "N/A";
 
+  // 标准化货币显示符号
+  const code = normalizeCurrencyToCode(currency);
+  const sym = CURRENCY_SYMBOLS[code] || currency;
+
   let cycleStr = `${billingCycle}天`;
   if (billingCycle < 0) {
-    return `${currency}${price.toFixed(2)}`;
+    return `${sym}${price.toFixed(2)}`;
   } else if (billingCycle === 30 || billingCycle === 31) {
     cycleStr = "月";
   } else if (billingCycle >= 89 && billingCycle <= 92) {
     cycleStr = "季";
-  } else if (billingCycle >= 180 && billingCycle <= 183) {
+  } else if (billingCycle >= 180 && billingCycle <= 184) {
     cycleStr = "半年";
   } else if (billingCycle >= 364 && billingCycle <= 366) {
     cycleStr = "年";
@@ -83,7 +89,7 @@ export const formatPrice = (
     cycleStr = "五年";
   }
 
-  return `${currency}${price.toFixed(2)}/${cycleStr}`;
+  return `${sym}${price.toFixed(2)}/${cycleStr}`;
 };
 
 export const formatTrafficLimit = (

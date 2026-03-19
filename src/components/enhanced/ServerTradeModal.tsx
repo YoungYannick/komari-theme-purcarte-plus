@@ -9,6 +9,7 @@ import {
   formatBytes,
   formatTraffic,
   getBillingCycleText,
+  normalizeCurrencyToCode,
 } from "./financeUtils";
 import { useLocale } from "@/config/hooks";
 import { Tag } from "@/components/ui/tag";
@@ -36,7 +37,6 @@ export function ServerTradeModal({
   const { enableSearchButton, enableAdvancedSearch } = useAppConfig();
   const isAdvancedSearchEnabled = enableSearchButton && enableAdvancedSearch;
   const [isClosing, setIsClosing] = useState(false);
-  const targetRate = rates[userCurrency] || 1;
   const sym = CURRENCY_SYMBOLS[userCurrency] || userCurrency;
   const regionCode = EMOJI_MAP[node.region] || node.region || "UN";
 
@@ -47,10 +47,9 @@ export function ServerTradeModal({
   const [tradeDate, setTradeDate] = useState(initialTradeDate || todayStr);
   const [tradeAmount, setTradeAmount] = useState(initialTradeAmount || "");
 
-  // 计算剩余价值
-  const remainValueCNY = calculateRemainValueForDate(node, rates, tradeDate);
+  // 计算剩余价值（已经是用户选择的基准货币）
   const displayRemainValue = parseFloat(
-    (remainValueCNY * targetRate).toFixed(2)
+    calculateRemainValueForDate(node, rates, tradeDate).toFixed(2)
   );
 
   // 溢价计算
@@ -597,7 +596,7 @@ export function ServerTradeModal({
               <div className="server-info-row">
                 <span className="info-label">{t("enhanced.trade.originalPrice")}</span>
                 <span className="info-value">
-                  {node.currency || "¥"}{" "}
+                  {CURRENCY_SYMBOLS[normalizeCurrencyToCode(node.currency || "¥")] || node.currency || "¥"}{" "}
                   {node.price === -1 ? t("enhanced.trade.free") : node.price}
                 </span>
               </div>

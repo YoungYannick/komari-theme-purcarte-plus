@@ -5,14 +5,14 @@ import {
   useExchangeRates,
   CURRENCY_SYMBOLS,
   CURRENCY_OPTIONS,
-  CURRENCY_NAMES,
 } from "./useExchangeRates";
 import type { ExchangeRates } from "./useExchangeRates";
 import type { NodeData } from "@/types/node.d";
 import {
-  parsePriceToCNY,
+  parsePriceToBase,
   calculateRemainingValue,
   calculateMonthlyExpense,
+  normalizeCurrencyToCode,
 } from "./financeUtils";
 import { ServerTradeModal } from "./ServerTradeModal";
 import { useLocale } from "@/config/hooks";
@@ -46,14 +46,14 @@ function sortNodes(nodes: NodeData[], sortBy: SortBy): NodeData[] {
 
 interface FinanceData {
   totalNodes: number;
-  totalPriceCNY: number;
-  monthlyPriceCNY: number;
-  totalRemainValCNY: number;
+  totalPrice: number;
+  monthlyPrice: number;
+  totalRemainVal: number;
   specialCases: string[];
   items: {
     node: NodeData;
     displayVal: number;
-    remainingValueCNY: number;
+    remainingValue: number;
     tooltipText: string;
     isSpecialFree: boolean;
     isLongTerm: boolean;
@@ -64,29 +64,27 @@ interface FinanceData {
 function calculateFinanceData(
   nodes: NodeData[],
   rates: ExchangeRates,
-  userCurrency: string,
   excludeFree: boolean,
   sortBy: SortBy,
   t: (key: string, params?: Record<string, string | number>) => string
 ): FinanceData {
   const sorted = sortNodes(nodes, sortBy);
-  const targetRate = rates[userCurrency] || 1;
   const now = new Date();
 
-  let totalPriceCNY = 0;
-  let monthlyPriceCNY = 0;
-  let totalRemainValCNY = 0;
+  let totalPrice = 0;
+  let monthlyPrice = 0;
+  let totalRemainVal = 0;
   const specialCases: string[] = [];
 
   const items = sorted.map((node) => {
     const isFreeTag = node.tags ? node.tags.includes(t("enhanced.finance.freeTag")) : false;
-    const { price: priceCNY, isSpecialFree } = parsePriceToCNY(node, rates);
+    const { price: priceBase, isSpecialFree } = parsePriceToBase(node, rates);
     const { remainingValue, isLongTerm } = calculateRemainingValue(
       node,
       rates,
       now
     );
-    const monthly = calculateMonthlyExpense(priceCNY, node.billing_cycle);
+    const monthly = calculateMonthlyExpense(priceBase, node.billing_cycle);
 
     let tooltipText = "";
     if (isSpecialFree) {
@@ -95,22 +93,23 @@ function calculateFinanceData(
     } else if (isLongTerm) {
       specialCases.push(`${node.name} (${t("enhanced.finance.longTermChicken")})`);
       tooltipText = t("enhanced.finance.longTermTooltip");
-    } else if (isFreeTag && !(excludeFree && isFreeTag)) {
+    } else if (isFreeTag && excludeFree) {
       specialCases.push(`${node.name} (${t("enhanced.finance.freeTag")})`);
       tooltipText = `${node.name} (${t("enhanced.finance.freeTag")})`;
     }
 
-    const shouldExclude = excludeFree && isFreeTag;
-    if (!shouldExclude) {
-      totalPriceCNY += priceCNY;
-      monthlyPriceCNY += monthly;
-      totalRemainValCNY += remainingValue;
+    // excludeFree 开启时白嫖机不计入汇总，列表中仍正常显示剩余价值
+    const excludeFromTotal = isSpecialFree || (excludeFree && isFreeTag);
+    if (!excludeFromTotal) {
+      totalPrice += priceBase;
+      monthlyPrice += monthly;
+      totalRemainVal += remainingValue;
     }
 
     return {
       node,
-      displayVal: remainingValue * targetRate,
-      remainingValueCNY: remainingValue,
+      displayVal: remainingValue,
+      remainingValue,
       tooltipText,
       isSpecialFree,
       isLongTerm,
@@ -120,9 +119,9 @@ function calculateFinanceData(
 
   return {
     totalNodes: nodes.length,
-    totalPriceCNY,
-    monthlyPriceCNY,
-    totalRemainValCNY,
+    totalPrice,
+    monthlyPrice,
+    totalRemainVal,
     specialCases,
     items,
   };
@@ -130,7 +129,6 @@ function calculateFinanceData(
 
 export function FinanceWidget() {
   const { nodes } = useNodeData();
-  const { rates, lastUpdated, refreshRates } = useExchangeRates();
   const { t } = useLocale();
   const { enableSearchButton, enableAdvancedSearch } = useAppConfig();
   const isAdvancedSearchEnabled = enableSearchButton && enableAdvancedSearch;
@@ -138,6 +136,7 @@ export function FinanceWidget() {
   const [userCurrency, setUserCurrency] = useState<string>(
     () => localStorage.getItem("fin_currency") || "CNY"
   );
+  const { rates, lastUpdated, refreshRates } = useExchangeRates(userCurrency);
   const [sortBy, setSortBy] = useState<SortBy>(
     () => (localStorage.getItem("fin_sort") as SortBy) || "weight_asc"
   );
@@ -176,7 +175,7 @@ export function FinanceWidget() {
     const tq = params.get("t_q");
 
     // 如果有 tm_cur，更新货币单位到 localStorage 和状态
-    if (tmCur && ["CNY", "USD", "HKD", "EUR", "GBP", "JPY"].includes(tmCur)) {
+    if (tmCur) {
       setUserCurrency(tmCur);
       localStorage.setItem("fin_currency", tmCur);
     }
@@ -194,12 +193,11 @@ export function FinanceWidget() {
   }, [nodes]);
 
   const financeData = useMemo(
-    () => calculateFinanceData(nodes, rates, userCurrency, excludeFree, sortBy, t),
-    [nodes, rates, userCurrency, excludeFree, sortBy, t]
+    () => calculateFinanceData(nodes, rates, excludeFree, sortBy, t),
+    [nodes, rates, excludeFree, sortBy, t]
   );
 
   const sym = CURRENCY_SYMBOLS[userCurrency] || userCurrency;
-  const targetRate = rates[userCurrency] || 1;
 
   const handleCurrencyChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -235,17 +233,31 @@ export function FinanceWidget() {
     setIsOpen(false);
   }, []);
 
-  // 汇率列表
+  // 汇率列表：只展示节点实际使用的货币与用户选择货币之间的汇率
   const ratesList = useMemo(() => {
-    const all = ["USD", "HKD", "EUR", "GBP", "JPY", "CNY"].filter(
-      (c) => c !== userCurrency
-    );
-    return all.map((c) => ({
-      code: c,
-      name: CURRENCY_NAMES[c] || c,
-      rate: (rates[userCurrency] || 1) / (rates[c] || 1),
-    }));
-  }, [rates, userCurrency]);
+    // 从节点数据中提取所有实际使用的货币代码
+    const nodeCurrencies = new Set<string>();
+    for (const node of nodes) {
+      const code = normalizeCurrencyToCode(node.currency || "¥");
+      nodeCurrencies.add(code);
+    }
+    // 合并：节点货币 + 用户选择的货币，去重后排除当前基准货币
+    const relevantCodes = new Set(nodeCurrencies);
+    relevantCodes.add(userCurrency);
+    relevantCodes.delete(userCurrency); // 排除基准货币自身
+
+    return Array.from(nodeCurrencies)
+      .filter((code) => code !== userCurrency && rates[code] != null)
+      .sort((a, b) => a.localeCompare(b))
+      .map((code) => {
+        const s = CURRENCY_SYMBOLS[code];
+        return {
+          code,
+          name: s ? `${code} ${s}` : code,
+          rate: rates[code],
+        };
+      });
+  }, [rates, userCurrency, nodes]);
 
   return (
     <>
@@ -291,13 +303,13 @@ export function FinanceWidget() {
           <div className="finance-row">
             <span>{t("enhanced.finance.totalValue")}</span>
             <span className="finance-value">
-              {sym} {(financeData.totalPriceCNY * targetRate).toFixed(2)}
+              {sym} {financeData.totalPrice.toFixed(2)}
             </span>
           </div>
           <div className="finance-row">
             <span>{t("enhanced.finance.monthlyExpense")}</span>
             <span className="finance-value">
-              {sym} {(financeData.monthlyPriceCNY * targetRate).toFixed(2)}
+              {sym} {financeData.monthlyPrice.toFixed(2)}
             </span>
           </div>
           <div className="finance-row">
@@ -305,7 +317,7 @@ export function FinanceWidget() {
             <div className="item-right">
               <span className="finance-value">
                 {sym}{" "}
-                {(financeData.totalRemainValCNY * targetRate).toFixed(2)}
+                {financeData.totalRemainVal.toFixed(2)}
               </span>
               {financeData.specialCases.length > 0 && (
                 <div
@@ -405,9 +417,9 @@ export function FinanceWidget() {
               <div className="finance-exchange-rates">
                 {ratesList.map((r) => (
                   <div key={r.code} className="finance-rate-item">
-                    <span>1 {r.name}</span>
+                    <span>{r.name}</span>
                     <span className="finance-rate-value">
-                      {sym} {r.rate.toFixed(6)}
+                      {r.rate.toFixed(6)}
                     </span>
                   </div>
                 ))}

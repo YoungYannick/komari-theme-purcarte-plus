@@ -5,10 +5,55 @@ import type { ExchangeRates } from "./useExchangeRates";
 const LONG_TERM_YEARS = 100;
 
 /**
- * 将节点价格解析为人民币（CNY）
- * 返回 { price: CNY金额, isSpecialFree: 是否为免费鸡(price=-1) }
+ * 将货币符号或代码统一标准化为货币代码
+ * 处理多字符符号（HK$、JP¥、NT$、S$、A$、C$、NZ$）和单字符符号（¥、$、€、£、₩、฿、₽、₹、₱、₫、₺）
+ * 单独的 ¥ 默认视为 CNY（人民币），JPY 需要通过 "JP¥" 或 "JPY" 标识
+ * 单独的 $ 默认视为 USD，其他美元需要前缀（HK$、S$、A$、C$、NZ$、NT$）
  */
-export function parsePriceToCNY(
+export function normalizeCurrencyToCode(cur: string): string {
+  const trimmed = cur.trim();
+  const upper = trimmed.toUpperCase();
+  // 标准三字母货币代码（直接返回）
+  const KNOWN_CODES = [
+    "CNY", "USD", "HKD", "EUR", "GBP", "JPY", "KRW", "THB", "RUB",
+    "INR", "TWD", "SGD", "AUD", "CAD", "CHF", "SEK", "NZD", "MYR",
+    "PHP", "VND", "BRL", "TRY", "ZAR", "AED", "SAR", "IDR", "PLN",
+    "NOK", "DKK", "CZK", "HUF", "ILS", "MXN", "ARS", "CLP", "COP",
+    "PEN", "BGN", "RON", "HRK", "ISK",
+  ];
+  if (KNOWN_CODES.includes(upper)) return upper;
+  // 多字符符号（必须在单字符之前匹配）
+  const MULTI_CHAR_MAP: Record<string, string> = {
+    "HK$": "HKD", "JP¥": "JPY", "NT$": "TWD", "S$": "SGD",
+    "A$": "AUD", "C$": "CAD", "NZ$": "NZD", "R$": "BRL",
+    "RM": "MYR", "د.إ": "AED", "﷼": "SAR",
+  };
+  for (const [sym, code] of Object.entries(MULTI_CHAR_MAP)) {
+    if (trimmed === sym) return code;
+  }
+  // 单字符符号
+  const SINGLE_CHAR_MAP: Record<string, string> = {
+    "¥": "CNY", "$": "USD", "€": "EUR", "£": "GBP",
+    "₩": "KRW", "฿": "THB", "₽": "RUB", "₹": "INR",
+    "₱": "PHP", "₫": "VND", "₺": "TRY",
+  };
+  if (SINGLE_CHAR_MAP[trimmed]) return SINGLE_CHAR_MAP[trimmed];
+  return upper || "CNY"; // 未知货币返回原始大写，空值默认 CNY
+}
+
+/**
+ * 将节点价格转换为当前基准货币（rates 的基准货币，即 rates 中值为 1 的那个）
+ *
+ * rates 由 useExchangeRates(baseCurrency) 返回，baseCurrency=1，
+ * 其他货币的值表示 "1 baseCurrency = X otherCurrency"
+ *
+ * 节点价格 nodePrice 的货币为 nodeCode，要转换为 baseCurrency：
+ *   priceInBase = nodePrice / rates[nodeCode]
+ *
+ * 例：baseCurrency=USD, rates.CNY=7.2, 节点 price=100 CNY
+ *   → 100 / 7.2 = 13.89 USD ✓
+ */
+export function parsePriceToBase(
   node: NodeData,
   rates: ExchangeRates
 ): { price: number; isSpecialFree: boolean } {
@@ -22,24 +67,21 @@ export function parsePriceToCNY(
     price = 0;
   }
 
-  let cur = node.currency || "¥";
-  if (cur === "CNY") cur = "¥";
+  const cur = node.currency || "¥";
+  const code = normalizeCurrencyToCode(cur);
+  const rate = rates[code];
 
-  let finalPrice = 0;
-  if (cur === "¥") finalPrice = price;
-  else if (cur === "HK$") finalPrice = price / (rates.HKD || 1.08);
-  else if (cur === "$" || cur === "USD") finalPrice = price / (rates.USD || 0.14);
-  else if (cur === "€" || cur === "EUR") finalPrice = price / (rates.EUR || 0.13);
-  else if (cur === "£" || cur === "GBP") finalPrice = price / (rates.GBP || 0.11);
-  else finalPrice = price;
+  // rate 存在且 > 0 时转换，否则原价返回（未知货币不转换）
+  const finalPrice = rate && rate > 0 ? price / rate : price;
 
   return { price: finalPrice, isSpecialFree };
 }
 
+// 向后兼容别名
+export const parsePriceToCNY = parsePriceToBase;
+
 /**
- * 计算节点剩余价值（CNY）
- * - 超过100年视为长期鸡，按原价计算
- * - 已过期返回0
+ * 计算节点剩余价值（以 rates 基准货币计）
  */
 export function calculateRemainingValue(
   node: NodeData,
@@ -48,11 +90,11 @@ export function calculateRemainingValue(
 ): { remainingValue: number; isLongTerm: boolean } {
   if (!node.expired_at) return { remainingValue: 0, isLongTerm: false };
 
-  const { price: priceCNY } = parsePriceToCNY(node, rates);
+  const { price: priceBase } = parsePriceToBase(node, rates);
 
   // 一次性付费（billing_cycle = -1）视为长期机器，按原价计算
   if (node.billing_cycle === -1) {
-    return { remainingValue: priceCNY, isLongTerm: true };
+    return { remainingValue: priceBase, isLongTerm: true };
   }
 
   const exp = new Date(node.expired_at);
@@ -61,51 +103,41 @@ export function calculateRemainingValue(
   const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365);
 
   if (diffYears > LONG_TERM_YEARS) {
-    return { remainingValue: priceCNY, isLongTerm: true };
+    return { remainingValue: priceBase, isLongTerm: true };
   }
 
   const billingCycleMs = node.billing_cycle * 24 * 60 * 60 * 1000;
   if (diffMs > 0 && billingCycleMs > 0) {
-    return { remainingValue: priceCNY * (diffMs / billingCycleMs), isLongTerm: false };
+    return { remainingValue: priceBase * (diffMs / billingCycleMs), isLongTerm: false };
   }
 
   return { remainingValue: 0, isLongTerm: false };
 }
 
 /**
- * 计算月均支出（CNY）
+ * 计算月均支出（以 rates 基准货币计）
  */
 export function calculateMonthlyExpense(
-  priceCNY: number,
+  priceBase: number,
   billingCycleDays: number
 ): number {
-  // 一次性付费不计入月均支出
   if (billingCycleDays === -1) return 0;
 
   let cycleMonths = 1;
-  if (billingCycleDays === 365) cycleMonths = 12;
-  else if (billingCycleDays === 30) cycleMonths = 1;
+  if (billingCycleDays === 30) cycleMonths = 1;
+  else if (billingCycleDays === 92) cycleMonths = 3;
+  else if (billingCycleDays === 184) cycleMonths = 6;
+  else if (billingCycleDays === 365) cycleMonths = 12;
+  else if (billingCycleDays === 730) cycleMonths = 24;
+  else if (billingCycleDays === 1095) cycleMonths = 36;
+  else if (billingCycleDays === 1825) cycleMonths = 60;
   else if (billingCycleDays > 0) cycleMonths = billingCycleDays / 30;
 
-  return cycleMonths > 0 ? priceCNY / cycleMonths : 0;
+  return cycleMonths > 0 ? priceBase / cycleMonths : 0;
 }
 
 /**
- * 货币转换：将 CNY 金额转换为目标货币
- */
-export function convertCurrency(
-  valueCNY: number,
-  targetCurrency: string,
-  rates: ExchangeRates
-): number {
-  const targetRate = rates[targetCurrency] || 1;
-  return valueCNY * targetRate;
-}
-
-/**
- * 根据选择的日期计算剩余价值（CNY）
- * 如果选择的是今天，使用当前精确时间
- * 否则使用该天的 00:00:00 (+08:00)
+ * 根据选择的日期计算剩余价值（以 rates 基准货币计）
  */
 export function calculateRemainValueForDate(
   node: NodeData,
@@ -128,11 +160,10 @@ export function calculateRemainValueForDate(
 
   if (!node.expired_at) return 0;
 
-  const { price: priceCNY } = parsePriceToCNY(node, rates);
+  const { price: priceBase } = parsePriceToBase(node, rates);
 
-  // 一次性付费（billing_cycle = -1）视为长期机器，按原价计算
   if (node.billing_cycle === -1) {
-    return priceCNY;
+    return priceBase;
   }
 
   const exp = new Date(node.expired_at);
@@ -141,12 +172,12 @@ export function calculateRemainValueForDate(
   const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365);
 
   if (diffYears > LONG_TERM_YEARS) {
-    return priceCNY;
+    return priceBase;
   }
 
   const billingCycleMs = node.billing_cycle * 24 * 60 * 60 * 1000;
   if (diffMs > 0 && billingCycleMs > 0) {
-    return priceCNY * (diffMs / billingCycleMs);
+    return priceBase * (diffMs / billingCycleMs);
   }
 
   return 0;
@@ -180,8 +211,11 @@ export function getBillingCycleText(days: number, t?: (key: string, params?: Rec
     const cycleMap: Record<string, string> = {
       "30": t("enhanced.trade.billingMonthly"),
       "92": t("enhanced.trade.billingQuarterly"),
+      "184": t("enhanced.trade.billingSemiAnnual"),
       "365": t("enhanced.trade.billingYearly"),
       "730": t("enhanced.trade.billingBiennial"),
+      "1095": t("enhanced.trade.billingTriennial"),
+      "1825": t("enhanced.trade.billingQuinquennial"),
       "-1": t("enhanced.trade.billingOneTime"),
     };
     return cycleMap[String(days)] || t("enhanced.trade.billingDays", { days });
@@ -189,8 +223,11 @@ export function getBillingCycleText(days: number, t?: (key: string, params?: Rec
   const cycleMap: Record<string, string> = {
     "30": "月付",
     "92": "季付",
+    "184": "半年付",
     "365": "年付",
     "730": "两年付",
+    "1095": "三年付",
+    "1825": "五年付",
     "-1": "一次性",
   };
   return cycleMap[String(days)] || `${days}天`;
