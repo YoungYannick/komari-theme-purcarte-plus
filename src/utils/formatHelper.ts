@@ -2,6 +2,8 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { resolveCurrency } from "@/components/enhanced/financeUtils";
 
+type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -60,31 +62,32 @@ export const formatPrice = (
   price: number,
   currency: string,
   billingCycle: number,
-  currencyCode?: string | null
+  currencyCode?: string | null,
+  t?: TranslateFn
 ) => {
-  if (price === -1) return "免费";
+  if (price === -1) return t ? t("nodeCard.priceFree") : "免费";
   if (price === 0) return "";
   if ((!currency && !currencyCode) || !billingCycle) return "N/A";
 
   const sym = resolveCurrency({ currency, currency_code: currencyCode }).symbol;
 
-  let cycleStr = `${billingCycle}天`;
+  let cycleStr = t ? t("nodeCard.priceCycleDays", { days: billingCycle }) : `${billingCycle}天`;
   if (billingCycle < 0) {
     return `${sym}${price.toFixed(2)}`;
   } else if (billingCycle === 30 || billingCycle === 31) {
-    cycleStr = "月";
+    cycleStr = t ? t("nodeCard.priceCycleMonth") : "月";
   } else if (billingCycle >= 89 && billingCycle <= 92) {
-    cycleStr = "季";
+    cycleStr = t ? t("nodeCard.priceCycleQuarter") : "季";
   } else if (billingCycle >= 180 && billingCycle <= 184) {
-    cycleStr = "半年";
+    cycleStr = t ? t("nodeCard.priceCycleHalfYear") : "半年";
   } else if (billingCycle >= 364 && billingCycle <= 366) {
-    cycleStr = "年";
+    cycleStr = t ? t("nodeCard.priceCycleYear") : "年";
   } else if (billingCycle >= 730 && billingCycle <= 732) {
-    cycleStr = "两年";
+    cycleStr = t ? t("nodeCard.priceCycleTwoYears") : "两年";
   } else if (billingCycle >= 1095 && billingCycle <= 1097) {
-    cycleStr = "三年";
+    cycleStr = t ? t("nodeCard.priceCycleThreeYears") : "三年";
   } else if (billingCycle >= 1825 && billingCycle <= 1827) {
-    cycleStr = "五年";
+    cycleStr = t ? t("nodeCard.priceCycleFiveYears") : "五年";
   }
 
   return `${sym}${price.toFixed(2)}/${cycleStr}`;

@@ -174,7 +174,8 @@ export const useNodeCommons = (node: NodeData & { stats?: any; _liveDataReady?: 
         node.price,
         node.currency,
         node.billing_cycle,
-        node.currency_code
+        node.currency_code,
+        t
       ),
       color: null,
       payload: {
