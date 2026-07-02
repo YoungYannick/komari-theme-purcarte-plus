@@ -19,6 +19,10 @@ const fetchPromiseMap = new Map<string, Promise<{ rates: ExchangeRates; lastUpda
 
 const apis = [
   {
+    buildUrl: (base: string) => `https://api.exchangerate.fun/latest?base=${base}`,
+    parse: (data: any): Record<string, number> | null => data.rates || null,
+  },
+  {
     buildUrl: (base: string) => `https://api.frankfurter.app/latest?from=${base}`,
     parse: (data: any): Record<string, number> | null => data.rates || null,
   },
