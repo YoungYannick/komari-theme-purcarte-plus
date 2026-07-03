@@ -19,14 +19,20 @@ const fetchPromiseMap = new Map<string, Promise<{ rates: ExchangeRates; lastUpda
 
 const apis = [
   {
+    id: "exchangerate-fun",
+    ttl: 3600000,
     buildUrl: (base: string) => `https://api.exchangerate.fun/latest?base=${base}`,
     parse: (data: any): Record<string, number> | null => data.rates || null,
   },
   {
+    id: "frankfurter",
+    ttl: 3600000,
     buildUrl: (base: string) => `https://api.frankfurter.app/latest?from=${base}`,
     parse: (data: any): Record<string, number> | null => data.rates || null,
   },
   {
+    id: "exchangerate-api_4",
+    ttl: 900000,
     buildUrl: (base: string) => `https://api.exchangerate-api.com/v4/latest/${base}`,
     parse: (data: any): Record<string, number> | null => data.rates || null,
   },
@@ -45,6 +51,17 @@ async function fetchRatesForBase(baseCurrency: string): Promise<{
   const promise = (async () => {
     for (const api of apis) {
       try {
+        const cacheKey = `ex_rates_${api.id}_${baseCurrency}`;
+        const cachedStr = localStorage.getItem(cacheKey);
+        if (cachedStr) {
+          const cachedData = JSON.parse(cachedStr);
+          if (Date.now() - cachedData.timestamp < api.ttl) {
+            const entry = { rates: cachedData.rates, lastUpdated: cachedData.lastUpdated };
+            cachedRatesMap.set(baseCurrency, entry);
+            return entry;
+          }
+        }
+
         const url = api.buildUrl(baseCurrency);
         const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
         if (res.ok) {
@@ -55,6 +72,13 @@ async function fetchRatesForBase(baseCurrency: string): Promise<{
             const result: ExchangeRates = { [baseCurrency]: 1, ...rates };
             const lastUpdated = new Date().toLocaleTimeString();
             const entry = { rates: result, lastUpdated };
+
+            localStorage.setItem(cacheKey, JSON.stringify({
+              timestamp: Date.now(),
+              rates: result,
+              lastUpdated
+            }));
+
             cachedRatesMap.set(baseCurrency, entry);
             return entry;
           }
@@ -110,6 +134,7 @@ export function useExchangeRates(baseCurrency: string = "CNY") {
 
   const refreshRates = useCallback(() => {
     cachedRatesMap.delete(baseCurrency);
+    apis.forEach(api => localStorage.removeItem(`ex_rates_${api.id}_${baseCurrency}`));
     fetchRatesForBase(baseCurrency).then(({ rates: r, lastUpdated: t }) => {
       if (mounted.current) {
         setRates(r);
