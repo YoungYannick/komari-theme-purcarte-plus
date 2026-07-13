@@ -264,7 +264,7 @@ class ApiService {
   }
 
   private metricTags(value: any): Record<string, string> | undefined {
-    const tags = value?.tag || value?.tags;
+    const tags = value?.tag || value?.tags || value?.labels;
     return tags && typeof tags === "object" ? tags : undefined;
   }
 
@@ -293,7 +293,7 @@ class ApiService {
   ): Promise<number> {
     if (this.useRpc) {
       const response = await this.rpcCall<
-        Array<{ name?: string; retention_days?: number }>
+        Array<{ name?: string; metric_key?: string; retention_days?: number }>
       >(
         "public:listMetricDefinitions",
         {},
@@ -302,7 +302,9 @@ class ApiService {
       if (response.status === "success" && Array.isArray(response.data)) {
         const keySet = new Set(metricKeys);
         const retentionDays = response.data
-          .filter((definition) => keySet.has(String(definition.name)))
+          .filter((definition) =>
+            keySet.has(String(definition.name || definition.metric_key))
+          )
           .map((definition) => Number(definition.retention_days))
           .filter((days) => Number.isFinite(days) && days > 0);
         if (retentionDays.length > 0) {
@@ -578,7 +580,7 @@ class ApiService {
       const response = await this.rpcFallback<any>([
         {
           method: "public:getRecordsByUUID",
-          params: { uuid, hours, load_type: "all" },
+          params: { uuid, hours: String(hours), load_type: "all" },
         },
         {
           method: "common:getRecords",
@@ -614,7 +616,7 @@ class ApiService {
       const response = await this.rpcFallback<any>([
         {
           method: "public:getPingRecords",
-          params: { uuid, hours },
+          params: { uuid, hours: String(hours) },
         },
         {
           method: "common:getRecords",
@@ -697,9 +699,10 @@ class ApiService {
   // 获取版本信息
   async getVersion(): Promise<{ version: string; hash: string }> {
     if (this.useRpc) {
-      const response = await this.rpcCall<{ version: string; hash: string }>(
-        "common:getVersion"
-      );
+      const response = await this.rpcFallback<{ version: string; hash: string }>([
+        { method: "public:getVersion" },
+        { method: "common:getVersion" },
+      ]);
       if (response.status === "success" && response.data) {
         return response.data;
       }
