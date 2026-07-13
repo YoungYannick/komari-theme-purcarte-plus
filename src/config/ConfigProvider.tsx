@@ -28,7 +28,7 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
     try {
       const { status, publicInfo } = await apiService.checkSiteStatus();
       setSiteStatus(status);
-      setPublicSettings(publicInfo);
+      let publicInfoForState = publicInfo;
 
       let mergedConfig: ConfigOptions;
       if (publicInfo) {
@@ -81,6 +81,23 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
           }
         }
       }
+
+      if (publicInfoForState && apiService.useRpc) {
+        const [loadMetricRetentionDays, pingMetricRetentionDays] =
+          await Promise.all([
+            apiService.getLoadMetricRetentionDays(publicInfoForState),
+            apiService.getPingMetricRetentionDays(publicInfoForState),
+          ]);
+        if (loadMetricRetentionDays > 0 || pingMetricRetentionDays > 0) {
+          publicInfoForState = {
+            ...publicInfoForState,
+            load_metric_retention_days: loadMetricRetentionDays || undefined,
+            ping_metric_retention_days: pingMetricRetentionDays || undefined,
+          };
+        }
+      }
+
+      setPublicSettings(publicInfoForState);
     } catch (error) {
       console.error("Failed to initialize site:", error);
       setConfig(DEFAULT_CONFIG);

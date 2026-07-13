@@ -61,6 +61,9 @@ export interface RpcPublicInfo {
   description: string;
   theme: string;
   theme_settings: object | null;
+  metric_retention_days?: number;
+  load_metric_retention_days?: number;
+  ping_metric_retention_days?: number;
   record_enabled: boolean;
   record_preserve_time: number;
   ping_record_preserve_time: number;

@@ -15,6 +15,11 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { useLocale } from "@/config/hooks";
 import { Card } from "@/components/ui/card";
 
+const toPositiveNumber = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+};
+
 const InstancePage = () => {
   const { uuid } = useParams<{ uuid: string }>();
   const navigate = useNavigate();
@@ -37,9 +42,23 @@ const InstancePage = () => {
   const isMobile = useIsMobile();
   const { t } = useLocale();
 
-  const maxRecordPreserveTime = publicSettings?.record_preserve_time || 0; // 默认0表示关闭
+  const loadMetricRetentionHours =
+    toPositiveNumber(
+      publicSettings?.load_metric_retention_days ??
+        publicSettings?.metric_retention_days
+    ) * 24;
+  const pingMetricRetentionHours =
+    toPositiveNumber(
+      publicSettings?.ping_metric_retention_days ??
+        publicSettings?.metric_retention_days
+    ) * 24;
+  const maxRecordPreserveTime =
+    loadMetricRetentionHours ||
+    toPositiveNumber(publicSettings?.record_preserve_time);
   const maxPingRecordPreserveTime =
-    publicSettings?.ping_record_preserve_time || 24; // 默认1天
+    pingMetricRetentionHours ||
+    toPositiveNumber(publicSettings?.ping_record_preserve_time) ||
+    24;
 
   const timeRanges = useMemo(() => {
     return [

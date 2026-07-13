@@ -76,7 +76,7 @@ function useNodesInternal() {
 
   const getRecentLoadHistory = useCallback(async (uuid: string) => {
     try {
-      const recentStats = await apiService.getNodeRecentStats(uuid);
+      const recentStats = await apiService.getRecentLoadHistory(uuid);
       if (!recentStats) return null;
 
       return { count: recentStats.length, records: recentStats };

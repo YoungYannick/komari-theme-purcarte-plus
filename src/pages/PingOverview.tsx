@@ -1,4 +1,4 @@
-import { memo, useState, useMemo, useEffect, useCallback } from "react";
+import { memo, useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -57,6 +57,11 @@ type SortDirection = "asc" | "desc";
 
 // localStorage 键
 const SERVER_SORT_KEY = "pingOverview_serverSort";
+
+const toPositiveNumber = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+};
 
 // 读写 localStorage 排序配置
 function loadSort<K extends string>(
@@ -215,8 +220,15 @@ const PingOverview = memo(() => {
     });
   };
 
+  const metricRetentionHours =
+    toPositiveNumber(
+      publicSettings?.ping_metric_retention_days ??
+        publicSettings?.metric_retention_days
+    ) * 24;
   const maxPingRecordPreserveTime =
-    publicSettings?.ping_record_preserve_time || 24;
+    metricRetentionHours ||
+    toPositiveNumber(publicSettings?.ping_record_preserve_time) ||
+    24;
 
   // 时间范围
   const timeRanges = useMemo(() => {
@@ -253,9 +265,14 @@ const PingOverview = memo(() => {
   >(new Map());
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
+  const fetchRequestIdRef = useRef(0);
 
   const fetchAllPingData = useCallback(async () => {
     if (!nodes || nodes.length === 0) return;
+    const requestId = ++fetchRequestIdRef.current;
+    setAllPingData(new Map());
+    setTimeRange(null);
+    setBrushIndices({});
     setDataLoading(true);
     setDataError(null);
 
@@ -281,12 +298,15 @@ const PingOverview = memo(() => {
           }
         }
         // 渐进式更新：每批到达即刷新
+        if (requestId !== fetchRequestIdRef.current) return;
         setAllPingData(new Map(map));
         if (i === 0) setDataLoading(false);
       }
     } catch (err: any) {
+      if (requestId !== fetchRequestIdRef.current) return;
       setDataError(err.message || "Failed to fetch ping data");
     } finally {
+      if (requestId !== fetchRequestIdRef.current) return;
       setDataLoading(false);
     }
   }, [nodes, hours, getPingHistory]);

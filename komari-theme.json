@@ -818,11 +818,11 @@
                 "type": "switch",
                 "default": true,
                 "help": {
-                    "zh-CN": "启用后将在支持的 Komari 版本（>=1.0.7）优先使用 JSON-RPC2 API 获取数据，以提升兼容性和性能，若出现问题请关闭此选项",
-                    "zh-TW": "啟用後將在支持的 Komari 版本（>=1.0.7）優先使用 JSON-RPC2 API 獲取數據，以提升兼容性和性能，若出現問題請關閉此選項",
-                    "en": "When enabled, prioritizes JSON-RPC2 API for data retrieval on supported Komari versions (>=1.0.7), improving compatibility and performance. Disable if issues occur.",
-                    "ja": "有効にすると、対応する Komari バージョン（>=1.0.7）で JSON-RPC2 API を優先使用してデータを取得し、互換性とパフォーマンスを向上させます。問題が発生した場合は無効にしてください。",
-                    "id": "Saat diaktifkan, mengutamakan API JSON-RPC2 untuk pengambilan data pada versi Komari yang didukung (>=1.0.7), meningkatkan kompatibilitas dan performa. Nonaktifkan jika terjadi masalah."
+                    "zh-CN": "启用后在支持的 Komari 版本优先使用 JSON-RPC2 获取节点、负载与延迟历史数据；Komari 1.2.6 历史数据使用 metrics RPC，并按负载/Ping 对应指标的 retention 分别判断时间范围上限；实时负载首屏仍按官方主题使用 /api/recent，旧版本会回退 common RPC 或 REST",
+                    "zh-TW": "啟用後在支援的 Komari 版本優先使用 JSON-RPC2 取得節點、負載與延遲歷史資料；Komari 1.2.6 歷史資料使用 metrics RPC，並按負載/Ping 對應指標的 retention 分別判斷時間範圍上限；實時負載首屏仍按官方主題使用 /api/recent，舊版本會回退 common RPC 或 REST",
+                    "en": "When enabled, supported Komari versions prefer JSON-RPC2 for nodes plus load and ping history. Komari 1.2.6 history uses metrics RPC and separates load/ping time-range limits by the matching metric retention. Realtime load still follows the official theme through /api/recent, and older versions fall back to common RPC or REST.",
+                    "ja": "有効にすると、対応する Komari バージョンでノード、負荷履歴、Ping 履歴の取得に JSON-RPC2 を優先します。Komari 1.2.6 の履歴は metrics RPC を使用し、負荷/Ping それぞれの該当指標 retention で時間範囲上限を判定します。リアルタイム負荷の初期表示は公式テーマと同じく /api/recent を使用します。旧バージョンは common RPC または REST にフォールバックします。",
+                    "id": "Saat diaktifkan, versi Komari yang didukung memprioritaskan JSON-RPC2 untuk node serta riwayat load dan ping. Riwayat Komari 1.2.6 memakai metrics RPC dan batas rentang waktu load/ping dipisahkan berdasarkan retensi metrik terkait. Load realtime awal tetap mengikuti tema resmi melalui /api/recent, dan versi lama fallback ke common RPC atau REST."
                 }
             },
             {

@@ -67,7 +67,7 @@
 - **前端配置编辑** — 支持管理员登录后通过标题栏按钮直接编辑主题配置，无需进入后台
 - **多语言配置声明** — `komari-theme.json` 支持中/繁/英/日/印尼五语言
 - **localStorage 配置** — 视图、外观等偏好设置可存储到浏览器本地，也可强制使用后台配置
-- **JSON-RPC2 API 适配** — 支持 Komari >=1.0.7 的 JSON-RPC2 API，涵盖节点数据、实时状态、负载/延迟历史、用户认证、公开设置等全部数据接口
+- **JSON-RPC2 API 适配** — 支持 Komari >=1.0.7 的 JSON-RPC2 API，并兼容 1.2.6 metrics 历史接口；负载/延迟历史优先使用 `public:queryMetrics`，负载与 Ping 时间范围上限分别按对应 metrics retention 判断，实时负载首屏按官方主题使用 `/api/recent`，其他数据按新公共 RPC → 旧 common RPC → REST API 顺序回退
 - **自定义 UI 文本** — 可视化编辑器自定义界面文本，无需手动填写配置
 - **向后兼容** — 旧版 `enableVideoBackground` 自动映射为新版 `backgroundMode`
 
@@ -327,7 +327,7 @@
 - **启用 JSON-RPC2 API 适配** (`enableJsonRPC2Api`)
   - **类型:** `switch`
   - **默认值:** `true`
-  - **说明:** 启用后将在支持的 Komari 版本（>=1.0.7）优先使用 JSON-RPC2 API 获取数据，以提升兼容性和性能，若出现问题请关闭此选项
+  - **说明:** 启用后将在支持的 Komari 版本优先使用 JSON-RPC2 API 获取节点、负载与 Ping 历史数据；Komari 1.2.6 的负载/Ping 历史优先使用 metrics RPC（`public:queryMetrics` / `public:getPingMetricStats`），时间范围上限按 `public:listMetricDefinitions` 中负载与 Ping 对应指标的 retention 分别判断，实时负载首屏按官方主题使用 `/api/recent`，旧版本自动回退到 common RPC 或 REST API
 
 - **是否在标题栏中显示统计信息** (`isShowStatsInHeader`)
   - **类型:** `switch`

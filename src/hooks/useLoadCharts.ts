@@ -5,6 +5,47 @@ import type { RpcNodeStatus } from "@/types/rpc";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import fillMissingTimePoints from "@/utils/RecordHelper";
 
+const HISTORY_NUMERIC_KEYS: Array<keyof HistoryRecord> = [
+  "cpu",
+  "gpu",
+  "ram",
+  "ram_total",
+  "swap",
+  "swap_total",
+  "load",
+  "temp",
+  "disk",
+  "disk_total",
+  "net_in",
+  "net_out",
+  "net_total_up",
+  "net_total_down",
+  "process",
+  "connections",
+  "connections_udp",
+];
+
+const MAX_REALTIME_POINTS = 30 * 5;
+
+const toFiniteNumber = (value: unknown): number | null => {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const normalizeHistoryRecord = (record: HistoryRecord): HistoryRecord => {
+  const normalized: Record<string, unknown> = { ...record };
+  for (const key of HISTORY_NUMERIC_KEYS) {
+    normalized[key] = toFiniteNumber(record[key]);
+  }
+  return normalized as unknown as HistoryRecord;
+};
+
 export const useLoadCharts = (node: NodeData | null, hours: number) => {
   const { getLoadHistory, getRecentLoadHistory } = useNodeData();
   const { liveData } = useLiveData();
@@ -25,7 +66,7 @@ export const useLoadCharts = (node: NodeData | null, hours: number) => {
       setError(null);
       try {
         const data = await getLoadHistory(node.uuid, hours);
-        const records = data?.records || [];
+        const records = (data?.records || []).map(normalizeHistoryRecord);
         setHistoricalData(records);
         setIsDataEmpty(records.length === 0);
 
@@ -38,7 +79,7 @@ export const useLoadCharts = (node: NodeData | null, hours: number) => {
     };
 
     fetchHistoricalData();
-  }, [node?.uuid, hours, getLoadHistory, isRealtime, isDataEmpty]);
+  }, [node?.uuid, hours, getLoadHistory, isRealtime]);
 
   // Fetch initial real-time data and handle WebSocket updates
   useEffect(() => {
@@ -49,7 +90,7 @@ export const useLoadCharts = (node: NodeData | null, hours: number) => {
       setError(null);
       try {
         const data = await getRecentLoadHistory(node.uuid);
-        setRealtimeData(data?.records || []);
+        setRealtimeData((data?.records || []).slice(-MAX_REALTIME_POINTS));
         setHistoricalData([]); // Clear historical data
       } catch (err: any) {
         setError(err.message || "Failed to fetch initial real-time data");
@@ -97,8 +138,8 @@ export const useLoadCharts = (node: NodeData | null, hours: number) => {
         return prevHistory;
       }
       const updatedHistory = [...prevHistory, newRecord];
-      return updatedHistory.length > 600
-        ? updatedHistory.slice(updatedHistory.length - 600)
+      return updatedHistory.length > MAX_REALTIME_POINTS
+        ? updatedHistory.slice(updatedHistory.length - MAX_REALTIME_POINTS)
         : updatedHistory;
     });
   }, [liveData, node?.uuid, isRealtime]);

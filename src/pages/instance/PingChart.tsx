@@ -76,6 +76,12 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
   }, [pingHistory?.tasks]);
 
   useEffect(() => {
+    setTimeRange(null);
+    setBrushIndices({});
+    setIsResetting(false);
+  }, [hours, node.uuid]);
+
+  useEffect(() => {
     if (isResetting) {
       setTimeRange(null);
       setBrushIndices({});

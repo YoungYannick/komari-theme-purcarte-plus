@@ -61,6 +61,9 @@ export interface PublicInfo {
   disable_password_login: boolean;
   oauth_enable: boolean;
   oauth_provider: string | null;
+  metric_retention_days?: number;
+  load_metric_retention_days?: number;
+  ping_metric_retention_days?: number;
   ping_record_preserve_time: number;
   private_site: boolean;
   record_enabled: boolean;
