@@ -4,7 +4,7 @@ import { useNodeData } from "@/contexts/NodeDataContext";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import type { NodeData } from "@/types/node";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CalendarDays, Search } from "lucide-react";
 import Instance from "./Instance";
 const LoadCharts = lazy(() => import("./LoadCharts"));
 const PingChart = lazy(() => import("./PingChart"));
@@ -14,10 +14,55 @@ import { useAppConfig } from "@/config";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useLocale } from "@/config/hooks";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+
+const CUSTOM_RANGE_HOURS = -1;
+
+type CustomTimeRange = {
+  start: string;
+  end: string;
+};
 
 const toPositiveNumber = (value: unknown) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+};
+
+const toDateTimeLocalValue = (date: Date) => {
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+};
+
+const buildRecentRange = (days: number): CustomTimeRange => {
+  const end = new Date();
+  const start = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
+  return {
+    start: toDateTimeLocalValue(start),
+    end: toDateTimeLocalValue(end),
+  };
+};
+
+const toQueryRange = (range: CustomTimeRange) => {
+  const start = new Date(range.start);
+  const end = new Date(range.end);
+  if (
+    !range.start ||
+    !range.end ||
+    !Number.isFinite(start.getTime()) ||
+    !Number.isFinite(end.getTime()) ||
+    end <= start
+  ) {
+    return null;
+  }
+  return { start: start.toISOString(), end: end.toISOString() };
+};
+
+const rangeHours = (range: { start: string; end: string } | null) => {
+  if (!range) return 24;
+  const hours =
+    (new Date(range.end).getTime() - new Date(range.start).getTime()) /
+    3_600_000;
+  return Number.isFinite(hours) && hours > 0 ? hours : 24;
 };
 
 const InstancePage = () => {
@@ -37,6 +82,13 @@ const InstancePage = () => {
   >("fading-in");
   const [loadHours, setLoadHours] = useState<number>(0);
   const [pingHours, setPingHours] = useState<number>(1); // 默认1小时
+  const [customDraftRange, setCustomDraftRange] = useState<CustomTimeRange>(
+    () => buildRecentRange(1)
+  );
+  const [customQueryRange, setCustomQueryRange] = useState<CustomTimeRange>(
+    () => buildRecentRange(1)
+  );
+  const [customRangeError, setCustomRangeError] = useState<string | null>(null);
   const { enableInstanceDetail, enablePingChart, publicSettings } =
     useAppConfig();
   const isMobile = useIsMobile();
@@ -130,6 +182,27 @@ const InstancePage = () => {
 
   const node = staticNode;
   const isOnline = stats?.online ?? false;
+  const customQuery = useMemo(
+    () => toQueryRange(customQueryRange),
+    [customQueryRange]
+  );
+  const activeHours = chartType === "load" ? loadHours : pingHours;
+  const isCustomRange = activeHours === CUSTOM_RANGE_HOURS;
+  const activeMaxRecordHours =
+    chartType === "load" ? maxRecordPreserveTime : maxPingRecordPreserveTime;
+  const customQuickRanges = useMemo(
+    () => [1, 7, 15, 30].filter((days) => days * 24 <= activeMaxRecordHours),
+    [activeMaxRecordHours]
+  );
+  const loadQueryRange =
+    loadHours === CUSTOM_RANGE_HOURS ? customQuery : null;
+  const pingQueryRange =
+    pingHours === CUSTOM_RANGE_HOURS ? customQuery : null;
+  const loadChartHours =
+    loadHours === CUSTOM_RANGE_HOURS ? rangeHours(customQuery) : loadHours;
+  const pingChartHours =
+    pingHours === CUSTOM_RANGE_HOURS ? rangeHours(customQuery) : pingHours;
+  const customInputMax = toDateTimeLocalValue(new Date());
 
   useEffect(() => {
     if (nodesLoading) {
@@ -170,6 +243,33 @@ const InstancePage = () => {
       return;
     }
     setChartType(nextType);
+  };
+
+  const handleCustomSelect = () => {
+    if (chartType === "load") {
+      setLoadHours(CUSTOM_RANGE_HOURS);
+    } else {
+      setPingHours(CUSTOM_RANGE_HOURS);
+    }
+    setCustomRangeError(null);
+  };
+
+  const applyCustomRange = () => {
+    const queryRange = toQueryRange(customDraftRange);
+    if (
+      !queryRange ||
+      rangeHours(queryRange) > activeMaxRecordHours
+    ) {
+      setCustomRangeError(t("instancePage.invalidTimeRange"));
+      return;
+    }
+    setCustomQueryRange(customDraftRange);
+    setCustomRangeError(null);
+  };
+
+  const selectRecentRange = (days: number) => {
+    setCustomDraftRange(buildRecentRange(days));
+    setCustomRangeError(null);
   };
 
   if (!node || !staticNode) {
@@ -252,6 +352,14 @@ const InstancePage = () => {
                   {range.label}
                 </Button>
               ))}
+              <Button
+                variant={
+                  loadHours === CUSTOM_RANGE_HOURS ? "default" : "ghost"
+                }
+                size="sm"
+                onClick={handleCustomSelect}>
+                {t("instancePage.customRange")}
+              </Button>
             </div>
           ) : (
             <div className="flex space-x-2 overflow-x-auto whitespace-nowrap">
@@ -264,9 +372,80 @@ const InstancePage = () => {
                   {range.label}
                 </Button>
               ))}
+              <Button
+                variant={
+                  pingHours === CUSTOM_RANGE_HOURS ? "default" : "ghost"
+                }
+                size="sm"
+                onClick={handleCustomSelect}>
+                {t("instancePage.customRange")}
+              </Button>
             </div>
           )}
         </Card>
+        {isCustomRange && (
+          <Card className="w-full p-3">
+            <div className="flex flex-col gap-3 @md:flex-row @md:flex-wrap @md:items-end">
+              <div className="flex items-center gap-2 text-sm font-medium @md:self-center">
+                <CalendarDays className="h-4 w-4" />
+                <span>{t("instancePage.customRange")}</span>
+              </div>
+              <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-secondary-foreground @md:min-w-56">
+                <span>{t("instancePage.startTime")}</span>
+                <Input
+                  type="datetime-local"
+                  value={customDraftRange.start}
+                  max={customInputMax}
+                  onChange={(event) => {
+                    setCustomDraftRange((current) => ({
+                      ...current,
+                      start: event.target.value,
+                    }));
+                    setCustomRangeError(null);
+                  }}
+                  aria-label={t("instancePage.startTime")}
+                />
+              </label>
+              <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-secondary-foreground @md:min-w-56">
+                <span>{t("instancePage.endTime")}</span>
+                <Input
+                  type="datetime-local"
+                  value={customDraftRange.end}
+                  max={customInputMax}
+                  onChange={(event) => {
+                    setCustomDraftRange((current) => ({
+                      ...current,
+                      end: event.target.value,
+                    }));
+                    setCustomRangeError(null);
+                  }}
+                  aria-label={t("instancePage.endTime")}
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {customQuickRanges.map((days) => (
+                  <Button
+                    key={days}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => selectRecentRange(days)}>
+                    {t("instancePage.recentDays", { count: days })}
+                  </Button>
+                ))}
+                <Button type="button" size="sm" onClick={applyCustomRange}>
+                  <Search className="h-4 w-4" />
+                  {t("instancePage.query")}
+                </Button>
+              </div>
+            </div>
+            {customRangeError && (
+              <div className="pt-2 text-sm text-red-500">
+                {customRangeError}
+              </div>
+            )}
+          </Card>
+        )}
       </div>
 
       <div
@@ -286,12 +465,17 @@ const InstancePage = () => {
           {displayedChartType === "load" && staticNode ? (
             <LoadCharts
               node={staticNode}
-              hours={loadHours}
+              hours={loadChartHours}
+              range={loadQueryRange}
               liveData={stats}
               isOnline={isOnline}
             />
           ) : displayedChartType === "ping" && staticNode ? (
-            <PingChart node={staticNode} hours={pingHours} />
+            <PingChart
+              node={staticNode}
+              hours={pingChartHours}
+              range={pingQueryRange}
+            />
           ) : null}
         </Suspense>
       </div>

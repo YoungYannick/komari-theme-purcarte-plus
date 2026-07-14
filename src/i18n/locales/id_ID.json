@@ -580,11 +580,14 @@
     "_": "Halaman Detail",
     "architecture": "Arsitektur",
     "cpu": "CPU",
+    "customRange": "Kustom",
     "days": "{{count}} hari",
     "disk": "Disk",
+    "endTime": "Waktu Selesai",
     "enteringNodeDetails": "Memasuki detail node...",
     "gpu": "GPU",
     "hours": "{{count}} jam",
+    "invalidTimeRange": "Pilih waktu mulai dan selesai yang valid",
     "lastUpdated": "Terakhir Diperbarui",
     "latency": "Latensi",
     "live": "Langsung",
@@ -595,8 +598,11 @@
     "optionLoad": "Beban",
     "optionPing": "Latensi",
     "os": "OS",
+    "query": "Cari",
     "realtimeNetwork": "Jaringan Realtime",
+    "recentDays": "{{count}} hari terakhir",
     "runtime": "Waktu Aktif",
+    "startTime": "Waktu Mulai",
     "swap": "Swap",
     "title": "Detail",
     "totalTraffic": "Total Traffic",
@@ -733,9 +739,9 @@
     "type": "Tipe"
   },
   "pingOverview": {
-    "_": "Ikhtisar Ping",
+    "_": "Ikhtisar Latensi",
     "deselectAll": "Batalkan Semua",
-    "entry": "Ikhtisar Ping",
+    "entry": "Ikhtisar Latensi",
     "loadingData": "Memuat data latensi semua server...",
     "monitorNodes": "Node Monitor",
     "noData": "Tidak ada data monitoring latensi",
@@ -747,7 +753,7 @@
     "sortByTargetDesc": "Target Turun",
     "sortByWeightAsc": "Bobot Naik",
     "sortByWeightDesc": "Bobot Turun",
-    "title": "Ikhtisar Monitor Latensi Global"
+    "title": "Ikhtisar Latensi"
   },
   "privatePage": {
     "_": "Pribadi",

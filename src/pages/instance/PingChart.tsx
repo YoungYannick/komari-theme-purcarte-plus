@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@radix-ui/react-label";
 import type { NodeData, PingTaskFull } from "@/types/node";
-import { apiService } from "@/services/api";
+import { apiService, type HistoryQueryRange } from "@/services/api";
 import Loading from "@/components/loading";
 import { usePingChart } from "@/hooks/usePingChart";
 import {
@@ -36,11 +36,12 @@ import { lttbDownsample, calculateAutoMaxPoints } from "@/utils/downsample";
 interface PingChartProps {
   node: NodeData;
   hours: number;
+  range?: HistoryQueryRange | null;
 }
 
-const PingChart = memo(({ node, hours }: PingChartProps) => {
+const PingChart = memo(({ node, hours, range }: PingChartProps) => {
   const { enableCutPeak, enableConnectBreaks, pingChartMaxPoints, monitorNodeSortMode, monitorNodeCustomOrder } = useAppConfig();
-  const { loading, error, pingHistory } = usePingChart(node, hours);
+  const { loading, error, pingHistory } = usePingChart(node, hours, range);
   const [visiblePingTasks, setVisiblePingTasks] = useState<number[]>([]);
   const [timeRange, setTimeRange] = useState<[number, number] | null>(null);
   const [brushIndices, setBrushIndices] = useState<{
@@ -79,7 +80,7 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
     setTimeRange(null);
     setBrushIndices({});
     setIsResetting(false);
-  }, [hours, node.uuid]);
+  }, [hours, node.uuid, range?.start, range?.end]);
 
   useEffect(() => {
     if (isResetting) {

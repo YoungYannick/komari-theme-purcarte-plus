@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNodeData } from "@/contexts/NodeDataContext";
 import type { HistoryRecord, NodeData } from "@/types/node";
+import type { HistoryQueryRange } from "@/services/api";
 import type { RpcNodeStatus } from "@/types/rpc";
 import { useLiveData } from "@/contexts/LiveDataContext";
 import fillMissingTimePoints from "@/utils/RecordHelper";
@@ -46,7 +47,11 @@ const normalizeHistoryRecord = (record: HistoryRecord): HistoryRecord => {
   return normalized as unknown as HistoryRecord;
 };
 
-export const useLoadCharts = (node: NodeData | null, hours: number) => {
+export const useLoadCharts = (
+  node: NodeData | null,
+  hours: number,
+  range?: HistoryQueryRange | null
+) => {
   const { getLoadHistory, getRecentLoadHistory } = useNodeData();
   const { liveData } = useLiveData();
   const [historicalData, setHistoricalData] = useState<HistoryRecord[]>([]);
@@ -65,7 +70,7 @@ export const useLoadCharts = (node: NodeData | null, hours: number) => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getLoadHistory(node.uuid, hours);
+        const data = await getLoadHistory(node.uuid, hours, range);
         const records = (data?.records || []).map(normalizeHistoryRecord);
         setHistoricalData(records);
         setIsDataEmpty(records.length === 0);
@@ -79,7 +84,7 @@ export const useLoadCharts = (node: NodeData | null, hours: number) => {
     };
 
     fetchHistoricalData();
-  }, [node?.uuid, hours, getLoadHistory, isRealtime]);
+  }, [node?.uuid, hours, range?.start, range?.end, getLoadHistory, isRealtime]);
 
   // Fetch initial real-time data and handle WebSocket updates
   useEffect(() => {
@@ -165,38 +170,29 @@ export const useLoadCharts = (node: NodeData | null, hours: number) => {
 
     // 确定与当前采样方案匹配的间隔，以便进行时间差比较
     const intervalSeconds =
-      hours === 1
-        ? minute
-        : hours === 4
-        ? minute
-        : hours > 120
-        ? hour
-        : minute * 15;
+      hours > 0 && hours <= 4 ? minute : hours > 120 ? hour : minute * 15;
 
-    // 如果最后一个数据点的时间与当前时间相差超过一个间隔，则在末尾添加一个当前时间的空点
-    const now = new Date();
+    // 如果最后一个数据点与查询终点相差超过一个间隔，则补一个查询终点空点。
+    const rangeEnd = range?.end ? new Date(range.end) : null;
+    const endAnchor =
+      rangeEnd && Number.isFinite(rangeEnd.getTime()) ? rangeEnd : new Date();
     if (stringifiedData.length > 0) {
       const lastDataTime = new Date(
         stringifiedData[stringifiedData.length - 1].time
       ).getTime();
-      if (now.getTime() - lastDataTime > intervalSeconds * 1000) {
-        stringifiedData.push({ time: now.toISOString() } as HistoryRecord);
+      if (endAnchor.getTime() - lastDataTime > intervalSeconds * 1000) {
+        stringifiedData.push({
+          time: endAnchor.toISOString(),
+        } as HistoryRecord);
       }
     }
 
     let filledData;
-    if (hours === 1) {
+    if (hours > 0 && hours <= 4) {
       filledData = fillMissingTimePoints(
         stringifiedData,
         minute,
-        hour,
-        minute * 2
-      );
-    } else if (hours === 4) {
-      filledData = fillMissingTimePoints(
-        stringifiedData,
-        minute,
-        hour * 4,
+        Math.max(minute, hour * hours),
         minute * 2
       );
     } else {
@@ -210,7 +206,7 @@ export const useLoadCharts = (node: NodeData | null, hours: number) => {
       );
     }
     return filledData.map((d) => ({ ...d, time: new Date(d.time!).getTime() }));
-  }, [isRealtime, realtimeData, historicalData, hours]);
+  }, [isRealtime, realtimeData, historicalData, hours, range?.end]);
 
   const memoryChartData = useMemo(() => {
     return chartData.map((item) => ({

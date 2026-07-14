@@ -11,6 +11,8 @@ import {
   ArrowDownUp,
   ArrowUp,
   ArrowDown,
+  CalendarDays,
+  Search,
 } from "lucide-react";
 import {
   LineChart,
@@ -25,6 +27,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
 import type { PingHistoryResponse, PingTaskFull } from "@/types/node";
 import Loading from "@/components/loading";
@@ -54,13 +57,55 @@ import { apiService } from "@/services/api";
 // 排序类型定义
 type ServerSortKey = "weight" | "name";
 type SortDirection = "asc" | "desc";
+type CustomTimeRange = {
+  start: string;
+  end: string;
+};
 
 // localStorage 键
 const SERVER_SORT_KEY = "pingOverview_serverSort";
+const CUSTOM_RANGE_HOURS = -1;
 
 const toPositiveNumber = (value: unknown) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+};
+
+const toDateTimeLocalValue = (date: Date) => {
+  const offset = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+};
+
+const buildRecentRange = (days: number): CustomTimeRange => {
+  const end = new Date();
+  const start = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
+  return {
+    start: toDateTimeLocalValue(start),
+    end: toDateTimeLocalValue(end),
+  };
+};
+
+const toQueryRange = (range: CustomTimeRange) => {
+  const start = new Date(range.start);
+  const end = new Date(range.end);
+  if (
+    !range.start ||
+    !range.end ||
+    !Number.isFinite(start.getTime()) ||
+    !Number.isFinite(end.getTime()) ||
+    end <= start
+  ) {
+    return null;
+  }
+  return { start: start.toISOString(), end: end.toISOString() };
+};
+
+const rangeHours = (range: { start: string; end: string } | null) => {
+  if (!range) return 1;
+  const hours =
+    (new Date(range.end).getTime() - new Date(range.start).getTime()) /
+    3_600_000;
+  return Number.isFinite(hours) && hours > 0 ? hours : 1;
 };
 
 // 读写 localStorage 排序配置
@@ -258,6 +303,43 @@ const PingOverview = memo(() => {
   }, [t, maxPingRecordPreserveTime]);
 
   const [hours, setHours] = useState<number>(1);
+  const [customDraftRange, setCustomDraftRange] = useState<CustomTimeRange>(
+    () => buildRecentRange(1)
+  );
+  const [customQueryRange, setCustomQueryRange] = useState<CustomTimeRange>(
+    () => buildRecentRange(1)
+  );
+  const [customRangeError, setCustomRangeError] = useState<string | null>(null);
+  const customQuery = useMemo(
+    () => toQueryRange(customQueryRange),
+    [customQueryRange]
+  );
+  const isCustomRange = hours === CUSTOM_RANGE_HOURS;
+  const queryRange = isCustomRange ? customQuery : null;
+  const chartHours = isCustomRange ? rangeHours(customQuery) : hours;
+  const customQuickRanges = useMemo(
+    () =>
+      [1, 7, 15, 30].filter(
+        (days) => days * 24 <= maxPingRecordPreserveTime
+      ),
+    [maxPingRecordPreserveTime]
+  );
+  const customInputMax = toDateTimeLocalValue(new Date());
+
+  const applyCustomRange = () => {
+    const nextRange = toQueryRange(customDraftRange);
+    if (!nextRange || rangeHours(nextRange) > maxPingRecordPreserveTime) {
+      setCustomRangeError(t("instancePage.invalidTimeRange"));
+      return;
+    }
+    setCustomQueryRange(customDraftRange);
+    setCustomRangeError(null);
+  };
+
+  const selectRecentRange = (days: number) => {
+    setCustomDraftRange(buildRecentRange(days));
+    setCustomRangeError(null);
+  };
 
   // 数据获取
   const [allPingData, setAllPingData] = useState<
@@ -285,7 +367,11 @@ const PingOverview = memo(() => {
         const results = await Promise.all(
           batch.map(async (node) => {
             try {
-              const data = await getPingHistory(node.uuid, hours);
+              const data = await getPingHistory(
+                node.uuid,
+                chartHours,
+                queryRange
+              );
               return { uuid: node.uuid, data };
             } catch {
               return { uuid: node.uuid, data: null };
@@ -309,7 +395,7 @@ const PingOverview = memo(() => {
       if (requestId !== fetchRequestIdRef.current) return;
       setDataLoading(false);
     }
-  }, [nodes, hours, getPingHistory]);
+  }, [nodes, chartHours, queryRange?.start, queryRange?.end, getPingHistory]);
 
   useEffect(() => {
     if (!nodesLoading && nodes && nodes.length > 0) {
@@ -609,7 +695,10 @@ const PingOverview = memo(() => {
     if (!merged.length) return [];
 
     const lastTs = (merged as any[])[(merged as any[]).length - 1].__ts;
-    const fromTs = lastTs - hours * 3600_000;
+    const fromTs = queryRange
+      ? new Date(queryRange.start).getTime()
+      : lastTs - chartHours * 3600_000;
+    const toTs = queryRange ? new Date(queryRange.end).getTime() : Infinity;
     let startIdx = 0;
     for (let i = 0; i < (merged as any[]).length; i++) {
       if ((merged as any[])[i].__ts >= fromTs) {
@@ -617,8 +706,8 @@ const PingOverview = memo(() => {
         break;
       }
     }
-    return (merged as any[]).slice(startIdx);
-  }, [allPingData, allLines, hours]);
+    return (merged as any[]).slice(startIdx).filter((row) => row.__ts <= toTs);
+  }, [allPingData, allLines, chartHours, queryRange?.start, queryRange?.end]);
 
   // 图表数据处理
   const chartData = useMemo(() => {
@@ -905,8 +994,80 @@ const PingOverview = memo(() => {
                 {range.label}
               </Button>
             ))}
+            <Button
+              variant={isCustomRange ? "default" : "ghost"}
+              size="sm"
+              onClick={() => {
+                setHours(CUSTOM_RANGE_HOURS);
+                setCustomRangeError(null);
+              }}>
+              {t("instancePage.customRange")}
+            </Button>
           </div>
         </Card>
+        {isCustomRange && (
+          <Card className="w-full p-3">
+            <div className="flex flex-col gap-3 @md:flex-row @md:flex-wrap @md:items-end">
+              <div className="flex items-center gap-2 text-sm font-medium @md:self-center">
+                <CalendarDays className="h-4 w-4" />
+                <span>{t("instancePage.customRange")}</span>
+              </div>
+              <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-secondary-foreground @md:min-w-56">
+                <span>{t("instancePage.startTime")}</span>
+                <Input
+                  type="datetime-local"
+                  value={customDraftRange.start}
+                  max={customInputMax}
+                  onChange={(event) => {
+                    setCustomDraftRange((current) => ({
+                      ...current,
+                      start: event.target.value,
+                    }));
+                    setCustomRangeError(null);
+                  }}
+                  aria-label={t("instancePage.startTime")}
+                />
+              </label>
+              <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-secondary-foreground @md:min-w-56">
+                <span>{t("instancePage.endTime")}</span>
+                <Input
+                  type="datetime-local"
+                  value={customDraftRange.end}
+                  max={customInputMax}
+                  onChange={(event) => {
+                    setCustomDraftRange((current) => ({
+                      ...current,
+                      end: event.target.value,
+                    }));
+                    setCustomRangeError(null);
+                  }}
+                  aria-label={t("instancePage.endTime")}
+                />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {customQuickRanges.map((days) => (
+                  <Button
+                    key={days}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => selectRecentRange(days)}>
+                    {t("instancePage.recentDays", { count: days })}
+                  </Button>
+                ))}
+                <Button type="button" size="sm" onClick={applyCustomRange}>
+                  <Search className="h-4 w-4" />
+                  {t("instancePage.query")}
+                </Button>
+              </div>
+            </div>
+            {customRangeError && (
+              <div className="pt-2 text-sm text-red-500">
+                {customRangeError}
+              </div>
+            )}
+          </Card>
+        )}
       </div>
 
       {/* 监测节点筛选 */}
@@ -1265,7 +1426,9 @@ const PingOverview = memo(() => {
                   {...tooltipProps}
                   content={
                     <ScrollableTooltip
-                      labelFormatter={(value: any) => lableFormatter(value, hours)}
+                      labelFormatter={(value: any) =>
+                        lableFormatter(value, chartHours)
+                      }
                     />
                   }
                 />

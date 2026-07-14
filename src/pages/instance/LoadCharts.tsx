@@ -20,10 +20,12 @@ import { CustomTooltip } from "@/components/ui/tooltip";
 import { lableFormatter, loadChartTimeFormatter } from "@/utils/chartHelper";
 import type { RpcNodeStatus } from "@/types/rpc";
 import { useLocale } from "@/config/hooks";
+import type { HistoryQueryRange } from "@/services/api";
 
 interface LoadChartsProps {
   node: NodeData;
   hours: number;
+  range?: HistoryQueryRange | null;
   liveData?: RpcNodeStatus;
   isOnline: boolean;
 }
@@ -43,9 +45,9 @@ const formatPercent = (value: unknown, decimals = 2) =>
   `${toFiniteNumber(value).toFixed(decimals)}%`;
 
 const LoadCharts = memo(
-  ({ node, hours, liveData, isOnline }: LoadChartsProps) => {
+  ({ node, hours, range, liveData, isOnline }: LoadChartsProps) => {
     const { loading, error, chartData, memoryChartData, isDataEmpty } =
-      useLoadCharts(node, hours);
+      useLoadCharts(node, hours, range);
     const { t } = useLocale();
 
     const chartDataLengthRef = useRef(0);

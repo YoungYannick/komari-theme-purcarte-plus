@@ -37,6 +37,11 @@ const LOAD_HISTORY_METRIC_KEYS = [
 
 const PING_HISTORY_METRIC_KEYS = ["ping.latency_ms", "ping.loss"];
 
+export type HistoryQueryRange = {
+  start: string;
+  end: string;
+};
+
 class ApiService {
   private baseUrl: string;
   public useRpc = false;
@@ -509,7 +514,8 @@ class ApiService {
 
   private async getLoadHistoryFromMetrics(
     uuid: string,
-    hours: number
+    hours: number,
+    range?: HistoryQueryRange | null
   ): Promise<{ count: number; records: HistoryRecord[] } | null> {
     const metricToRecordKey: Record<string, keyof HistoryRecord> = {
       "cpu.usage": "cpu",
@@ -566,7 +572,7 @@ class ApiService {
     const baseParams = {
       metric_keys: metricKeys,
       entity_id: uuid,
-      hours,
+      ...(range ? { start: range.start, end: range.end } : { hours }),
       max_points: 700,
       aggregation: "avg",
     };
@@ -593,13 +599,14 @@ class ApiService {
 
   private async getPingHistoryFromMetrics(
     uuid: string,
-    hours: number
+    hours: number,
+    range?: HistoryQueryRange | null
   ): Promise<PingHistoryResponse | null> {
     const metricKeys = await this.filterAvailableMetricKeys(["ping.latency_ms"]);
     const baseMetricParams = {
       metric_keys: metricKeys,
       entity_id: uuid,
-      hours,
+      ...(range ? { start: range.start, end: range.end } : { hours }),
       max_points: 700,
       aggregation: "avg",
     };
@@ -612,7 +619,11 @@ class ApiService {
       this.getPingTasks(),
       this.rpcCall<any>(
         "public:getPingMetricStats",
-        { entity_id: uuid, hours, max_points: 700 },
+        {
+          entity_id: uuid,
+          ...(range ? { start: range.start, end: range.end } : { hours }),
+          max_points: 700,
+        },
         { silent: true }
       ).then((response) =>
         response.status === "success" ? response.data : null
@@ -792,11 +803,18 @@ class ApiService {
   // 获取负载历史记录
   async getLoadHistory(
     uuid: string,
-    hours: number = 24
+    hours: number = 24,
+    range?: HistoryQueryRange | null
   ): Promise<{ count: number; records: HistoryRecord[] } | null> {
     if (this.useRpc) {
-      const metricHistory = await this.getLoadHistoryFromMetrics(uuid, hours);
+      const metricHistory = await this.getLoadHistoryFromMetrics(
+        uuid,
+        hours,
+        range
+      );
       if (metricHistory) return metricHistory;
+
+      if (range) return null;
 
       const recordsHistory = await this.getLoadHistoryFromRecordFallbacks(
         uuid,
@@ -820,10 +838,11 @@ class ApiService {
   // 获取 Ping 历史记录
   async getPingHistory(
     uuid: string,
-    hours: number = 24
+    hours: number = 24,
+    range?: HistoryQueryRange | null
   ): Promise<PingHistoryResponse | null> {
     if (this.useRpc) {
-      if (hours > 0 && hours <= 4) {
+      if (!range && hours > 0 && hours <= 4) {
         const recordsHistory = await this.getPingHistoryFromRecordFallbacks(
           uuid,
           hours
@@ -831,8 +850,14 @@ class ApiService {
         if (recordsHistory) return recordsHistory;
       }
 
-      const metricHistory = await this.getPingHistoryFromMetrics(uuid, hours);
+      const metricHistory = await this.getPingHistoryFromMetrics(
+        uuid,
+        hours,
+        range
+      );
       if (metricHistory) return metricHistory;
+
+      if (range) return null;
 
       const recordsHistory = await this.getPingHistoryFromRecordFallbacks(
         uuid,

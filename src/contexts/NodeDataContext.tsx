@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { apiService } from "../services/api";
+import type { HistoryQueryRange } from "../services/api";
 import type { NodeData } from "../types/node";
 
 // The core logic from the original useNodeData.ts, now kept internal to this file.
@@ -49,9 +50,13 @@ function useNodesInternal() {
   }, []);
 
   const getLoadHistory = useCallback(
-    async (uuid: string, hours: number = 24) => {
+    async (
+      uuid: string,
+      hours: number = 24,
+      range?: HistoryQueryRange | null
+    ) => {
       try {
-        const loadHistory = await apiService.getLoadHistory(uuid, hours);
+        const loadHistory = await apiService.getLoadHistory(uuid, hours, range);
         return loadHistory;
       } catch (err) {
         console.error("Failed to fetch load history:", err);
@@ -62,9 +67,13 @@ function useNodesInternal() {
   );
 
   const getPingHistory = useCallback(
-    async (uuid: string, hours: number = 24) => {
+    async (
+      uuid: string,
+      hours: number = 24,
+      range?: HistoryQueryRange | null
+    ) => {
       try {
-        const pingHistory = await apiService.getPingHistory(uuid, hours);
+        const pingHistory = await apiService.getPingHistory(uuid, hours, range);
         return pingHistory;
       } catch (err) {
         console.error("Failed to fetch ping history:", err);

@@ -580,11 +580,14 @@
     "_": "Details",
     "architecture": "Architecture",
     "cpu": "CPU",
+    "customRange": "Custom",
     "days": "{{count}}d",
     "disk": "Disk",
+    "endTime": "End Time",
     "enteringNodeDetails": "Entering node details...",
     "gpu": "GPU",
     "hours": "{{count}}h",
+    "invalidTimeRange": "Select a valid start and end time",
     "lastUpdated": "Last Updated",
     "latency": "Latency",
     "live": "Live",
@@ -595,8 +598,11 @@
     "optionLoad": "Load",
     "optionPing": "Latency",
     "os": "OS",
+    "query": "Query",
     "realtimeNetwork": "Realtime Network",
+    "recentDays": "Last {{count}}d",
     "runtime": "Uptime",
+    "startTime": "Start Time",
     "swap": "Swap",
     "title": "Details",
     "totalTraffic": "Total Traffic",
@@ -733,9 +739,9 @@
     "type": "Type"
   },
   "pingOverview": {
-    "_": "Ping Overview",
+    "_": "Latency Overview",
     "deselectAll": "Deselect All",
-    "entry": "Ping Overview",
+    "entry": "Latency Overview",
     "loadingData": "Loading latency data for all servers...",
     "monitorNodes": "Monitor Nodes",
     "noData": "No latency monitoring data",
@@ -747,7 +753,7 @@
     "sortByTargetDesc": "By Target Desc",
     "sortByWeightAsc": "By Weight Asc",
     "sortByWeightDesc": "By Weight Desc",
-    "title": "Global Latency Monitor Overview"
+    "title": "Latency Overview"
   },
   "privatePage": {
     "_": "Private",

@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNodeData } from "@/contexts/NodeDataContext";
 import type { PingHistoryResponse, NodeData } from "@/types/node";
+import type { HistoryQueryRange } from "@/services/api";
 
-export const usePingChart = (node: NodeData | null, hours: number) => {
+export const usePingChart = (
+  node: NodeData | null,
+  hours: number,
+  range?: HistoryQueryRange | null
+) => {
   const { getPingHistory } = useNodeData();
   const requestIdRef = useRef(0);
   const [pingHistory, setPingHistory] = useState<PingHistoryResponse | null>(
@@ -25,7 +30,7 @@ export const usePingChart = (node: NodeData | null, hours: number) => {
 
     const fetchHistory = async () => {
       try {
-        const data = await getPingHistory(node.uuid, hours);
+        const data = await getPingHistory(node.uuid, hours, range);
         if (requestId !== requestIdRef.current) return;
         setPingHistory(data);
       } catch (err: any) {
@@ -38,7 +43,7 @@ export const usePingChart = (node: NodeData | null, hours: number) => {
     };
 
     fetchHistory();
-  }, [node?.uuid, hours, getPingHistory]);
+  }, [node?.uuid, hours, range?.start, range?.end, getPingHistory]);
 
   return {
     loading,
