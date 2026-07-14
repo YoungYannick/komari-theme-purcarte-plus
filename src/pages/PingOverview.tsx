@@ -593,7 +593,12 @@ const PingOverview = memo(() => {
           }
         }
         const lineKey = `${uuid}_${rec.task_id}`;
-        grouped[use][lineKey] = rec.value < 0 ? null : rec.value;
+        grouped[use][lineKey] =
+          typeof rec.value === "number" &&
+          Number.isFinite(rec.value) &&
+          rec.value >= 0
+            ? rec.value
+            : null;
       }
     }
 

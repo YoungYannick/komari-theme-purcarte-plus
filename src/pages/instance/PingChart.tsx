@@ -133,7 +133,12 @@ const PingChart = memo(({ node, hours }: PingChartProps) => {
           bucketToAnchor.set(bucket, use);
         }
       }
-      grouped[use][rec.task_id] = rec.value < 0 ? null : rec.value;
+      grouped[use][rec.task_id] =
+        typeof rec.value === "number" &&
+        Number.isFinite(rec.value) &&
+        rec.value >= 0
+          ? rec.value
+          : null;
     }
 
     const merged = Object.values(grouped).sort(

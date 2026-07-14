@@ -50,6 +50,7 @@ class ApiService {
       timeout: ReturnType<typeof setTimeout>;
     }
   >();
+  private metricDefinitionKeysPromise: Promise<Set<string> | null> | null = null;
 
   constructor() {
     this.baseUrl = "";
@@ -218,12 +219,13 @@ class ApiService {
       ? data.records
           .map((record: any) => {
             const taskId = Number(record.task_id);
-            const value = Number(record.value);
+            const value =
+              record.value === null ? null : this.metricValue(record.value);
             if (!Number.isFinite(taskId)) return null;
             return {
               ...record,
               task_id: taskId,
-              value: Number.isFinite(value) ? value : -1,
+              value: value === null ? null : value,
             };
           })
           .filter(Boolean)
@@ -277,6 +279,172 @@ class ApiService {
       return Number.isFinite(parsed) ? parsed : null;
     }
     return null;
+  }
+
+  private hasFiniteMetricValue(records: Array<Record<string, unknown>>) {
+    return records.some((record) =>
+      Object.entries(record).some(
+        ([key, value]) =>
+          key !== "time" &&
+          key !== "client" &&
+          typeof value === "number" &&
+          Number.isFinite(value)
+      )
+    );
+  }
+
+  private hasFinitePingValue(records: PingHistoryRecord[]) {
+    return records.some(
+      (record) =>
+        typeof record.value === "number" &&
+        Number.isFinite(record.value) &&
+        record.value >= 0
+    );
+  }
+
+  private isPingMetricsConsistent(
+    records: PingHistoryRecord[],
+    statsData: any
+  ) {
+    if (!this.hasFinitePingValue(records)) return false;
+
+    const statsList = Array.isArray(statsData?.stats) ? statsData.stats : [];
+    if (statsList.length === 0) return true;
+
+    const maxByTask = new Map<number, number>();
+    for (const stat of statsList) {
+      const taskId = Number(stat.task_id);
+      const candidates = [stat.max, stat.latest, stat.avg]
+        .map((value) => this.metricValue(value))
+        .filter((value): value is number => value !== null && value >= 0);
+      if (!Number.isFinite(taskId) || candidates.length === 0) continue;
+      maxByTask.set(taskId, Math.max(...candidates));
+    }
+    if (maxByTask.size === 0) return true;
+
+    for (const record of records) {
+      if (
+        typeof record.value !== "number" ||
+        !Number.isFinite(record.value) ||
+        record.value < 0
+      ) {
+        continue;
+      }
+      const statMax = maxByTask.get(Number(record.task_id));
+      if (typeof statMax !== "number" || !Number.isFinite(statMax)) continue;
+      const allowedMax = Math.max(statMax * 3, statMax + 1000);
+      if (record.value > allowedMax) return false;
+    }
+
+    return true;
+  }
+
+  private async getLoadHistoryFromRecordFallbacks(
+    uuid: string,
+    hours: number
+  ): Promise<{ count: number; records: HistoryRecord[] } | null> {
+    const attempts = [
+      {
+        method: "public:getRecordsByUUID",
+        params: { uuid, hours: String(hours), load_type: "all" },
+      },
+      {
+        method: "common:getRecords",
+        params: {
+          uuid,
+          hours,
+          type: "load",
+          load_type: "all",
+          maxCount: -1,
+        },
+      },
+    ];
+
+    for (let i = 0; i < attempts.length; i++) {
+      const attempt = attempts[i];
+      const response = await this.rpcCall<any>(
+        attempt.method,
+        attempt.params,
+        { silent: i < attempts.length - 1 }
+      );
+      if (response.status !== "success" || !response.data) continue;
+      const normalized = this.normalizeLoadHistory(response.data, uuid);
+      if (
+        normalized &&
+        this.hasFiniteMetricValue(normalized.records as any[])
+      ) {
+        return normalized;
+      }
+    }
+
+    return null;
+  }
+
+  private async getPingHistoryFromRecordFallbacks(
+    uuid: string,
+    hours: number
+  ): Promise<PingHistoryResponse | null> {
+    const attempts = [
+      {
+        method: "public:getPingRecords",
+        params: { uuid, hours: String(hours) },
+      },
+      {
+        method: "common:getRecords",
+        params: {
+          uuid,
+          hours,
+          type: "ping",
+          task_id: -1,
+          maxCount: -1,
+        },
+      },
+    ];
+
+    for (let i = 0; i < attempts.length; i++) {
+      const attempt = attempts[i];
+      const response = await this.rpcCall<any>(
+        attempt.method,
+        attempt.params,
+        { silent: i < attempts.length - 1 }
+      );
+      if (response.status !== "success" || !response.data) continue;
+      const normalized = this.normalizePingHistory(response.data);
+      if (normalized && this.hasFinitePingValue(normalized.records)) {
+        return normalized;
+      }
+    }
+
+    return null;
+  }
+
+  private async getMetricDefinitionKeys() {
+    if (!this.metricDefinitionKeysPromise) {
+      this.metricDefinitionKeysPromise = this.rpcCall<
+        Array<{ name?: string; metric_key?: string }>
+      >("public:listMetricDefinitions", {}, { silent: true }).then((response) => {
+        if (response.status !== "success" || !Array.isArray(response.data)) {
+          return null;
+        }
+        return new Set(
+          response.data
+            .map((definition) =>
+              String(definition.name || definition.metric_key || "")
+            )
+            .filter(Boolean)
+        );
+      });
+    }
+    return this.metricDefinitionKeysPromise;
+  }
+
+  private async filterAvailableMetricKeys(metricKeys: string[]) {
+    const available = await this.getMetricDefinitionKeys();
+    if (!available) {
+      return metricKeys;
+    }
+    const filtered = metricKeys.filter((key) => available.has(key));
+    return filtered.length > 0 ? filtered : metricKeys;
   }
 
   private async queryMetrics(params: any): Promise<any | null> {
@@ -362,54 +530,83 @@ class ApiService {
       "connections.tcp": "connections",
       "connections.udp": "connections_udp",
     };
-    const metricKeys = Object.keys(metricToRecordKey);
-    const data = await this.queryMetrics({
+    const metricKeys = await this.filterAvailableMetricKeys(
+      Object.keys(metricToRecordKey)
+    );
+    const buildRecords = (data: any) => {
+      const seriesList = Array.isArray(data?.series) ? data.series : [];
+      if (seriesList.length === 0) return null;
+
+      const rows = new Map<string, Partial<HistoryRecord>>();
+      for (const series of seriesList) {
+        const metricKey = series.metric_key || series.name;
+        const recordKey = metricToRecordKey[metricKey];
+        if (!recordKey) continue;
+        for (const point of series.points || []) {
+          const time = new Date(point.time).getTime();
+          if (!Number.isFinite(time)) continue;
+          const timestamp = new Date(time).toISOString();
+          const row = rows.get(timestamp) || { client: uuid, time: timestamp };
+          (row as any)[recordKey] = this.metricValue(point.value);
+          rows.set(timestamp, row);
+        }
+      }
+
+      const records = Array.from(rows.values())
+        .sort(
+          (a, b) =>
+            new Date(a.time || 0).getTime() - new Date(b.time || 0).getTime()
+        )
+        .map((row) => ({ client: uuid, ...row } as HistoryRecord))
+        .filter((record) => this.hasFiniteMetricValue([record as any]));
+
+      return records.length > 0 ? records : null;
+    };
+
+    const baseParams = {
       metric_keys: metricKeys,
       entity_id: uuid,
       hours,
-      downsample: true,
       max_points: 700,
       aggregation: "avg",
+    };
+    const data = await this.queryMetrics({
+      ...baseParams,
+      downsample: true,
       fill_empty: true,
     });
-    const seriesList = Array.isArray(data?.series) ? data.series : [];
-    if (seriesList.length === 0) return null;
+    let records = buildRecords(data);
 
-    const rows = new Map<string, Partial<HistoryRecord>>();
-    for (const series of seriesList) {
-      const metricKey = series.metric_key || series.name;
-      const recordKey = metricToRecordKey[metricKey];
-      if (!recordKey) continue;
-      for (const point of series.points || []) {
-        const timestamp = new Date(point.time).toISOString();
-        const row = rows.get(timestamp) || { client: uuid, time: timestamp };
-        (row as any)[recordKey] = this.metricValue(point.value);
-        rows.set(timestamp, row);
-      }
+    if (!records || !this.hasFiniteMetricValue(records as any[])) {
+      const rawData = await this.queryMetrics({
+        ...baseParams,
+        downsample: false,
+        fill_empty: false,
+      });
+      records = buildRecords(rawData);
     }
 
-    const records = Array.from(rows.values())
-      .sort(
-        (a, b) =>
-          new Date(a.time || 0).getTime() - new Date(b.time || 0).getTime()
-      )
-      .map((row) => ({ client: uuid, ...row } as HistoryRecord));
-
-    return records.length > 0 ? { count: records.length, records } : null;
+    return records && this.hasFiniteMetricValue(records as any[])
+      ? { count: records.length, records }
+      : null;
   }
 
   private async getPingHistoryFromMetrics(
     uuid: string,
     hours: number
   ): Promise<PingHistoryResponse | null> {
+    const metricKeys = await this.filterAvailableMetricKeys(["ping.latency_ms"]);
+    const baseMetricParams = {
+      metric_keys: metricKeys,
+      entity_id: uuid,
+      hours,
+      max_points: 700,
+      aggregation: "avg",
+    };
     const [metricData, taskList, statsData] = await Promise.all([
       this.queryMetrics({
-        metric_keys: ["ping.latency_ms"],
-        entity_id: uuid,
-        hours,
+        ...baseMetricParams,
         downsample: true,
-        max_points: 700,
-        aggregation: "avg",
         fill_empty: true,
       }),
       this.getPingTasks(),
@@ -422,28 +619,52 @@ class ApiService {
       ),
     ]);
 
-    const seriesList = Array.isArray(metricData?.series)
-      ? metricData.series
-      : [];
-    if (seriesList.length === 0) return null;
+    const buildRecords = (data: any) => {
+      const seriesList = Array.isArray(data?.series) ? data.series : [];
+      if (seriesList.length === 0) return null;
 
-    const records: PingHistoryRecord[] = [];
-    const taskIds = new Set<number>();
-    for (const series of seriesList) {
-      for (const point of series.points || []) {
-        const tags = this.metricTags(point) || this.metricTags(series);
-        const taskId = Number(tags?.task_id);
-        if (!Number.isFinite(taskId)) continue;
-        taskIds.add(taskId);
-        const value = this.metricValue(point.value);
-        records.push({
-          task_id: taskId,
-          time: new Date(point.time).toISOString(),
-          value: value === null ? -1 : value,
-          client: uuid,
-        } as PingHistoryRecord);
+      const records: PingHistoryRecord[] = [];
+      const taskIds = new Set<number>();
+      for (const series of seriesList) {
+        for (const point of series.points || []) {
+          const tags = this.metricTags(point) || this.metricTags(series);
+          const taskId = Number(tags?.task_id);
+          const time = new Date(point.time).getTime();
+          if (!Number.isFinite(taskId) || !Number.isFinite(time)) continue;
+          const value = this.metricValue(point.value);
+          if (value === null) continue;
+          taskIds.add(taskId);
+          records.push({
+            task_id: taskId,
+            time: new Date(time).toISOString(),
+            value,
+            client: uuid,
+          } as PingHistoryRecord);
+        }
       }
+      return { records, taskIds };
+    };
+
+    let built = buildRecords(metricData);
+    if (
+      !built ||
+      !built.records.some(
+        (record) =>
+          typeof record.value === "number" && Number.isFinite(record.value)
+      )
+    ) {
+      const rawData = await this.queryMetrics({
+        ...baseMetricParams,
+        downsample: false,
+        fill_empty: false,
+      });
+      built = buildRecords(rawData);
     }
+    if (!built || !this.isPingMetricsConsistent(built.records, statsData)) {
+      return null;
+    }
+
+    const { records, taskIds } = built;
 
     const taskMap = new Map<number, PingTask>();
     for (const task of taskList) {
@@ -577,31 +798,23 @@ class ApiService {
       const metricHistory = await this.getLoadHistoryFromMetrics(uuid, hours);
       if (metricHistory) return metricHistory;
 
-      const response = await this.rpcFallback<any>([
-        {
-          method: "public:getRecordsByUUID",
-          params: { uuid, hours: String(hours), load_type: "all" },
-        },
-        {
-          method: "common:getRecords",
-          params: {
-            uuid,
-            hours,
-            type: "load",
-            load_type: "all",
-            maxCount: -1,
-          },
-        },
-      ]);
-      if (response.status === "success" && response.data) {
-        return this.normalizeLoadHistory(response.data, uuid);
-      }
+      const recordsHistory = await this.getLoadHistoryFromRecordFallbacks(
+        uuid,
+        hours
+      );
+      if (recordsHistory) return recordsHistory;
     }
     const response = await this.get<{
       count: number;
       records: HistoryRecord[];
     }>(`/api/records/load?uuid=${uuid}&hours=${hours}`);
-    return response.status === "success" ? response.data : null;
+    if (response.status === "success" && response.data?.records?.length) {
+      const normalized = this.normalizeLoadHistory(response.data, uuid);
+      return normalized && this.hasFiniteMetricValue(normalized.records as any[])
+        ? normalized
+        : null;
+    }
+    return null;
   }
 
   // 获取 Ping 历史记录
@@ -610,33 +823,33 @@ class ApiService {
     hours: number = 24
   ): Promise<PingHistoryResponse | null> {
     if (this.useRpc) {
+      if (hours > 0 && hours <= 4) {
+        const recordsHistory = await this.getPingHistoryFromRecordFallbacks(
+          uuid,
+          hours
+        );
+        if (recordsHistory) return recordsHistory;
+      }
+
       const metricHistory = await this.getPingHistoryFromMetrics(uuid, hours);
       if (metricHistory) return metricHistory;
 
-      const response = await this.rpcFallback<any>([
-        {
-          method: "public:getPingRecords",
-          params: { uuid, hours: String(hours) },
-        },
-        {
-          method: "common:getRecords",
-          params: {
-            uuid,
-            hours,
-            type: "ping",
-            task_id: -1,
-            maxCount: -1,
-          },
-        },
-      ]);
-      if (response.status === "success" && response.data) {
-        return this.normalizePingHistory(response.data);
-      }
+      const recordsHistory = await this.getPingHistoryFromRecordFallbacks(
+        uuid,
+        hours
+      );
+      if (recordsHistory) return recordsHistory;
     }
     const response = await this.get<PingHistoryResponse>(
       `/api/records/ping?uuid=${uuid}&hours=${hours}`
     );
-    return response.status === "success" ? response.data : null;
+    if (response.status === "success" && response.data?.records?.length) {
+      const normalized = this.normalizePingHistory(response.data);
+      return normalized && this.hasFinitePingValue(normalized.records)
+        ? normalized
+        : null;
+    }
+    return null;
   }
 
   // 获取监测节点任务列表（管理员API）

@@ -98,7 +98,7 @@ export interface HistoryRecord {
 export interface PingHistoryRecord {
   task_id: number;
   time: string;
-  value: number;
+  value: number | null;
 }
 
 export interface PingTask {

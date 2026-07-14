@@ -454,7 +454,7 @@ export function sampleDataByRetention(
  * @returns 包含丢包率和最新值的对象。
  */
 export function calculateTaskStats(
-  records: { time: string; task_id: number; value: number }[],
+  records: { time: string; task_id: number; value: number | null }[],
   taskId: number,
   timeRange: [number, number] | null
 ): { loss: number; latestValue: number | null; latestTime: string | null } {
@@ -469,7 +469,12 @@ export function calculateTaskStats(
     relevantRecords?.filter((rec) => rec.task_id === taskId) || [];
 
   const totalPings = taskRecords.length;
-  const successfulPings = taskRecords.filter((rec) => rec.value >= 0);
+  const successfulPings = taskRecords.filter(
+    (rec) =>
+      typeof rec.value === "number" &&
+      Number.isFinite(rec.value) &&
+      rec.value >= 0
+  );
   const loss =
     totalPings > 0 ? (1 - successfulPings.length / totalPings) * 100 : 0;
 
