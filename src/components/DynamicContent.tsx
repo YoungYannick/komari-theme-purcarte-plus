@@ -3,6 +3,44 @@ import { useAppConfig } from "@/config/hooks";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useTheme } from "@/hooks/useTheme";
 
+const hashString = (value: string) => {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+};
+
+const getPseudoRandomUrl = (urls: string[], cacheKey: string) => {
+  if (urls.length <= 1) return urls[0] || "";
+
+  const shuffledUrls = urls
+    .map((url, index) => ({
+      url,
+      index,
+      weight: hashString(`${cacheKey}|${url}|${index}`),
+    }))
+    .sort((a, b) => a.weight - b.weight || a.index - b.index)
+    .map((item) => item.url);
+  const storageKey = `purcarte-bg-cycle:${hashString(cacheKey).toString(36)}`;
+
+  try {
+    const storedIndex = Number(localStorage.getItem(storageKey));
+    const currentIndex =
+      Number.isInteger(storedIndex) && storedIndex >= 0
+        ? storedIndex % shuffledUrls.length
+        : 0;
+    localStorage.setItem(
+      storageKey,
+      String((currentIndex + 1) % shuffledUrls.length)
+    );
+    return shuffledUrls[currentIndex];
+  } catch {
+    return shuffledUrls[0];
+  }
+};
+
 export function DynamicContent({ children }: { children: ReactNode }) {
   const config = useAppConfig();
   const isMobile = useIsMobile();
@@ -29,8 +67,7 @@ export function DynamicContent({ children }: { children: ReactNode }) {
         .split(",")
         .map((u) => u.trim())
         .filter(Boolean);
-      const randomIndex = Math.floor(Math.random() * themeUrls.length);
-      const result = themeUrls[randomIndex] || "";
+      const result = getPseudoRandomUrl(themeUrls, cacheKey);
       cachedUrlsRef.current[cacheKey] = result;
       return result;
     },
@@ -46,6 +83,7 @@ export function DynamicContent({ children }: { children: ReactNode }) {
   const videoBgUrlMobile = config.videoBackgroundUrlMobile;
   const solidColorBg = config.solidColorBackground;
   const mainWidth = config.mainWidth;
+  const enableBlur = config.enableBlur;
   const blurValue = config.blurValue;
   const blurBackgroundColor = config.blurBackgroundColor;
   const bgAlignment = config.backgroundAlignment;
@@ -74,7 +112,7 @@ export function DynamicContent({ children }: { children: ReactNode }) {
 
     styles.push(`--main-width: ${mainWidth}vw;`);
     styles.push(`--body-background-url: url(${imageUrl});`);
-    styles.push(`--purcarte-blur: ${blurValue}px;`);
+    styles.push(`--purcarte-blur: ${enableBlur ? blurValue : 0}px;`);
 
     const colors = blurBackgroundColor.split("|").map((color) => color.trim());
     if (colors.length >= 2) {
@@ -86,7 +124,7 @@ export function DynamicContent({ children }: { children: ReactNode }) {
     }
 
     return `:root { ${styles.join(" ")} }`;
-  }, [mainWidth, blurValue, blurBackgroundColor, imageUrl]);
+  }, [mainWidth, enableBlur, blurValue, blurBackgroundColor, imageUrl]);
 
   useEffect(() => {
     const imageBackground = document.getElementById("image-background");

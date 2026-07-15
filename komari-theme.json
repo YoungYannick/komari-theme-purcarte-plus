@@ -86,11 +86,11 @@
                 "type": "string",
                 "default": "/assets/default-background-image.jpg",
                 "help": {
-                    "zh-CN": "支持多张背景图片或图片api，使用“,”分割，使用“|”分隔亮色模式和暗色模式，填写单个则同时用于亮暗模式",
-                    "zh-TW": "支持多張背景圖片或圖片api，使用“,”分割，使用“|”分隔亮色模式和暗色模式，填寫單個則同時用於亮暗模式",
-                    "en": "Supports multiple images/APIs separated by comma. Use '|' to separate Light and Dark modes. Single value applies to both.",
-                    "ja": "複数の画像/APIに対応（カンマ区切り）。「|」を使用してライトモードとダークモードを区切ります。単一の場合は両方に適用されます。",
-                    "id": "Mendukung beberapa gambar/API dipisahkan koma. Gunakan '|' untuk memisahkan mode Terang dan Gelap. Nilai tunggal berlaku untuk keduanya."
+                    "zh-CN": "支持多张背景图片或图片api，使用“,”分割，多项会按伪随机顺序轮换；使用“|”分隔亮色模式和暗色模式，填写单个则同时用于亮暗模式",
+                    "zh-TW": "支持多張背景圖片或圖片api，使用“,”分割，多項會按偽隨機順序輪換；使用“|”分隔亮色模式和暗色模式，填寫單個則同時用於亮暗模式",
+                    "en": "Supports multiple images/APIs separated by comma. Multiple entries rotate in pseudo-random order. Use '|' to separate Light and Dark modes. Single value applies to both.",
+                    "ja": "複数の画像/APIに対応（カンマ区切り）。複数項目は疑似ランダム順でローテーションします。「|」でライト/ダークモードを区切ります。単一の場合は両方に適用されます。",
+                    "id": "Mendukung beberapa gambar/API dipisahkan koma. Beberapa entri bergiliran dalam urutan pseudo-acak. Gunakan '|' untuk memisahkan mode Terang dan Gelap. Nilai tunggal berlaku untuk keduanya."
                 }
             },
             {
@@ -105,11 +105,11 @@
                 "type": "string",
                 "default": "",
                 "help": {
-                    "zh-CN": "移动端背景图片链接，与桌面端一样区分亮暗模式，留空则使用桌面端背景",
-                    "zh-TW": "移動端背景圖片連結，與桌面端一樣區分亮暗模式，留空則使用桌面端背景",
-                    "en": "Mobile background URL. Supports Light/Dark mode separation like desktop. Uses desktop background if empty.",
-                    "ja": "モバイル用背景URL。デスクトップ同様にライト/ダークモードを区別します。空の場合はデスクトップ背景を使用します。",
-                    "id": "URL latar mobile. Mendukung pemisahan mode Terang/Gelap seperti desktop. Menggunakan latar desktop jika kosong."
+                    "zh-CN": "移动端背景图片链接，多个使用“,”分割并按伪随机顺序轮换，与桌面端一样区分亮暗模式，留空则使用桌面端背景",
+                    "zh-TW": "移動端背景圖片連結，多個使用“,”分割並按偽隨機順序輪換，與桌面端一樣區分亮暗模式，留空則使用桌面端背景",
+                    "en": "Mobile background URL. Multiple entries separated by comma rotate in pseudo-random order. Supports Light/Dark mode separation like desktop. Uses desktop background if empty.",
+                    "ja": "モバイル用背景URL。複数項目はカンマ区切りで疑似ランダム順にローテーションします。デスクトップ同様にライト/ダークモードを区別します。空の場合はデスクトップ背景を使用します。",
+                    "id": "URL latar mobile. Beberapa entri dipisahkan koma dan bergiliran dalam urutan pseudo-acak. Mendukung pemisahan mode Terang/Gelap seperti desktop. Menggunakan latar desktop jika kosong."
                 }
             },
             {
@@ -163,11 +163,11 @@
                 "type": "string",
                 "default": "/assets/LanternRivers_1080p15fps2Mbps3s.mp4",
                 "help": {
-                    "zh-CN": "视频背景链接，使用“|”分隔亮色模式和暗色模式，填写单个则同时用于亮暗模式，建议使用无声视频，且视频文件较大时可能会影响加载速度",
-                    "zh-TW": "視頻背景連結，使用“|”分隔亮色模式和暗色模式，填寫單個則同時用於亮暗模式，建議使用無聲視頻，且視頻文件較大時可能會影響加載速度",
-                    "en": "Video URL. Use '|' to separate Light/Dark modes. Silent videos recommended. Large files may affect loading speed.",
-                    "ja": "動画URL。「|」でライト/ダークモードを区切ります。無音動画を推奨。ファイルサイズが大きいと読み込み速度に影響する場合があります。",
-                    "id": "URL video. Gunakan '|' untuk memisahkan mode Terang/Gelap. Video tanpa suara disarankan. File besar dapat mempengaruhi kecepatan loading."
+                    "zh-CN": "视频背景链接，多个使用“,”分割并按伪随机顺序轮换；使用“|”分隔亮色模式和暗色模式，填写单个则同时用于亮暗模式，建议使用无声视频，且视频文件较大时可能会影响加载速度",
+                    "zh-TW": "視頻背景連結，多個使用“,”分割並按偽隨機順序輪換；使用“|”分隔亮色模式和暗色模式，填寫單個則同時用於亮暗模式，建議使用無聲視頻，且視頻文件較大時可能會影響加載速度",
+                    "en": "Video URL. Multiple entries separated by comma rotate in pseudo-random order. Use '|' to separate Light/Dark modes. Silent videos recommended. Large files may affect loading speed.",
+                    "ja": "動画URL。複数項目はカンマ区切りで疑似ランダム順にローテーションします。「|」でライト/ダークモードを区切ります。無音動画を推奨。ファイルサイズが大きいと読み込み速度に影響する場合があります。",
+                    "id": "URL video. Beberapa entri dipisahkan koma dan bergiliran dalam urutan pseudo-acak. Gunakan '|' untuk memisahkan mode Terang/Gelap. Video tanpa suara disarankan. File besar dapat mempengaruhi kecepatan loading."
                 }
             },
             {
@@ -182,15 +182,15 @@
                 "type": "string",
                 "default": "",
                 "help": {
-                    "zh-CN": "移动端视频背景链接，多个使用“,”分割，与桌面端一样区分亮暗模式，留空则使用桌面端视频",
-                    "zh-TW": "移動端視頻背景連結，多個使用“,”分割，與桌面端一樣區分亮暗模式，留空則使用桌面端視頻",
-                    "en": "Mobile video URL. Separated by comma. Supports Light/Dark mode. Uses desktop video if empty.",
-                    "ja": "モバイル動画URL。カンマ区切り。ライト/ダークモード対応。空の場合はデスクトップ動画を使用します。",
-                    "id": "URL video mobile. Dipisahkan koma. Mendukung mode Terang/Gelap. Menggunakan video desktop jika kosong."
+                    "zh-CN": "移动端视频背景链接，多个使用“,”分割并按伪随机顺序轮换，与桌面端一样区分亮暗模式，留空则使用桌面端视频",
+                    "zh-TW": "移動端視頻背景連結，多個使用“,”分割並按偽隨機順序輪換，與桌面端一樣區分亮暗模式，留空則使用桌面端視頻",
+                    "en": "Mobile video URL. Multiple entries separated by comma rotate in pseudo-random order. Supports Light/Dark mode. Uses desktop video if empty.",
+                    "ja": "モバイル動画URL。複数項目はカンマ区切りで疑似ランダム順にローテーションします。ライト/ダークモード対応。空の場合はデスクトップ動画を使用します。",
+                    "id": "URL video mobile. Beberapa entri dipisahkan koma dan bergiliran dalam urutan pseudo-acak. Mendukung mode Terang/Gelap. Menggunakan video desktop jika kosong."
                 }
             },
             {
-                "key": "backagroundAlignment",
+                "key": "backgroundAlignment",
                 "name": {
                     "zh-CN": "背景对齐方式",
                     "zh-TW": "背景對齊方式",

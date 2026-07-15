@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useContext, useMemo } from "react";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useAppConfig } from "@/config";
 import { DEFAULT_CONFIG, allAppearance, allViewModes, allColors } from "@/config/default";
@@ -115,6 +115,13 @@ const useStoredState = <T>(
   });
 
   useEffect(() => {
+    if (!enableLocalStorage) {
+      setState(defaultValue);
+      return;
+    }
+  }, [defaultValue, enableLocalStorage]);
+
+  useEffect(() => {
     if (enableLocalStorage) {
       try {
         localStorage.setItem(key, JSON.stringify(state));
@@ -136,6 +143,15 @@ export const useThemeManager = () => {
   } = useAppConfig();
   const defaultstatusCardsVisibility = useAppConfig().statusCardsVisibility;
   const isMobile = useIsMobile();
+  const defaultViewMode = isMobile ? selectMobileDefaultView : selectedDefaultView;
+  const defaultStatusCardsVisibility = useMemo(() => {
+    const visibility: { [key: string]: boolean } = {};
+    defaultstatusCardsVisibility.split(",").forEach((item) => {
+      const [key, value] = item.split(":");
+      visibility[key] = value === "true";
+    });
+    return visibility as ThemeContextType["statusCardsVisibility"];
+  }, [defaultstatusCardsVisibility]);
 
   const [appearance, setAppearance] = useStoredState<AppearanceType>(
     "appearance",
@@ -151,29 +167,13 @@ export const useThemeManager = () => {
 
   const [viewMode, setViewMode] = useStoredState<ViewModeType>(
     "nodeViewMode",
-    selectedDefaultView,
+    defaultViewMode,
     (v): v is ViewModeType => allViewModes.includes(v)
   );
 
-  useEffect(() => {
-    if (selectMobileDefaultView && isMobile) {
-      setViewMode(selectMobileDefaultView);
-    }
-    if (!isMobile) {
-      setViewMode(selectedDefaultView);
-    }
-  }, [isMobile, selectMobileDefaultView, selectedDefaultView, setViewMode]);
-
   const [statusCardsVisibility, setStatusCardsVisibility] = useStoredState(
     "statusCardsVisibility",
-    (() => {
-      const visibility: { [key: string]: boolean } = {};
-      defaultstatusCardsVisibility.split(",").forEach((item) => {
-        const [key, value] = item.split(":");
-        visibility[key] = value === "true";
-      });
-      return visibility as ThemeContextType["statusCardsVisibility"];
-    })()
+    defaultStatusCardsVisibility
   );
 
   const handleSetStatusCardsVisibility = (
@@ -181,10 +181,6 @@ export const useThemeManager = () => {
   ) => {
     setStatusCardsVisibility((prev) => ({ ...prev, ...newVisibility }));
   };
-
-  useEffect(() => {
-    setColor(selectThemeColor);
-  }, [selectThemeColor, setColor]);
 
   const resolvedAppearance = useSystemTheme(appearance);
 

@@ -11,6 +11,7 @@ export interface ConfigOptions {
   videoBackgroundUrl: string; // 桌面端视频背景URL
   videoBackgroundUrlMobile: string; // 移动端视频背景URL
   backgroundAlignment: string; // 背景对齐方式
+  enableBlur: boolean; // 是否启用磨砂玻璃效果
   blurValue: number; // 磨砂玻璃模糊值
   blurBackgroundColor: string; // 磨砂玻璃背景颜色
   enableTransparentTags: boolean; // 是否启用标签透明背景
@@ -102,6 +103,7 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   videoBackgroundUrl: "/assets/LanternRivers_1080p15fps2Mbps3s.mp4",
   videoBackgroundUrlMobile: "",
   backgroundAlignment: "cover,top",
+  enableBlur: true,
   blurValue: 5,
   blurBackgroundColor: "rgba(255, 255, 255, 0.5)|rgba(0, 0, 0, 0.5)",
   enableTransparentTags: true,

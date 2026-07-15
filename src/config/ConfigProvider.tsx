@@ -13,6 +13,11 @@ interface ConfigProviderProps {
   children: ReactNode;
 }
 
+type LegacyThemeSettings = Partial<ConfigOptions> & {
+  backagroundAlignment?: unknown;
+  enableVideoBackground?: unknown;
+};
+
 /**
  * 配置提供者组件，用于将配置传递给子组件
  */
@@ -34,7 +39,7 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
       let mergedConfig: ConfigOptions;
       if (publicInfo) {
         const rawSettings =
-          (publicInfo.theme_settings as Partial<ConfigOptions>) || {};
+          (publicInfo.theme_settings as LegacyThemeSettings) || {};
         // 从后端配置中过滤掉 undefined/null 值，以防止
         // 覆盖 DEFAULT_CONFIG 的默认值（修复 React 错误 #130）
         // 对于 string 类型的配置项，允许空字符串通过（用户可能故意清空）
@@ -43,6 +48,13 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
             ([k, v]) => v !== undefined && v !== null && (v !== "" || typeof DEFAULT_CONFIG[k as keyof ConfigOptions] === "string")
           )
         ) as Partial<ConfigOptions>;
+        if (
+          !themeSettings.backgroundAlignment &&
+          typeof rawSettings.backagroundAlignment === "string" &&
+          rawSettings.backagroundAlignment.trim()
+        ) {
+          themeSettings.backgroundAlignment = rawSettings.backagroundAlignment;
+        }
         mergedConfig = {
           ...DEFAULT_CONFIG,
           ...themeSettings,
@@ -54,7 +66,7 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
         // 向后兼容：旧版 enableVideoBackground: true → backgroundMode: "video"
         if (
           !themeSettings.backgroundMode &&
-          (rawSettings as Record<string, unknown>).enableVideoBackground === true
+          rawSettings.enableVideoBackground === true
         ) {
           mergedConfig.backgroundMode = "video";
         }
