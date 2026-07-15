@@ -14,6 +14,7 @@ import {
   calculateMonthlyExpense,
   normalizeCurrencyToCode,
 } from "./financeUtils";
+import { hasDelimitedTag, normalizeFreeTag } from "@/utils/tagHelper";
 import { ServerTradeModal } from "./ServerTradeModal";
 import { useLocale } from "@/config/hooks";
 import {
@@ -73,7 +74,8 @@ function calculateFinanceData(
   rates: ExchangeRates,
   excludeFree: boolean,
   sortBy: SortBy,
-  t: (key: string, params?: Record<string, string | number>) => string
+  t: (key: string, params?: Record<string, string | number>) => string,
+  freeTag: string
 ): FinanceData {
   const sorted = sortNodes(nodes, sortBy);
   const now = new Date();
@@ -84,7 +86,7 @@ function calculateFinanceData(
   const specialCases: string[] = [];
 
   const items = sorted.map((node) => {
-    const isFreeTag = node.tags ? node.tags.includes(t("enhanced.finance.freeTag")) : false;
+    const isFreeTag = hasDelimitedTag(node.tags, freeTag);
     const { price: priceBase, isSpecialFree } = parsePriceToBase(node, rates);
     const { remainingValue, isLongTerm } = calculateRemainingValue(
       node,
@@ -101,8 +103,8 @@ function calculateFinanceData(
       specialCases.push(`${node.name} (${t("enhanced.finance.longTermChicken")})`);
       tooltipText = t("enhanced.finance.longTermTooltip");
     } else if (isFreeTag && excludeFree) {
-      specialCases.push(`${node.name} (${t("enhanced.finance.freeTag")})`);
-      tooltipText = `${node.name} (${t("enhanced.finance.freeTag")})`;
+      specialCases.push(`${node.name} (${freeTag})`);
+      tooltipText = `${node.name} (${freeTag})`;
     }
 
     // excludeFree 开启时白嫖机不计入汇总，列表中仍正常显示剩余价值
@@ -137,8 +139,9 @@ function calculateFinanceData(
 export function FinanceWidget() {
   const { nodes } = useNodeData();
   const { t } = useLocale();
-  const { enableSearchButton, enableAdvancedSearch } = useAppConfig();
+  const { enableSearchButton, enableAdvancedSearch, freeTag } = useAppConfig();
   const isAdvancedSearchEnabled = enableSearchButton && enableAdvancedSearch;
+  const configuredFreeTag = normalizeFreeTag(freeTag);
   const [isOpen, setIsOpen] = useState(false);
   const [userCurrency, setUserCurrency] = useState<string>(
     () => localStorage.getItem("fin_currency") || "CNY"
@@ -200,8 +203,8 @@ export function FinanceWidget() {
   }, [nodes]);
 
   const financeData = useMemo(
-    () => calculateFinanceData(nodes, rates, excludeFree, sortBy, t),
-    [nodes, rates, excludeFree, sortBy, t]
+    () => calculateFinanceData(nodes, rates, excludeFree, sortBy, t, configuredFreeTag),
+    [nodes, rates, excludeFree, sortBy, t, configuredFreeTag]
   );
 
   const sym = CURRENCY_SYMBOLS[userCurrency] || userCurrency;
@@ -466,8 +469,8 @@ export function FinanceWidget() {
                 className={`finance-btn${excludeFree ? " active" : ""}`}
                 title={
                   excludeFree
-                    ? t("enhanced.finance.excludeFreeOn")
-                    : t("enhanced.finance.excludeFreeOff")
+                    ? t("enhanced.finance.excludeFreeOn", { tag: configuredFreeTag })
+                    : t("enhanced.finance.excludeFreeOff", { tag: configuredFreeTag })
                 }
                 onClick={handleToggleFree}>
                 <svg

@@ -139,10 +139,10 @@ const NodeTableRow = ({
               const parts: string[] = [];
               if (isOnline && stats) {
                 if (showExpiry) parts.push(expired_at);
-                if (showUptime) parts.push(formatUptime(stats.uptime));
+                if (showUptime) parts.push(formatUptime(stats.uptime, t));
               } else if (!isOnline) {
                 if (showExpiry) parts.push(expired_at);
-                if (showUptime && stats?.time) parts.push(`${t("node.lastSeen")} ${formatLastSeen(stats.time)}`);
+                if (showUptime && stats?.time) parts.push(`${t("node.lastSeen")} ${formatLastSeen(stats.time, t)}`);
               }
               const text = parts.length > 0
                 ? parts.join(" | ")
@@ -290,7 +290,8 @@ const NodeTableRow = ({
                   <div className="text-xs text-secondary-foreground">
                     {formatTrafficLimit(
                       node.traffic_limit,
-                      node.traffic_limit_type
+                      node.traffic_limit_type,
+                      t
                     )}
                   </div>
                 </>
@@ -317,7 +318,8 @@ const NodeTableRow = ({
                   <div>
                     {formatTrafficLimit(
                       node.traffic_limit,
-                      node.traffic_limit_type
+                      node.traffic_limit_type,
+                      t
                     )}
                   </div>
                 )}

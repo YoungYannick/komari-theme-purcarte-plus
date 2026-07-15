@@ -169,12 +169,12 @@ export const NodeCompact = ({ node, onShowDetails }: NodeCompactProps) => {
                   {isOnline && stats ? (
                     <>
                       <span className="mr-1">{t("node.uptime")}</span>
-                      <span>{formatUptime(stats.uptime)}</span>
+                      <span>{formatUptime(stats.uptime, t)}</span>
                     </>
                   ) : stats?.time ? (
                     <>
                       <span className="mr-1">{t("node.lastSeen")}</span>
-                      <span>{formatLastSeen(stats.time)}</span>
+                      <span>{formatLastSeen(stats.time, t)}</span>
                     </>
                   ) : (
                     t("node.offline")

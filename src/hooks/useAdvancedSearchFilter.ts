@@ -20,6 +20,8 @@ import type {
 import { TEXT_FIELD_KEYS } from "@/types/advancedSearch";
 import type { ExchangeRates } from "@/components/enhanced/useExchangeRates";
 import { parsePriceToCNY } from "@/components/enhanced/financeUtils";
+import { DEFAULT_FREE_TAG } from "@/config/default";
+import { hasDelimitedTag, normalizeFreeTag } from "@/utils/tagHelper";
 
 /**
  * 单位转换为字节
@@ -117,10 +119,11 @@ function searchPriceToCNY(
 function matchPriceField(
   node: NodeData,
   filter: PriceFilter,
-  rates?: ExchangeRates
+  rates?: ExchangeRates,
+  freeTag: string = DEFAULT_FREE_TAG
 ): boolean {
   if (filter.isFreeSearch) {
-    return node.price === -1;
+    return node.price === -1 || hasDelimitedTag(node.tags, normalizeFreeTag(freeTag));
   }
 
   // 获取节点价格（转 CNY 或直接使用）
@@ -308,7 +311,8 @@ function matchSwapField(
 export function applyAdvancedFilters(
   nodes: (NodeData & { stats?: any })[],
   state: AdvancedSearchState,
-  rates?: ExchangeRates
+  rates?: ExchangeRates,
+  freeTag: string = DEFAULT_FREE_TAG
 ): (NodeData & { stats?: any })[] {
   return nodes.filter((node) => {
     // 1. 统一文本搜索：跨所有文本字段模糊匹配
@@ -330,7 +334,7 @@ export function applyAdvancedFilters(
       return false;
 
     // 4. 价格字段匹配（货币感知）
-    if (!matchPriceField(node, state.price, rates)) return false;
+    if (!matchPriceField(node, state.price, rates, freeTag)) return false;
 
     // 5. CPU 核心数匹配
     if (!matchCpuCores(node.cpu_cores, state.cpu_cores)) return false;

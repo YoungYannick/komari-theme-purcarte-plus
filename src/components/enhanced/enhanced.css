@@ -493,11 +493,6 @@
   transition: all 0.2s;
 }
 
-.trade-input:focus {
-  border-color: var(--accent-9);
-  background: var(--gray-a3);
-}
-
 .trade-result-box {
   background: var(--gray-a2);
   border: 1px solid var(--gray-a5);

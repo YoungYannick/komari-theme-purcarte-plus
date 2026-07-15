@@ -6,6 +6,7 @@ import { apiService, getWsService } from "@/services/api";
 import Loading from "@/components/loading";
 import { defaultTexts, otherTexts } from "./locales";
 import { mergeTexts, deepMerge } from "@/utils/localeUtils";
+import i18next from "i18next";
 
 // 配置提供者属性类型
 interface ConfigProviderProps {
@@ -139,7 +140,10 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
 
   if (!isLoaded || !config) {
     return (
-      <Loading text="加载配置中..." className={!loading ? "fade-out" : ""} />
+      <Loading
+        text={i18next.t("homePage.loadingConfig")}
+        className={!loading ? "fade-out" : ""}
+      />
     );
   }
 

@@ -24,7 +24,7 @@ export const useNodeListCommons = (searchTerm: string, advancedSearchState?: Adv
     getGroups,
   } = useNodeData() as NodeDataContextType;
   const { liveData } = useLiveData() as LiveDataContextType;
-  const { isOfflineNodesBehind, defaultSelectedGroup } = useAppConfig();
+  const { isOfflineNodesBehind, defaultSelectedGroup, freeTag } = useAppConfig();
   const { rates } = useExchangeRates();
   const [selectedGroup, setSelectedGroup] = useState(
     defaultSelectedGroup || ALL_GROUP
@@ -69,7 +69,7 @@ export const useNodeListCommons = (searchTerm: string, advancedSearchState?: Adv
 
     // 高级搜索激活时，使用高级过滤替代简单名称搜索
     if (advancedSearchState && !isStateDefault(advancedSearchState)) {
-      nodes = applyAdvancedFilters(nodes, advancedSearchState, rates) as typeof nodes;
+      nodes = applyAdvancedFilters(nodes, advancedSearchState, rates, freeTag) as typeof nodes;
     } else {
       // 简单搜索：名称模糊匹配
       nodes = nodes.filter((node: NodeData) =>
@@ -117,6 +117,7 @@ export const useNodeListCommons = (searchTerm: string, advancedSearchState?: Adv
     searchTerm,
     advancedSearchState,
     rates,
+    freeTag,
     sortKey,
     sortOrder,
     isOfflineNodesBehind,
@@ -165,7 +166,7 @@ export const useNodeCommons = (node: NodeData & { stats?: any; _liveDataReady?: 
   const isOnline = stats ? stats.online : false;
   // 离线确认：liveData 已到达且节点不在线（包括 stats 为 undefined 的从未上线节点）
   const isConfirmedOffline = _liveDataReady ? !isOnline : false;
-  const price = formatPrice(node.price, node.currency, node.billing_cycle);
+  const price = formatPrice(node.price, node.currency, node.billing_cycle, t);
 
   const cpuUsage = stats && isOnline ? stats.cpu : 0;
   const memUsage =

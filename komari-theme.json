@@ -304,6 +304,25 @@
                 }
             },
             {
+                "key": "freeTag",
+                "name": {
+                    "zh-CN": "免费标签文本",
+                    "zh-TW": "免費標籤文字",
+                    "en": "Free Tag Text",
+                    "ja": "無料タグ文字",
+                    "id": "Teks Tag Gratis"
+                },
+                "type": "string",
+                "default": "白嫖中",
+                "help": {
+                    "zh-CN": "用于识别免费/白嫖节点的标签文本。资产统计的排除免费标签、高级搜索的搜索免费都会按此文本匹配节点 tags，默认：白嫖中",
+                    "zh-TW": "用於識別免費節點的標籤文字。資產統計的排除免費標籤、進階搜尋的搜尋免費都會按此文字匹配節點 tags，預設：白嫖中",
+                    "en": "Tag text used to identify free nodes. Asset statistics exclusion and Advanced Search free search both match node tags by this text. Default: 白嫖中",
+                    "ja": "無料ノードを識別するタグ文字です。資産統計の無料タグ除外と高度な検索の無料検索は、この文字でノード tags を照合します。デフォルト: 白嫖中",
+                    "id": "Teks tag untuk mengenali node gratis. Pengecualian tag gratis di statistik aset dan pencarian gratis di pencarian lanjutan akan mencocokkan tags node dengan teks ini. Bawaan: 白嫖中"
+                }
+            },
+            {
                 "key": "selectThemeColor",
                 "name": {
                     "zh-CN": "默认主题颜色",

@@ -238,7 +238,8 @@ export const NodeGrid = ({
               <span>
                 {formatTrafficLimit(
                   node.traffic_limit,
-                  node.traffic_limit_type
+                  node.traffic_limit_type,
+                  t
                 )}
               </span>
               <span>
@@ -304,7 +305,8 @@ export const NodeGrid = ({
                     <div className="text-right">
                       {formatTrafficLimit(
                         node.traffic_limit,
-                        node.traffic_limit_type
+                        node.traffic_limit_type,
+                        t
                       )}
                     </div>
                   )}
@@ -340,12 +342,12 @@ export const NodeGrid = ({
                     {isOnline && stats ? (
                       <>
                         <span className="mr-1">{t("node.uptime")}</span>
-                        <span>{formatUptime(stats.uptime)}</span>
+                        <span>{formatUptime(stats.uptime, t)}</span>
                       </>
                     ) : stats?.time ? (
                       <>
                         <span className="mr-1">{t("node.lastSeen")}</span>
-                        <span>{formatLastSeen(stats.time)}</span>
+                        <span>{formatLastSeen(stats.time, t)}</span>
                       </>
                     ) : (
                       t("node.offline")

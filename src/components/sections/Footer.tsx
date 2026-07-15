@@ -52,10 +52,10 @@ function parseStartTime(timeStr: string): Date | null {
  * 根据模板计算运行时间字符串
  * 模板变量: {days} {hours} {minutes} {seconds}
  */
-function formatUptime(startTime: Date, template: string): string {
+function formatUptime(startTime: Date, template: string, notStartedText: string): string {
   const now = new Date();
   const diff = now.getTime() - startTime.getTime();
-  if (diff < 0) return "尚未启动";
+  if (diff < 0) return notStartedText;
 
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -99,13 +99,14 @@ const Footer = forwardRef<
       setUptimeText("");
       return;
     }
-    const tpl = serverUptimeTemplate || "已不稳定运行 {days} 天 {hours} 小时 {minutes} 分钟 {seconds} 秒";
-    setUptimeText(formatUptime(startTime, tpl));
+    const tpl = serverUptimeTemplate;
+    const notStartedText = t("time.notStarted");
+    setUptimeText(formatUptime(startTime, tpl, notStartedText));
     const timer = setInterval(() => {
-      setUptimeText(formatUptime(startTime, tpl));
+      setUptimeText(formatUptime(startTime, tpl, notStartedText));
     }, 1000);
     return () => clearInterval(timer);
-  }, [enableServerUptime, startTime, serverUptimeTemplate]);
+  }, [enableServerUptime, startTime, serverUptimeTemplate, t]);
 
   // 解析自定义内容（支持实际换行符和 ${n} 两种分隔方式）
   const customLines = useMemo(() => {

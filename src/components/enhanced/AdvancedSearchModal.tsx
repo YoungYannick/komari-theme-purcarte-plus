@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X, RotateCcw } from "lucide-react";
-import { useLocale } from "@/config/hooks";
+import { useAppConfig, useLocale } from "@/config/hooks";
 import type {
   AdvancedSearchState,
   ValidationErrors,
@@ -35,6 +35,7 @@ import type {
 } from "@/types/advancedSearch";
 import { parseTextInput } from "@/types/advancedSearch";
 import { CURRENCY_OPTIONS } from "@/components/enhanced/useExchangeRates";
+import { normalizeFreeTag } from "@/utils/tagHelper";
 import "./AdvancedSearchModal.css";
 
 // ======================== 工具函数 ========================
@@ -106,6 +107,8 @@ export function AdvancedSearchModal({
   setValidationErrors,
 }: AdvancedSearchModalProps) {
   const { t } = useLocale();
+  const { freeTag } = useAppConfig();
+  const configuredFreeTag = normalizeFreeTag(freeTag);
   const modalRef = useRef<HTMLDivElement>(null);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -290,6 +293,7 @@ export function AdvancedSearchModal({
               onChange={(price) => setState((prev) => ({ ...prev, price }))}
               errors={validationErrors}
               t={t}
+              freeTag={configuredFreeTag}
             />
 
             {/* CPU 核心数：精确/范围切换 */}
@@ -486,11 +490,13 @@ function PriceSearchField({
   onChange,
   errors,
   t,
+  freeTag,
 }: {
   state: PriceFilter;
   onChange: (val: PriceFilter) => void;
   errors: ValidationErrors;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
+  freeTag: string;
 }) {
   const fromError = errors.price_from;
   const toError = errors.price_to;
@@ -627,7 +633,9 @@ function PriceSearchField({
           )}
         </>
       )}
-      <span className="search-field-help">{t("advancedSearch.priceHelp")}</span>
+      <span className="search-field-help">
+        {t("advancedSearch.priceHelp", { tag: freeTag })}
+      </span>
       {fromError && (
         <span className="search-field-error">
           {t("advancedSearch.rangeFrom")}: {t(`advancedSearch.validation.${fromError}`)}

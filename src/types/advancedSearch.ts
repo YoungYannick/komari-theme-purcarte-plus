@@ -36,7 +36,7 @@ export type TrafficLimitTypeFilter =
 
 /** 价格字段过滤器 */
 export interface PriceFilter {
-  isFreeSearch: boolean; // 开关：ON = 搜索免费 (price=-1)
+  isFreeSearch: boolean; // 开关：ON = 搜索免费 (price=-1 或配置的免费标签)
   isExact: boolean; // 开关：ON = 精确匹配，OFF = 范围搜索（默认）
   exactValue: string; // 精确价格匹配值
   rangeFrom: string; // 范围模式：最低价格

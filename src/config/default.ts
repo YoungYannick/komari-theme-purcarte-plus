@@ -1,3 +1,5 @@
+export const DEFAULT_FREE_TAG = "白嫖中";
+
 // 配置类型定义
 export interface ConfigOptions {
   isShowConfigEditButtonInLogined: boolean; // 是否在登录时显示配置编辑按钮
@@ -13,6 +15,7 @@ export interface ConfigOptions {
   blurBackgroundColor: string; // 磨砂玻璃背景颜色
   enableTransparentTags: boolean; // 是否启用标签透明背景
   tagDefaultColorList: string; // 标签默认颜色列表
+  freeTag: string; // 免费/白嫖标签文本
   selectThemeColor: ColorType; // 默认主题颜色
   enableLocalStorage: boolean; // 是否启用本地存储
   selectedDefaultView: ViewModeType; // 默认视图模式
@@ -104,6 +107,7 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   enableTransparentTags: true,
   tagDefaultColorList:
     "lime,cyan,pink,crimson,iris,violet,plum,indigo,blue,jade,mint,grass,teal,sky,red,ruby,tomato,orange,amber,yellow,green,purple,gold,bronze,brown,gray,mauve,slate",
+  freeTag: DEFAULT_FREE_TAG,
   selectThemeColor: "violet",
   enableLocalStorage: true,
   selectedDefaultView: "grid",
