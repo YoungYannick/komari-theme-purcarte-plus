@@ -177,7 +177,7 @@
   right: 20px;
   top: 70px;
   z-index: 1040;
-  width: 280px;
+  width: 340px;
   border-radius: 16px;
   transition: all 0.3s ease;
   display: flex;
@@ -286,7 +286,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 140px;
+  max-width: 200px;
   color: var(--gray-12);
 }
 

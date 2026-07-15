@@ -75,7 +75,7 @@ export const NodeCompact = ({ node, onShowDetails }: NodeCompactProps) => {
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
         <Link
           to={`/instance/${node.uuid}`}
-          className="hover:underline hover:text-(--accent-11)">
+          className="text-inherit transition-opacity duration-200 hover:opacity-80">
           <div className="flex items-center gap-2 min-w-0">
             <Flag flag={node.region} size={"4"}></Flag>
             <img

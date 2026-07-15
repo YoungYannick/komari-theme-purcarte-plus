@@ -310,6 +310,9 @@ const PingOverview = memo(() => {
     () => buildRecentRange(1)
   );
   const [customRangeError, setCustomRangeError] = useState<string | null>(null);
+  const [customQuickRangeDays, setCustomQuickRangeDays] = useState<
+    number | null
+  >(1);
   const customQuery = useMemo(
     () => toQueryRange(customQueryRange),
     [customQueryRange]
@@ -338,6 +341,7 @@ const PingOverview = memo(() => {
 
   const selectRecentRange = (days: number) => {
     setCustomDraftRange(buildRecentRange(days));
+    setCustomQuickRangeDays(days);
     setCustomRangeError(null);
   };
 
@@ -348,11 +352,15 @@ const PingOverview = memo(() => {
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
   const fetchRequestIdRef = useRef(0);
+  const hasLoadedPingDataRef = useRef(false);
+  const [hasLoadedPingData, setHasLoadedPingData] = useState(false);
 
   const fetchAllPingData = useCallback(async () => {
     if (!nodes || nodes.length === 0) return;
     const requestId = ++fetchRequestIdRef.current;
-    setAllPingData(new Map());
+    if (!hasLoadedPingDataRef.current) {
+      setAllPingData(new Map());
+    }
     setTimeRange(null);
     setBrushIndices({});
     setDataLoading(true);
@@ -393,6 +401,8 @@ const PingOverview = memo(() => {
       setDataError(err.message || "Failed to fetch ping data");
     } finally {
       if (requestId !== fetchRequestIdRef.current) return;
+      hasLoadedPingDataRef.current = true;
+      setHasLoadedPingData(true);
       setDataLoading(false);
     }
   }, [nodes, chartHours, queryRange?.start, queryRange?.end, getPingHistory]);
@@ -560,32 +570,68 @@ const PingOverview = memo(() => {
   const [visibleServers, setVisibleServers] = useState<Set<string>>(
     new Set()
   );
+  const hasInitializedMonitorSelectionRef = useRef(false);
+  const hasInitializedServerSelectionRef = useRef(false);
+  const knownMonitorNodesRef = useRef<Set<string>>(new Set());
+  const knownServerNodesRef = useRef<Set<string>>(new Set());
 
-  // 默认全选：数据变化时选中所有
   useEffect(() => {
-    if (uniqueMonitorNodes.length > 0) {
-      setVisibleMonitorNodes((prev) => {
-        if (prev.size === 0) return new Set(uniqueMonitorNodes);
-        return prev;
+    if (uniqueMonitorNodes.length === 0) return;
+
+    const knownNames = new Set(uniqueMonitorNodes);
+    const previousKnownNames = knownMonitorNodesRef.current;
+    setVisibleMonitorNodes((prev) => {
+      if (!hasInitializedMonitorSelectionRef.current) {
+        hasInitializedMonitorSelectionRef.current = true;
+        return new Set(uniqueMonitorNodes);
+      }
+
+      const next = new Set([...prev].filter((name) => knownNames.has(name)));
+      uniqueMonitorNodes.forEach((name) => {
+        if (!previousKnownNames.has(name)) {
+          next.add(name);
+        }
       });
-    }
+      return next;
+    });
+    knownMonitorNodesRef.current = knownNames;
   }, [uniqueMonitorNodes]);
 
   useEffect(() => {
-    if (filteredServerNodes.length > 0) {
-      setVisibleServers((prev) => {
-        if (prev.size === 0)
-          return new Set(filteredServerNodes.map((s) => s.uuid));
-        return prev;
-      });
-    }
-  }, [filteredServerNodes]);
+    if (uniqueServerNodes.length === 0) return;
 
-  // 分组变化时同步可见服务器
-  useEffect(() => {
-    const filteredUuids = new Set(filteredServerNodes.map((s) => s.uuid));
-    setVisibleServers(filteredUuids);
-  }, [selectedGroups, filteredServerNodes]);
+    const knownUuids = new Set(uniqueServerNodes.map((server) => server.uuid));
+    const previousKnownUuids = knownServerNodesRef.current;
+    setVisibleServers((prev) => {
+      if (!hasInitializedServerSelectionRef.current) {
+        hasInitializedServerSelectionRef.current = true;
+        return new Set(uniqueServerNodes.map((server) => server.uuid));
+      }
+
+      const next = new Set([...prev].filter((uuid) => knownUuids.has(uuid)));
+      uniqueServerNodes.forEach((server) => {
+        if (!previousKnownUuids.has(server.uuid)) {
+          next.add(server.uuid);
+        }
+      });
+      return next;
+    });
+    knownServerNodesRef.current = knownUuids;
+  }, [uniqueServerNodes]);
+
+  const filteredServerUuids = useMemo(
+    () => filteredServerNodes.map((server) => server.uuid),
+    [filteredServerNodes]
+  );
+
+  const displayedServerUuids = useMemo(
+    () => new Set(filteredServerUuids),
+    [filteredServerUuids]
+  );
+
+  const allFilteredServersVisible =
+    filteredServerUuids.length > 0 &&
+    filteredServerUuids.every((uuid) => visibleServers.has(uuid));
 
   // 单条线的显隐状态（通过统计卡片点击控制）
   const [hiddenLines, setHiddenLines] = useState<Set<string>>(new Set());
@@ -595,10 +641,11 @@ const PingOverview = memo(() => {
       return (
         visibleMonitorNodes.has(line.taskName) &&
         visibleServers.has(line.uuid) &&
+        displayedServerUuids.has(line.uuid) &&
         !hiddenLines.has(line.key)
       );
     },
-    [visibleMonitorNodes, visibleServers, hiddenLines]
+    [visibleMonitorNodes, visibleServers, displayedServerUuids, hiddenLines]
   );
 
   const handleToggleLine = (key: string) => {
@@ -824,11 +871,15 @@ const PingOverview = memo(() => {
   };
 
   const handleToggleAllServers = () => {
-    if (visibleServers.size === filteredServerNodes.length) {
-      setVisibleServers(new Set());
-    } else {
-      setVisibleServers(new Set(filteredServerNodes.map((s) => s.uuid)));
-    }
+    setVisibleServers((prev) => {
+      const next = new Set(prev);
+      if (allFilteredServersVisible) {
+        filteredServerUuids.forEach((uuid) => next.delete(uuid));
+      } else {
+        filteredServerUuids.forEach((uuid) => next.add(uuid));
+      }
+      return next;
+    });
   };
 
   // 断点标记
@@ -898,7 +949,9 @@ const PingOverview = memo(() => {
   const filteredLineStats = useMemo(() => {
     const filtered = lineStats.filter(
       (stat) =>
-        visibleServers.has(stat.uuid) && visibleMonitorNodes.has(stat.taskName)
+        visibleServers.has(stat.uuid) &&
+        displayedServerUuids.has(stat.uuid) &&
+        visibleMonitorNodes.has(stat.taskName)
     );
 
     // 构建服务器排序索引（复用 filteredServerNodes 的顺序）
@@ -922,22 +975,29 @@ const PingOverview = memo(() => {
     });
 
     return filtered;
-  }, [lineStats, visibleServers, visibleMonitorNodes, filteredServerNodes, uniqueMonitorNodes]);
+  }, [lineStats, visibleServers, displayedServerUuids, visibleMonitorNodes, filteredServerNodes, uniqueMonitorNodes]);
 
   // 切换全部线条显隐
   const handleToggleAllLines = () => {
     const allMonitorSelected =
       visibleMonitorNodes.size === uniqueMonitorNodes.length;
-    const allServersSelected =
-      visibleServers.size === filteredServerNodes.length;
+    const allServersSelected = allFilteredServersVisible;
     const noneHidden = hiddenLines.size === 0;
 
     if (allMonitorSelected && allServersSelected && noneHidden) {
       setVisibleMonitorNodes(new Set());
-      setVisibleServers(new Set());
+      setVisibleServers((prev) => {
+        const next = new Set(prev);
+        filteredServerUuids.forEach((uuid) => next.delete(uuid));
+        return next;
+      });
     } else {
       setVisibleMonitorNodes(new Set(uniqueMonitorNodes));
-      setVisibleServers(new Set(filteredServerNodes.map((s) => s.uuid)));
+      setVisibleServers((prev) => {
+        const next = new Set(prev);
+        filteredServerUuids.forEach((uuid) => next.add(uuid));
+        return next;
+      });
       setHiddenLines(new Set());
     }
   };
@@ -950,12 +1010,12 @@ const PingOverview = memo(() => {
 
   const allVisible =
     visibleMonitorNodes.size === uniqueMonitorNodes.length &&
-    visibleServers.size === filteredServerNodes.length &&
+    allFilteredServersVisible &&
     hiddenLines.size === 0;
 
   const isLoading = nodesLoading || dataLoading;
 
-  if (isLoading && allPingData.size === 0) {
+  if (isLoading && !hasLoadedPingData && allPingData.size === 0) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loading text={t("pingOverview.loadingData")} />
@@ -1023,6 +1083,7 @@ const PingOverview = memo(() => {
                       ...current,
                       start: event.target.value,
                     }));
+                    setCustomQuickRangeDays(null);
                     setCustomRangeError(null);
                   }}
                   aria-label={t("instancePage.startTime")}
@@ -1039,6 +1100,7 @@ const PingOverview = memo(() => {
                       ...current,
                       end: event.target.value,
                     }));
+                    setCustomQuickRangeDays(null);
                     setCustomRangeError(null);
                   }}
                   aria-label={t("instancePage.endTime")}
@@ -1049,7 +1111,9 @@ const PingOverview = memo(() => {
                   <Button
                     key={days}
                     type="button"
-                    variant="ghost"
+                    variant={
+                      customQuickRangeDays === days ? "default" : "ghost"
+                    }
                     size="sm"
                     onClick={() => selectRecentRange(days)}>
                     {t("instancePage.recentDays", { count: days })}
@@ -1174,7 +1238,7 @@ const PingOverview = memo(() => {
                 variant="ghost"
                 size="sm"
                 onClick={handleToggleAllServers}>
-                {visibleServers.size === filteredServerNodes.length
+                {allFilteredServersVisible
                   ? t("pingOverview.deselectAll")
                   : t("pingOverview.selectAll")}
               </Button>
@@ -1281,7 +1345,10 @@ const PingOverview = memo(() => {
       <Card className="flex-grow flex flex-col relative">
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center purcarte-blur rounded-lg z-10">
-            <Loading text={t("chart.loadingData")} />
+            <Loading
+              text={t("chart.loadingData")}
+              className="!min-h-0 h-full"
+            />
           </div>
         )}
         {dataError && (

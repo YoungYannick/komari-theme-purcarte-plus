@@ -89,6 +89,9 @@ const InstancePage = () => {
     () => buildRecentRange(1)
   );
   const [customRangeError, setCustomRangeError] = useState<string | null>(null);
+  const [customQuickRangeDays, setCustomQuickRangeDays] = useState<
+    number | null
+  >(1);
   const { enableInstanceDetail, enablePingChart, publicSettings } =
     useAppConfig();
   const isMobile = useIsMobile();
@@ -269,6 +272,7 @@ const InstancePage = () => {
 
   const selectRecentRange = (days: number) => {
     setCustomDraftRange(buildRecentRange(days));
+    setCustomQuickRangeDays(days);
     setCustomRangeError(null);
   };
 
@@ -401,6 +405,7 @@ const InstancePage = () => {
                       ...current,
                       start: event.target.value,
                     }));
+                    setCustomQuickRangeDays(null);
                     setCustomRangeError(null);
                   }}
                   aria-label={t("instancePage.startTime")}
@@ -417,6 +422,7 @@ const InstancePage = () => {
                       ...current,
                       end: event.target.value,
                     }));
+                    setCustomQuickRangeDays(null);
                     setCustomRangeError(null);
                   }}
                   aria-label={t("instancePage.endTime")}
@@ -427,7 +433,9 @@ const InstancePage = () => {
                   <Button
                     key={days}
                     type="button"
-                    variant="ghost"
+                    variant={
+                      customQuickRangeDays === days ? "default" : "ghost"
+                    }
                     size="sm"
                     onClick={() => selectRecentRange(days)}>
                     {t("instancePage.recentDays", { count: days })}

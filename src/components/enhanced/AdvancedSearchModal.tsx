@@ -806,7 +806,7 @@ function DateSearchField({
         /* 精确日期输入 */
         <input
           type="date"
-          className={`flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${errors.expired_at ? "search-input-error" : ""}`}
+          className={`advanced-search-date-input ${errors.expired_at ? "search-input-error" : ""}`}
           value={state.exactDate}
           onChange={(e) => onChange({ ...state, exactDate: e.target.value })}
         />
@@ -816,7 +816,7 @@ function DateSearchField({
           <div className="search-date-input">
             <input
               type="date"
-              className={`flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${errors.expired_at_from ? "search-input-error" : ""}`}
+              className={`advanced-search-date-input ${errors.expired_at_from ? "search-input-error" : ""}`}
               value={state.rangeFrom}
               onChange={(e) =>
                 onChange({ ...state, rangeFrom: e.target.value })
@@ -828,7 +828,7 @@ function DateSearchField({
           <div className="search-date-input">
             <input
               type="date"
-              className={`flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${errors.expired_at_to ? "search-input-error" : ""}`}
+              className={`advanced-search-date-input ${errors.expired_at_to ? "search-input-error" : ""}`}
               value={state.rangeTo}
               onChange={(e) =>
                 onChange({ ...state, rangeTo: e.target.value })

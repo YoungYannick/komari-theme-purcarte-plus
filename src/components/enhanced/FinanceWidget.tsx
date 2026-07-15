@@ -16,6 +16,13 @@ import {
 } from "./financeUtils";
 import { ServerTradeModal } from "./ServerTradeModal";
 import { useLocale } from "@/config/hooks";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type SortBy = "weight_asc" | "weight_desc" | "price_asc" | "price_desc";
 
@@ -200,8 +207,7 @@ export function FinanceWidget() {
   const sym = CURRENCY_SYMBOLS[userCurrency] || userCurrency;
 
   const handleCurrencyChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const val = e.target.value;
+    (val: string) => {
       setUserCurrency(val);
       localStorage.setItem("fin_currency", val);
     },
@@ -209,10 +215,10 @@ export function FinanceWidget() {
   );
 
   const handleSortChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const val = e.target.value as SortBy;
-      setSortBy(val);
-      localStorage.setItem("fin_sort", val);
+    (val: string) => {
+      const nextSort = val as SortBy;
+      setSortBy(nextSort);
+      localStorage.setItem("fin_sort", nextSort);
     },
     []
   );
@@ -430,26 +436,30 @@ export function FinanceWidget() {
           {/* 控制栏 */}
           <div className="finance-controls">
             <div style={{ display: "flex", gap: 8 }}>
-              <select
-                className="finance-select"
-                value={userCurrency}
-                onChange={handleCurrencyChange}>
-                {CURRENCY_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="finance-select"
-                value={sortBy}
-                onChange={handleSortChange}>
-                {SORT_VALUES.map((val) => (
-                  <option key={val} value={val}>
-                    {t(SORT_LABEL_KEYS[val])}
-                  </option>
-                ))}
-              </select>
+              <Select value={userCurrency} onValueChange={handleCurrencyChange}>
+                <SelectTrigger className="h-8 w-[92px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={handleSortChange}>
+                <SelectTrigger className="h-8 w-[132px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_VALUES.map((val) => (
+                    <SelectItem key={val} value={val}>
+                      {t(SORT_LABEL_KEYS[val])}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div style={{ display: "flex", gap: 5 }}>
               <button

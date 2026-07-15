@@ -127,7 +127,7 @@ const NodeTableRow = ({
             <Link
               to={`/instance/${node.uuid}`}
               onClick={(e) => e.stopPropagation()}
-              className="hover:underline hover:text-(--accent-11)">
+              className="text-inherit transition-opacity duration-200 hover:opacity-80">
               <div className="text-base font-bold truncate md:whitespace-normal md:break-words">{node.name}</div>
             </Link>
             <Tag className="text-xs" tags={tagList} />

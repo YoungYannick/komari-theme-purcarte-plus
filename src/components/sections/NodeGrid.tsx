@@ -93,7 +93,7 @@ export const NodeGrid = ({
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <Link
           to={`/instance/${node.uuid}`}
-          className="hover:underline hover:text-(--accent-11) min-w-0">
+          className="min-w-0 text-inherit transition-opacity duration-200 hover:opacity-80">
           <div className="flex items-center gap-2">
             <Flag flag={node.region}></Flag>
             <img
