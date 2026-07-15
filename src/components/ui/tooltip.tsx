@@ -1,4 +1,10 @@
-import { useCallback } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type WheelEvent,
+} from "react";
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -6,6 +12,7 @@ interface CustomTooltipProps {
   label?: any;
   chartConfig?: any;
   labelFormatter?: (label: any) => string;
+  scrollable?: boolean;
 }
 
 export const CustomTooltip = ({
@@ -14,7 +21,10 @@ export const CustomTooltip = ({
   label,
   chartConfig,
   labelFormatter,
+  scrollable = false,
 }: CustomTooltipProps) => {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
   const defaultLabelFormatter = useCallback((value: any) => {
     const date = new Date(value);
     return date.toLocaleString([], {
@@ -25,6 +35,32 @@ export const CustomTooltip = ({
       second: "2-digit",
     });
   }, []);
+  const registerScrollContainer = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!scrollable || typeof window === "undefined") return;
+      const key = "__purcarteActiveTooltipScrollEl";
+      const previous = scrollRef.current;
+      if (node) {
+        scrollRef.current = node;
+        (window as any)[key] = node;
+        return;
+      }
+      if ((window as any)[key] === previous) {
+        delete (window as any)[key];
+      }
+      scrollRef.current = null;
+    },
+    [scrollable]
+  );
+
+  useLayoutEffect(() => {
+    if (!scrollable) {
+      setHasOverflow(false);
+      return;
+    }
+    const el = scrollRef.current;
+    setHasOverflow(!!el && el.scrollHeight > el.clientHeight);
+  }, [payload?.length, scrollable]);
 
   if (active && payload && payload.length) {
     return (
@@ -34,7 +70,25 @@ export const CustomTooltip = ({
             ? labelFormatter(label)
             : defaultLabelFormatter(label)}
         </p>
-        <div className="space-y-1">
+        <div
+          ref={scrollable ? registerScrollContainer : undefined}
+          {...(scrollable
+            ? {
+                id: "tooltip-scroll-container",
+                "data-tooltip-scroll-container": "true",
+              }
+            : {})}
+          className={`space-y-1 ${hasOverflow ? "pr-1" : ""}`}
+          style={
+            scrollable
+              ? {
+                  maxHeight: "min(260px, calc(100vh - 180px))",
+                  overflowY: "auto",
+                  overscrollBehavior: "contain",
+                  scrollbarGutter: hasOverflow ? "stable" : "auto",
+                }
+              : undefined
+          }>
           {payload.map((item: any, index: number) => {
             const series = chartConfig?.series
               ? chartConfig.series.find((s: any) => s.dataKey === item.dataKey)
@@ -80,23 +134,31 @@ export const CustomTooltip = ({
 
 export const ScrollableTooltip = (props: any) => {
   const { active, payload, ...rest } = props;
+  const handleWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {
+    const scrollEl = e.currentTarget.querySelector<HTMLElement>(
+      "[data-tooltip-scroll-container='true']"
+    );
+    if (!scrollEl || scrollEl.scrollHeight <= scrollEl.clientHeight) return;
+    e.preventDefault();
+    e.stopPropagation();
+    scrollEl.scrollTop += e.deltaY;
+    window.dispatchEvent(new CustomEvent("purcarte-tooltip-scroll"));
+  }, []);
+
   if (!active || !payload || !payload.length) return null;
   const filtered = payload.filter(
     (item: any) => item.value !== null && item.value !== undefined
   );
   if (!filtered.length) return null;
+
   return (
     <div
-      id="tooltip-scroll-container"
+      data-tooltip-shell="true"
       style={{
-        maxHeight: "300px",
-        overflowY: "auto",
         pointerEvents: "auto",
-        paddingRight: "4px",
       }}
-      onWheel={(e) => e.stopPropagation()}
-    >
-      <CustomTooltip {...rest} active={true} payload={filtered} />
+      onWheel={handleWheel}>
+      <CustomTooltip {...rest} active={true} payload={filtered} scrollable />
     </div>
   );
 };
