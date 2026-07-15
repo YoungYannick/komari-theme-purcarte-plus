@@ -4,7 +4,7 @@ import type { HistoryRecord, NodeData } from "@/types/node";
 import type { HistoryQueryRange } from "@/services/api";
 import type { RpcNodeStatus } from "@/types/rpc";
 import { useLiveData } from "@/contexts/LiveDataContext";
-import fillMissingTimePoints from "@/utils/RecordHelper";
+import { calculateAutoMaxPoints, lttbDownsample } from "@/utils/downsample";
 
 const HISTORY_NUMERIC_KEYS: Array<keyof HistoryRecord> = [
   "cpu",
@@ -45,6 +45,40 @@ const normalizeHistoryRecord = (record: HistoryRecord): HistoryRecord => {
     normalized[key] = toFiniteNumber(record[key]);
   }
   return normalized as unknown as HistoryRecord;
+};
+
+const insertBreakPoints = (records: HistoryRecord[], hours: number) => {
+  if (records.length < 2) return records;
+
+  const minute = 60;
+  const hour = minute * 60;
+  const expectedIntervalSeconds =
+    hours > 0 && hours <= 4 ? minute : hours > 120 ? hour : minute * 15;
+  const maxGapMs = expectedIntervalSeconds * 2 * 1000;
+  const result: HistoryRecord[] = [];
+
+  for (let i = 0; i < records.length; i++) {
+    const current = records[i];
+    result.push(current);
+
+    const next = records[i + 1];
+    if (!next) continue;
+
+    const currentTime = new Date(current.time).getTime();
+    const nextTime = new Date(next.time).getTime();
+    if (
+      Number.isFinite(currentTime) &&
+      Number.isFinite(nextTime) &&
+      nextTime - currentTime > maxGapMs
+    ) {
+      result.push({
+        client: current.client,
+        time: new Date(currentTime + expectedIntervalSeconds * 1000).toISOString(),
+      } as HistoryRecord);
+    }
+  }
+
+  return result;
 };
 
 export const useLoadCharts = (
@@ -160,68 +194,51 @@ export const useLoadCharts = (
       return mappedData;
     }
 
-    const minute = 60;
-    const hour = minute * 60;
+    const sortedData = mappedData
+      .filter((d) => Number.isFinite(d.time))
+      .sort((a, b) => a.time - b.time);
 
-    const stringifiedData = mappedData.map((d) => ({
-      ...d,
-      time: new Date(d.time).toISOString(),
-    }));
-
-    // 确定与当前采样方案匹配的间隔，以便进行时间差比较
-    const intervalSeconds =
-      hours > 0 && hours <= 4 ? minute : hours > 120 ? hour : minute * 15;
-
-    // 如果最后一个数据点与查询终点相差超过一个间隔，则补一个查询终点空点。
-    const rangeEnd = range?.end ? new Date(range.end) : null;
-    const endAnchor =
-      rangeEnd && Number.isFinite(rangeEnd.getTime()) ? rangeEnd : new Date();
-    if (stringifiedData.length > 0) {
-      const lastDataTime = new Date(
-        stringifiedData[stringifiedData.length - 1].time
-      ).getTime();
-      if (endAnchor.getTime() - lastDataTime > intervalSeconds * 1000) {
-        stringifiedData.push({
-          time: endAnchor.toISOString(),
-        } as HistoryRecord);
-      }
-    }
-
-    let filledData;
-    if (hours > 0 && hours <= 4) {
-      filledData = fillMissingTimePoints(
-        stringifiedData,
-        minute,
-        Math.max(minute, hour * hours),
-        minute * 2
-      );
-    } else {
-      const interval = hours > 120 ? hour : minute * 15;
-      const maxGap = interval * 2;
-      filledData = fillMissingTimePoints(
-        stringifiedData,
-        interval,
-        hour * hours,
-        maxGap
-      );
-    }
-    return filledData.map((d) => ({ ...d, time: new Date(d.time!).getTime() }));
+    return insertBreakPoints(
+      sortedData.map((d) => ({
+        ...d,
+        time: new Date(d.time).toISOString(),
+      })) as HistoryRecord[],
+      hours
+    )
+      .map((d) => ({ ...d, time: new Date(d.time!).getTime() }))
+      .filter((d) => Number.isFinite(d.time));
   }, [isRealtime, realtimeData, historicalData, hours, range?.end]);
 
+  const sampledChartData = useMemo(() => {
+    if (isRealtime || chartData.length === 0) return chartData;
+
+    const maxPoints = calculateAutoMaxPoints(
+      chartData.length,
+      HISTORY_NUMERIC_KEYS.length
+    );
+    if (maxPoints <= 0 || chartData.length <= maxPoints) return chartData;
+
+    return lttbDownsample(
+      chartData,
+      maxPoints,
+      HISTORY_NUMERIC_KEYS as string[]
+    );
+  }, [chartData, isRealtime]);
+
   const memoryChartData = useMemo(() => {
-    return chartData.map((item) => ({
+    return sampledChartData.map((item) => ({
       ...item,
       ram: ((item.ram ?? 0) / (node?.mem_total ?? 1)) * 100,
       ram_raw: item.ram,
       swap: ((item.swap ?? 0) / (node?.swap_total ?? 1)) * 100,
       swap_raw: item.swap,
     }));
-  }, [chartData, node?.mem_total, node?.swap_total]);
+  }, [sampledChartData, node?.mem_total, node?.swap_total]);
 
   return {
     loading,
     error,
-    chartData,
+    chartData: sampledChartData,
     memoryChartData,
     isDataEmpty,
   };

@@ -25,8 +25,8 @@
 - **欢迎气泡 (WelcomeBubble)** — 左下角展示访客 IP、地理位置及 ISP 信息，支持自定义站点名称与 Logo
 - **资产统计 (FinanceWidget)** — 标题栏入口按钮（延迟总览左侧），查看服务器总价值、月均支出、剩余价值，支持多币种汇率换算与交易溢价计算，可通过后台配置免费标签文本用于排除免费/白嫖节点，交易模态框支持分享链接（自动生成含搜索+交易参数的URL并复制到剪贴板，接收方打开链接自动搜索服务器、加载交易参数与货币单位）及导出为图片（自动处理毛玻璃背景，确保导出图片文字清晰可读），交易模态框标签与备注标签采用多颜色模式（复用服务器卡片的标签颜色池）
 - **3D 地球 (EarthGlobe)** — 标题栏入口按钮（延迟总览左侧），集成 globe.gl 可视化节点地理分布，支持亮暗模式独立贴图/背景、"伪点亮全球"演示模式
-- **延迟总览 (PingOverview)** — 同时展示所有服务器和监测节点的延迟数据，支持固定时间范围和自定义开始/结束时间查询、服务器排序、分组筛选与统计联动，监测节点排序由后台配置控制（支持按 ID/权重/名称/目标/类型排序以及自定义顺序，同时作用于延迟总览和服务器详情页）
-- **详情页自定义图表范围** — 服务器详情页负载与延迟图表支持自定义开始/结束时间查询，并按当前数据保留时间提供最近 1/7/15/30 天内可用的快捷填充
+- **延迟总览 (PingOverview)** — 同时展示所有服务器和监测节点的延迟数据，支持固定时间范围和自定义开始/结束时间查询、服务器排序、分组筛选与统计联动，监测节点排序由后台配置控制（支持按 ID/权重/名称/目标/类型排序以及自定义顺序，同时作用于延迟总览和服务器详情页），长范围图表仅处理当前可见线条并在重计算前预降采样，避免大范围历史数据卡顿
+- **详情页自定义图表范围** — 服务器详情页负载与延迟图表支持自定义开始/结束时间查询，并按当前数据保留时间提供最近 1/7/15/30 天内可用的快捷填充；未登录用户的负载、延迟与延迟总览历史范围最多 1 天
 - **滚动辅助 (ScrollHelpers)** — 页面右下角回到顶部/底部按钮
 - **多语言支持 (i18n)** — 集成 i18next 国际化框架，标题栏内置语言切换器，支持简中/繁中/英/日/印尼五种语言，增强组件（欢迎气泡、资产统计、交易面板、3D地球、访客保护）全面接入 i18n
 - **访客保护 (Protection)** — 对未登录用户启用反调试保护，禁止右键菜单与开发者工具
@@ -55,7 +55,7 @@
 - **前端配置编辑** — 支持管理员登录后通过标题栏按钮直接编辑主题配置，无需进入后台
 - **多语言配置声明** — `komari-theme.json` 支持中/繁/英/日/印尼五语言
 - **localStorage 配置** — 视图、外观等偏好设置可存储到浏览器本地，也可强制使用后台配置
-- **JSON-RPC2 API 适配** — 支持 Komari >=1.0.7 的 JSON-RPC2 API，并兼容 1.2.6 metrics 历史接口；负载/延迟历史使用 `public:queryMetrics` 时会过滤 `fill_empty` 产生的空桶，详情页自定义时间范围按官方 metrics `start/end` 查询，短时间 Ping 优先使用 raw records，服务端降采样关闭或 metrics 不可用时继续回退旧 records 接口；负载与 Ping 时间范围上限分别按对应 metrics retention 判断，实时负载首屏按官方主题使用 `/api/recent`，其他数据按新公共 RPC → 旧 common RPC → REST API 顺序回退
+- **JSON-RPC2 API 适配** — 支持 Komari >=1.0.7 的 JSON-RPC2 API，并兼容 1.2.6 metrics 历史接口；负载/延迟历史使用 `public:queryMetrics` 时优先请求原始 metrics 点并过滤 `fill_empty` 产生的空桶，详情页自定义时间范围按官方 metrics `start/end` 查询，短时间 Ping 优先使用 raw records，metrics 原始点不可用时再回退聚合 metrics 或旧 records 接口；负载与 Ping 时间范围上限分别按对应 metrics retention 判断，未登录用户最多查询 1 天历史，实时负载首屏按官方主题使用 `/api/recent`，其他数据按新公共 RPC → 旧 common RPC → REST API 顺序回退
 - **自定义 UI 文本** — 可视化编辑器自定义界面文本，无需手动填写配置
 - **向后兼容** — 旧版 `enableVideoBackground` 自动映射为新版 `backgroundMode`
 
@@ -320,7 +320,7 @@
 - **启用 JSON-RPC2 API 适配** (`enableJsonRPC2Api`)
   - **类型:** `switch`
   - **默认值:** `true`
-  - **说明:** 启用后将在支持的 Komari 版本优先使用 JSON-RPC2 API 获取节点、负载与 Ping 历史数据；Komari 1.2.6 的负载/Ping 历史适配 metrics RPC（`public:queryMetrics` / `public:getPingMetricStats`），并过滤 `fill_empty` 空桶以兼容现有图表结构；短时间 Ping 优先使用 `public:getPingRecords` raw records，metrics 无效时继续回退旧 records 接口，时间范围上限按 `public:listMetricDefinitions` 中负载与 Ping 对应指标的 retention 分别判断，实时负载首屏按官方主题使用 `/api/recent`，旧版本自动回退到 common RPC 或 REST API
+  - **说明:** 启用后将在支持的 Komari 版本优先使用 JSON-RPC2 API 获取节点、负载与 Ping 历史数据；Komari 1.2.6 的负载/Ping 历史适配 metrics RPC（`public:queryMetrics` / `public:getPingMetricStats`），优先请求原始 metrics 点并过滤 `fill_empty` 空桶以兼容现有图表结构；短时间 Ping 优先使用 `public:getPingRecords` raw records，metrics 原始点无效时继续回退聚合 metrics、旧 records 接口，时间范围上限按 `public:listMetricDefinitions` 中负载与 Ping 对应指标的 retention 分别判断，未登录用户最多查询 1 天历史，实时负载首屏按官方主题使用 `/api/recent`，旧版本自动回退到 common RPC 或 REST API
 
 - **是否在标题栏中显示统计信息** (`isShowStatsInHeader`)
   - **类型:** `switch`
@@ -458,7 +458,7 @@
 - **延迟图表最大渲染点数** (`pingChartMaxPoints`)
   - **类型:** `number`
   - **默认值:** `0`
-  - **说明:** 设置延迟图表的最大渲染点数，0 表示使用自动智能降采样（根据数据量和线条数自动计算最佳点数，使用 LTTB 算法保留视觉形状），设置正整数则强制使用该值
+  - **说明:** 设置延迟图表的最大渲染点数，0 表示使用自动智能降采样（根据数据量和线条数自动计算最佳点数，使用 LTTB 算法保留视觉形状），设置正整数则强制使用该值。此配置只控制前端渲染层的 LTTB 点数，不限制历史数据接口拉取的原始点数量
 
 - **监测节点排序方式** (`monitorNodeSortMode`)
   - **类型:** `select`

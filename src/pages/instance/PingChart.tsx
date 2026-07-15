@@ -39,6 +39,58 @@ interface PingChartProps {
   range?: HistoryQueryRange | null;
 }
 
+const insertPingBreakRows = (
+  rows: any[],
+  taskKeys: string[],
+  tasks: Array<{ id: number; interval: number }>
+) => {
+  if (rows.length < 2 || taskKeys.length === 0) return rows;
+
+  const intervalByKey = new Map(
+    tasks.map((task) => [
+      String(task.id),
+      Math.max(30, Number(task.interval) || 60) * 1000,
+    ])
+  );
+  const result: any[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const current = rows[i];
+    result.push(current);
+
+    const next = rows[i + 1];
+    if (!next) continue;
+
+    const currentTime = current.__ts ?? new Date(current.time).getTime();
+    const nextTime = next.__ts ?? new Date(next.time).getTime();
+    if (!Number.isFinite(currentTime) || !Number.isFinite(nextTime)) continue;
+
+    for (const key of taskKeys) {
+      const currentValue = current[key];
+      const nextValue = next[key];
+      if (
+        typeof currentValue !== "number" ||
+        !Number.isFinite(currentValue) ||
+        typeof nextValue !== "number" ||
+        !Number.isFinite(nextValue)
+      ) {
+        continue;
+      }
+
+      const intervalMs = intervalByKey.get(key) ?? 60_000;
+      if (nextTime - currentTime <= intervalMs * 2.5) continue;
+
+      result.push({
+        time: new Date(currentTime + intervalMs).toISOString(),
+        __ts: currentTime + intervalMs,
+        [key]: null,
+      });
+    }
+  }
+
+  return result.sort((a, b) => (a.__ts ?? 0) - (b.__ts ?? 0));
+};
+
 const PingChart = memo(({ node, hours, range }: PingChartProps) => {
   const { enableCutPeak, enableConnectBreaks, pingChartMaxPoints, monitorNodeSortMode, monitorNodeCustomOrder } = useAppConfig();
   const { loading, error, pingHistory } = usePingChart(node, hours, range);
@@ -149,7 +201,10 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
     if (!merged.length) return [];
 
     const lastTs = (merged as any[])[(merged as any[]).length - 1].__ts;
-    const fromTs = lastTs - hours * 3600_000;
+    const fromTs = range?.start
+      ? new Date(range.start).getTime()
+      : lastTs - hours * 3600_000;
+    const toTs = range?.end ? new Date(range.end).getTime() : Infinity;
     let startIdx = 0;
     for (let i = 0; i < (merged as any[]).length; i++) {
       if ((merged as any[])[i].__ts >= fromTs) {
@@ -157,20 +212,37 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
         break;
       }
     }
-    return (merged as any[]).slice(startIdx);
-  }, [pingHistory, hours]);
+    return (merged as any[]).slice(startIdx).filter((row) => row.__ts <= toTs);
+  }, [pingHistory, hours, range?.start, range?.end]);
 
   const chartData = useMemo(() => {
     let full = midData;
     const tasks = pingHistory?.tasks || [];
     if (!tasks.length || !full.length) return [];
+    const activeTasks = tasks.filter(
+      (task) => visiblePingTasks.length === 0 || visiblePingTasks.includes(task.id)
+    );
+    if (!activeTasks.length) return [];
+    const keys = activeTasks.map((t) => String(t.id));
 
-    if (cutPeak) {
-      const taskKeys = tasks.map((task) => String(task.id));
-      full = cutPeakValues(full, taskKeys);
+    const autoMax = calculateAutoMaxPoints(full.length, keys.length);
+    const effectiveMax = pingChartMaxPoints > 0 ? pingChartMaxPoints : autoMax;
+    const preProcessMax =
+      effectiveMax > 0 ? Math.min(full.length, effectiveMax * 4) : 0;
+
+    if (preProcessMax > 0 && full.length > preProcessMax) {
+      const withTs = full.map((d: any) => ({
+        ...d,
+        time: d.__ts ?? new Date(d.time).getTime(),
+      }));
+      full = lttbDownsample(withTs, preProcessMax, keys);
     }
 
-    const keys = tasks.map((t) => String(t.id));
+    full = insertPingBreakRows(full, keys, activeTasks);
+
+    if (cutPeak) {
+      full = cutPeakValues(full, keys);
+    }
 
     // 使用 Uint8Array 替代 Set<string> 标记 null 值
     const keyCount = keys.length;
@@ -198,10 +270,6 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
       }
     }
 
-    // 自动智能降采样
-    const autoMax = calculateAutoMaxPoints(full.length, keys.length);
-    const effectiveMax = pingChartMaxPoints > 0 ? pingChartMaxPoints : autoMax;
-
     if (effectiveMax > 0 && full.length > effectiveMax) {
       const withTs = full.map((d: any) => ({
         ...d,
@@ -214,7 +282,7 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
       ...d,
       time: d.__ts ?? new Date(d.time).getTime(),
     }));
-  }, [midData, cutPeak, pingHistory?.tasks, pingChartMaxPoints]);
+  }, [midData, cutPeak, pingHistory?.tasks, pingChartMaxPoints, visiblePingTasks]);
 
   const handleTaskVisibilityToggle = (taskId: number) => {
     setVisiblePingTasks((prev) =>
@@ -348,7 +416,8 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
       const { loss, latestValue, latestTime } = calculateTaskStats(
         pingHistory.records,
         task.id,
-        timeRange
+        timeRange,
+        task.interval
       );
       return {
         ...task,

@@ -1330,11 +1330,11 @@
                 "type": "number",
                 "default": 0,
                 "help": {
-                    "zh-CN": "设置延迟图表的最大渲染点数，0 表示使用自动智能降采样（根据数据量和线条数自动计算，使用 LTTB 算法保留视觉形状），设置正整数则强制使用该值",
-                    "zh-TW": "設置延遲圖表的最大渲染點數，0 表示使用自動智能降採樣（根據資料量和線條數自動計算，使用 LTTB 演算法保留視覺形狀），設置正整數則強制使用該值",
-                    "en": "Max points for ping chart. 0 = auto smart downsampling (auto-calculated based on data volume and line count, using LTTB algorithm to preserve visual shape). Set a positive number to override.",
-                    "ja": "Pingチャートの最大描画点数。0＝自動スマートダウンサンプリング（データ量とライン数から自動計算、LTTBアルゴリズムで視覚形状を維持）。正の整数を設定すると強制適用。",
-                    "id": "Titik maksimum grafik ping. 0 = downsampling otomatis cerdas (dihitung otomatis berdasarkan volume data dan jumlah garis, menggunakan algoritma LTTB untuk mempertahankan bentuk visual). Atur angka positif untuk menimpa."
+                    "zh-CN": "设置延迟图表的最大渲染点数，0 表示使用自动智能降采样（根据数据量和线条数自动计算，使用 LTTB 算法保留视觉形状），设置正整数则强制使用该值。此项仅控制前端渲染点数，不限制历史数据接口拉取的原始点数量",
+                    "zh-TW": "設置延遲圖表的最大渲染點數，0 表示使用自動智能降採樣（根據資料量和線條數自動計算，使用 LTTB 演算法保留視覺形狀），設置正整數則強制使用該值。此項僅控制前端渲染點數，不限制歷史資料介面拉取的原始點數量",
+                    "en": "Max points for ping chart. 0 = auto smart downsampling (auto-calculated based on data volume and line count, using LTTB algorithm to preserve visual shape). Set a positive number to override. This only controls frontend rendering points and does not limit raw history points fetched from the API.",
+                    "ja": "Pingチャートの最大描画点数。0＝自動スマートダウンサンプリング（データ量とライン数から自動計算、LTTBアルゴリズムで視覚形状を維持）。正の整数を設定すると強制適用。この項目はフロントエンドの描画点数のみを制御し、履歴APIから取得する生データ点数は制限しません。",
+                    "id": "Titik maksimum grafik ping. 0 = downsampling otomatis cerdas (dihitung otomatis berdasarkan volume data dan jumlah garis, menggunakan algoritma LTTB untuk mempertahankan bentuk visual). Atur angka positif untuk menimpa. Opsi ini hanya mengontrol titik render frontend dan tidak membatasi jumlah titik riwayat mentah yang diambil dari API."
                 }
             },
             {

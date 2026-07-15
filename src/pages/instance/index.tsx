@@ -92,11 +92,17 @@ const InstancePage = () => {
   const [customQuickRangeDays, setCustomQuickRangeDays] = useState<
     number | null
   >(1);
-  const { enableInstanceDetail, enablePingChart, publicSettings } =
+  const { enableInstanceDetail, enablePingChart, publicSettings, siteStatus } =
     useAppConfig();
   const isMobile = useIsMobile();
   const { t } = useLocale();
 
+  const isAuthenticated =
+    siteStatus === "authenticated" || siteStatus === "private-authenticated";
+  const limitHistoryHours = (value: number, fallback = 24) => {
+    const hours = toPositiveNumber(value) || fallback;
+    return isAuthenticated ? hours : Math.min(hours, 24);
+  };
   const loadMetricRetentionHours =
     toPositiveNumber(
       publicSettings?.load_metric_retention_days ??
@@ -107,13 +113,14 @@ const InstancePage = () => {
       publicSettings?.ping_metric_retention_days ??
         publicSettings?.metric_retention_days
     ) * 24;
-  const maxRecordPreserveTime =
+  const maxRecordPreserveTime = limitHistoryHours(
     loadMetricRetentionHours ||
-    toPositiveNumber(publicSettings?.record_preserve_time);
-  const maxPingRecordPreserveTime =
+      toPositiveNumber(publicSettings?.record_preserve_time)
+  );
+  const maxPingRecordPreserveTime = limitHistoryHours(
     pingMetricRetentionHours ||
-    toPositiveNumber(publicSettings?.ping_record_preserve_time) ||
-    24;
+      toPositiveNumber(publicSettings?.ping_record_preserve_time)
+  );
 
   const timeRanges = useMemo(() => {
     return [
@@ -166,6 +173,15 @@ const InstancePage = () => {
 
     return filtered;
   }, [timeRanges, maxRecordPreserveTime, t]);
+
+  useEffect(() => {
+    if (loadHours !== CUSTOM_RANGE_HOURS && loadHours > maxRecordPreserveTime) {
+      setLoadHours(Math.min(24, maxRecordPreserveTime));
+    }
+    if (pingHours !== CUSTOM_RANGE_HOURS && pingHours > maxPingRecordPreserveTime) {
+      setPingHours(Math.min(24, maxPingRecordPreserveTime));
+    }
+  }, [loadHours, pingHours, maxRecordPreserveTime, maxPingRecordPreserveTime]);
 
   useEffect(() => {
     if (Array.isArray(staticNodes)) {

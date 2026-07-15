@@ -36,6 +36,9 @@ const LOAD_HISTORY_METRIC_KEYS = [
 ];
 
 const PING_HISTORY_METRIC_KEYS = ["ping.latency_ms", "ping.loss"];
+const METRIC_DEFAULT_MAX_POINTS = 700;
+const METRIC_RAW_MAX_POINTS = 200_000;
+const METRIC_RAW_POINT_INTERVAL_SECONDS = 30;
 
 export type HistoryQueryRange = {
   start: string;
@@ -307,6 +310,33 @@ class ApiService {
     );
   }
 
+  private historyRangeHours(
+    hours: number,
+    range?: HistoryQueryRange | null
+  ) {
+    if (range?.start && range?.end) {
+      const start = new Date(range.start).getTime();
+      const end = new Date(range.end).getTime();
+      const rangeHours = (end - start) / 3_600_000;
+      if (Number.isFinite(rangeHours) && rangeHours > 0) {
+        return rangeHours;
+      }
+    }
+    return Number.isFinite(hours) && hours > 0 ? hours : 1;
+  }
+
+  private rawMetricMaxPoints(
+    hours: number,
+    range?: HistoryQueryRange | null
+  ) {
+    const rangeSeconds = this.historyRangeHours(hours, range) * 3600;
+    const points = Math.ceil(rangeSeconds / METRIC_RAW_POINT_INTERVAL_SECONDS) + 2;
+    return Math.min(
+      METRIC_RAW_MAX_POINTS,
+      Math.max(METRIC_DEFAULT_MAX_POINTS, points)
+    );
+  }
+
   private isPingMetricsConsistent(
     records: PingHistoryRecord[],
     statsData: any
@@ -573,23 +603,24 @@ class ApiService {
       metric_keys: metricKeys,
       entity_id: uuid,
       ...(range ? { start: range.start, end: range.end } : { hours }),
-      max_points: 700,
       aggregation: "avg",
     };
-    const data = await this.queryMetrics({
+    const rawData = await this.queryMetrics({
       ...baseParams,
-      downsample: true,
-      fill_empty: true,
+      max_points: this.rawMetricMaxPoints(hours, range),
+      downsample: false,
+      fill_empty: false,
     });
-    let records = buildRecords(data);
+    let records = buildRecords(rawData);
 
     if (!records || !this.hasFiniteMetricValue(records as any[])) {
-      const rawData = await this.queryMetrics({
+      const data = await this.queryMetrics({
         ...baseParams,
-        downsample: false,
-        fill_empty: false,
+        max_points: METRIC_DEFAULT_MAX_POINTS,
+        downsample: true,
+        fill_empty: true,
       });
-      records = buildRecords(rawData);
+      records = buildRecords(data);
     }
 
     return records && this.hasFiniteMetricValue(records as any[])
@@ -607,14 +638,15 @@ class ApiService {
       metric_keys: metricKeys,
       entity_id: uuid,
       ...(range ? { start: range.start, end: range.end } : { hours }),
-      max_points: 700,
       aggregation: "avg",
     };
+    const rawMaxPoints = this.rawMetricMaxPoints(hours, range);
     const [metricData, taskList, statsData] = await Promise.all([
       this.queryMetrics({
         ...baseMetricParams,
-        downsample: true,
-        fill_empty: true,
+        max_points: rawMaxPoints,
+        downsample: false,
+        fill_empty: false,
       }),
       this.getPingTasks(),
       this.rpcCall<any>(
@@ -622,7 +654,7 @@ class ApiService {
         {
           entity_id: uuid,
           ...(range ? { start: range.start, end: range.end } : { hours }),
-          max_points: 700,
+          max_points: rawMaxPoints,
         },
         { silent: true }
       ).then((response) =>
@@ -664,12 +696,13 @@ class ApiService {
           typeof record.value === "number" && Number.isFinite(record.value)
       )
     ) {
-      const rawData = await this.queryMetrics({
+      const sampledData = await this.queryMetrics({
         ...baseMetricParams,
-        downsample: false,
-        fill_empty: false,
+        max_points: METRIC_DEFAULT_MAX_POINTS,
+        downsample: true,
+        fill_empty: true,
       });
-      built = buildRecords(rawData);
+      built = buildRecords(sampledData);
     }
     if (!built || !this.isPingMetricsConsistent(built.records, statsData)) {
       return null;

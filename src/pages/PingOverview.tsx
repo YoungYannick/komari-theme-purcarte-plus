@@ -183,6 +183,55 @@ const generateCombinedColor = (
   return hslFallback;
 };
 
+const insertOverviewBreakRows = (rows: any[], lines: CombinedLineInfo[]) => {
+  if (rows.length < 2 || lines.length === 0) return rows;
+
+  const intervalByKey = new Map(
+    lines.map((line) => [
+      line.key,
+      Math.max(30, Number(line.interval) || 60) * 1000,
+    ])
+  );
+  const keys = lines.map((line) => line.key);
+  const result: any[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const current = rows[i];
+    result.push(current);
+
+    const next = rows[i + 1];
+    if (!next) continue;
+
+    const currentTime = current.__ts ?? new Date(current.time).getTime();
+    const nextTime = next.__ts ?? new Date(next.time).getTime();
+    if (!Number.isFinite(currentTime) || !Number.isFinite(nextTime)) continue;
+
+    for (const key of keys) {
+      const currentValue = current[key];
+      const nextValue = next[key];
+      if (
+        typeof currentValue !== "number" ||
+        !Number.isFinite(currentValue) ||
+        typeof nextValue !== "number" ||
+        !Number.isFinite(nextValue)
+      ) {
+        continue;
+      }
+
+      const intervalMs = intervalByKey.get(key) ?? 60_000;
+      if (nextTime - currentTime <= intervalMs * 2.5) continue;
+
+      result.push({
+        time: new Date(currentTime + intervalMs).toISOString(),
+        __ts: currentTime + intervalMs,
+        [key]: null,
+      });
+    }
+  }
+
+  return result.sort((a, b) => (a.__ts ?? 0) - (b.__ts ?? 0));
+};
+
 // 组件
 const PingOverview = memo(() => {
   const {
@@ -190,6 +239,7 @@ const PingOverview = memo(() => {
     enableConnectBreaks,
     pingChartMaxPoints,
     publicSettings,
+    siteStatus,
     monitorNodeSortMode,
     monitorNodeCustomOrder,
   } = useAppConfig();
@@ -270,10 +320,19 @@ const PingOverview = memo(() => {
       publicSettings?.ping_metric_retention_days ??
         publicSettings?.metric_retention_days
     ) * 24;
+  const isAuthenticated =
+    siteStatus === "authenticated" || siteStatus === "private-authenticated";
   const maxPingRecordPreserveTime =
-    metricRetentionHours ||
-    toPositiveNumber(publicSettings?.ping_record_preserve_time) ||
-    24;
+    isAuthenticated
+      ? metricRetentionHours ||
+        toPositiveNumber(publicSettings?.ping_record_preserve_time) ||
+        24
+      : Math.min(
+          metricRetentionHours ||
+            toPositiveNumber(publicSettings?.ping_record_preserve_time) ||
+            24,
+          24
+        );
 
   // 时间范围
   const timeRanges = useMemo(() => {
@@ -328,6 +387,12 @@ const PingOverview = memo(() => {
     [maxPingRecordPreserveTime]
   );
   const customInputMax = toDateTimeLocalValue(new Date());
+
+  useEffect(() => {
+    if (hours !== CUSTOM_RANGE_HOURS && hours > maxPingRecordPreserveTime) {
+      setHours(Math.min(24, maxPingRecordPreserveTime));
+    }
+  }, [hours, maxPingRecordPreserveTime]);
 
   const applyCustomRange = () => {
     const nextRange = toQueryRange(customDraftRange);
@@ -520,6 +585,24 @@ const PingOverview = memo(() => {
     return arr.map((item) => item.name);
   }, [allLines, monitorNodeSortMode, monitorNodeCustomOrder, pingTasksFull]);
 
+  const sortedAllServerNodes = useMemo(() => {
+    const servers = (nodes || []).map((node) => ({
+      uuid: node.uuid,
+      name: node.name,
+      weight: node.weight ?? 0,
+      group: node.group ?? "",
+    }));
+    const { key: sortKey, dir: sortDir } = serverSort;
+    servers.sort((a, b) => {
+      const cmp =
+        sortKey === "weight"
+          ? a.weight - b.weight
+          : a.name.localeCompare(b.name);
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return servers;
+  }, [nodes, serverSort]);
+
   // 去重的服务器节点 + 排序
   const uniqueServerNodes = useMemo(() => {
     const servers: { uuid: string; name: string; weight: number; group: string }[] = [];
@@ -563,6 +646,19 @@ const PingOverview = memo(() => {
     });
   }, [uniqueServerNodes, selectedGroups]);
 
+  const selectableServerUuids = useMemo(() => {
+    const allLabel = ALL_GROUP;
+    const servers = selectedGroups.has(allLabel)
+      ? sortedAllServerNodes
+      : sortedAllServerNodes.filter((server) => {
+          if (!server.group && selectedGroups.size > 0) return false;
+          if (!server.group) return false;
+          const nodeGroups = server.group.split(";").map((g) => g.trim());
+          return nodeGroups.some((group) => selectedGroups.has(group));
+        });
+    return servers.map((server) => server.uuid);
+  }, [sortedAllServerNodes, selectedGroups]);
+
   // 可见性状态
   const [visibleMonitorNodes, setVisibleMonitorNodes] = useState<Set<string>>(
     new Set()
@@ -598,26 +694,31 @@ const PingOverview = memo(() => {
   }, [uniqueMonitorNodes]);
 
   useEffect(() => {
-    if (uniqueServerNodes.length === 0) return;
+    if (sortedAllServerNodes.length === 0) return;
 
-    const knownUuids = new Set(uniqueServerNodes.map((server) => server.uuid));
+    const knownUuids = new Set(
+      sortedAllServerNodes.map((server) => server.uuid)
+    );
     const previousKnownUuids = knownServerNodesRef.current;
     setVisibleServers((prev) => {
       if (!hasInitializedServerSelectionRef.current) {
         hasInitializedServerSelectionRef.current = true;
-        return new Set(uniqueServerNodes.map((server) => server.uuid));
+        return new Set(knownUuids);
       }
 
+      const wasAllKnownSelected =
+        previousKnownUuids.size > 0 &&
+        [...previousKnownUuids].every((uuid) => prev.has(uuid));
       const next = new Set([...prev].filter((uuid) => knownUuids.has(uuid)));
-      uniqueServerNodes.forEach((server) => {
-        if (!previousKnownUuids.has(server.uuid)) {
-          next.add(server.uuid);
+      knownUuids.forEach((uuid) => {
+        if (!previousKnownUuids.has(uuid) && wasAllKnownSelected) {
+          next.add(uuid);
         }
       });
       return next;
     });
     knownServerNodesRef.current = knownUuids;
-  }, [uniqueServerNodes]);
+  }, [sortedAllServerNodes]);
 
   const filteredServerUuids = useMemo(
     () => filteredServerNodes.map((server) => server.uuid),
@@ -630,8 +731,8 @@ const PingOverview = memo(() => {
   );
 
   const allFilteredServersVisible =
-    filteredServerUuids.length > 0 &&
-    filteredServerUuids.every((uuid) => visibleServers.has(uuid));
+    selectableServerUuids.length > 0 &&
+    selectableServerUuids.every((uuid) => visibleServers.has(uuid));
 
   // 单条线的显隐状态（通过统计卡片点击控制）
   const [hiddenLines, setHiddenLines] = useState<Set<string>>(new Set());
@@ -680,12 +781,27 @@ const PingOverview = memo(() => {
 
   const chartMargin = { top: 8, right: 16, bottom: 8, left: 16 };
 
+  const activeLines = useMemo(
+    () => allLines.filter((line) => isLineVisible(line)),
+    [allLines, isLineVisible]
+  );
+
+  const activeLineKeys = useMemo(
+    () => activeLines.map((line) => line.key),
+    [activeLines]
+  );
+
+  const activeLineKeySet = useMemo(
+    () => new Set(activeLineKeys),
+    [activeLineKeys]
+  );
+
   // 合并所有记录到统一时间线
   const midData = useMemo(() => {
-    if (allPingData.size === 0 || allLines.length === 0) return [];
+    if (allPingData.size === 0 || activeLines.length === 0) return [];
 
     // 计算最小间隔用于容差
-    const intervals = allLines
+    const intervals = activeLines
       .map((l) => l.interval)
       .filter((v) => typeof v === "number" && v > 0);
     const fallbackIntervalSec = intervals.length
@@ -705,6 +821,9 @@ const PingOverview = memo(() => {
     for (const [uuid, pingData] of allPingData.entries()) {
       if (!pingData?.records) continue;
       for (const rec of pingData.records) {
+        const lineKey = `${uuid}_${rec.task_id}`;
+        if (!activeLineKeySet.has(lineKey)) continue;
+
         const ts = new Date(rec.time).getTime();
         const bucket = Math.floor(ts / bucketSize);
 
@@ -725,7 +844,6 @@ const PingOverview = memo(() => {
             bucketToAnchor.set(bucket, use);
           }
         }
-        const lineKey = `${uuid}_${rec.task_id}`;
         grouped[use][lineKey] =
           typeof rec.value === "number" &&
           Number.isFinite(rec.value) &&
@@ -754,14 +872,35 @@ const PingOverview = memo(() => {
       }
     }
     return (merged as any[]).slice(startIdx).filter((row) => row.__ts <= toTs);
-  }, [allPingData, allLines, chartHours, queryRange?.start, queryRange?.end]);
+  }, [
+    allPingData,
+    activeLines,
+    activeLineKeySet,
+    chartHours,
+    queryRange?.start,
+    queryRange?.end,
+  ]);
 
   // 图表数据处理
   const chartData = useMemo(() => {
     let full = midData;
-    if (!allLines.length || !full.length) return [];
+    if (!activeLineKeys.length || !full.length) return [];
 
-    const keys = allLines.map((l) => l.key);
+    const keys = activeLineKeys;
+    const autoMax = calculateAutoMaxPoints(full.length, keys.length);
+    const effectiveMax = pingChartMaxPoints > 0 ? pingChartMaxPoints : autoMax;
+    const preProcessMax =
+      effectiveMax > 0 ? Math.min(full.length, effectiveMax * 4) : 0;
+
+    if (preProcessMax > 0 && full.length > preProcessMax) {
+      const withTs = full.map((d: any) => ({
+        ...d,
+        time: d.__ts ?? new Date(d.time).getTime(),
+      }));
+      full = lttbDownsample(withTs, preProcessMax, keys);
+    }
+
+    full = insertOverviewBreakRows(full, activeLines);
 
     if (cutPeak) {
       full = cutPeakValues(full, keys);
@@ -794,9 +933,6 @@ const PingOverview = memo(() => {
     }
 
     // 自动智能降采样：优先用户配置，否则自动计算
-    const autoMax = calculateAutoMaxPoints(full.length, keys.length);
-    const effectiveMax = pingChartMaxPoints > 0 ? pingChartMaxPoints : autoMax;
-
     if (effectiveMax > 0 && full.length > effectiveMax) {
       // 先转换时间戳，再用 LTTB 降采样
       const withTs = full.map((d: any) => ({
@@ -810,7 +946,7 @@ const PingOverview = memo(() => {
       ...d,
       time: d.__ts ?? new Date(d.time).getTime(),
     }));
-  }, [midData, cutPeak, allLines, pingChartMaxPoints]);
+  }, [midData, cutPeak, activeLineKeys, activeLines, pingChartMaxPoints]);
 
   // 线条颜色（按服务器分色相，同服务器内按监测节点变化）
   const lineColors = useMemo(() => {
@@ -874,9 +1010,9 @@ const PingOverview = memo(() => {
     setVisibleServers((prev) => {
       const next = new Set(prev);
       if (allFilteredServersVisible) {
-        filteredServerUuids.forEach((uuid) => next.delete(uuid));
+        selectableServerUuids.forEach((uuid) => next.delete(uuid));
       } else {
-        filteredServerUuids.forEach((uuid) => next.add(uuid));
+        selectableServerUuids.forEach((uuid) => next.add(uuid));
       }
       return next;
     });
@@ -933,7 +1069,8 @@ const PingOverview = memo(() => {
       const { loss, latestValue, latestTime } = calculateTaskStats(
         pingData.records,
         line.taskId,
-        timeRange
+        timeRange,
+        line.interval
       );
       return {
         ...line,
