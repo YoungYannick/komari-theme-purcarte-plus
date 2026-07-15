@@ -41,6 +41,8 @@ const resources = {
     },
 };
 
+const LANGUAGE_STORAGE_KEY = "language";
+
 const i18n = i18next
     .use(LanguageDetector)
     .use(initReactI18next)
@@ -51,8 +53,9 @@ const i18n = i18next
             escapeValue: false, // React handles XSS
         },
         detection: {
-            order: ["querystring", "cookie", "localStorage", "navigator", "htmlTag"],
-            caches: ["localStorage", "cookie"],
+            order: ["querystring", "localStorage", "cookie", "navigator", "htmlTag"],
+            lookupLocalStorage: LANGUAGE_STORAGE_KEY,
+            caches: ["localStorage"],
         },
     });
 
