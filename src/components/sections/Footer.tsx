@@ -20,13 +20,13 @@ function parseMarkdown(text: string): string {
   // 处理图片 ![alt](url) — 必须先于链接处理
   escaped = escaped.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img src="$2" alt="$1" style="max-height:1.5em;vertical-align:middle;display:inline;" />'
+    '<img src="$2" alt="$1" style="max-width:100%;max-height:1.5em;height:auto;vertical-align:middle;display:inline;" />'
   );
 
   // 处理链接 [text](url)
   escaped = escaped.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-600 transition-colors">$1</a>'
+    '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:text-blue-600 transition-colors break-words">$1</a>'
   );
 
   return escaped;
@@ -139,19 +139,19 @@ const Footer = forwardRef<
       <Card
         className={cn(
           selectedFooterStyle !== "followContent" ? "rounded-none" : "",
-          "p-2 w-full flex items-center justify-center inset-shadow-sm inset-shadow-(color:--accent-a4)"
+          "p-2 w-full min-w-0 flex items-center justify-center inset-shadow-sm inset-shadow-(color:--accent-a4)"
         )}>
         {hasContent ? (
-          <div className="flex flex-col items-center justify-center space-y-1">
+          <div className="flex min-w-0 max-w-full flex-col items-center justify-center space-y-1 text-center">
             {/* 原始内容 */}
             {!hideFooterOriginal && (
-              <p className="flex justify-center text-sm text-secondary-foreground theme-text-shadow whitespace-pre">
+              <p className="flex max-w-full flex-wrap justify-center text-sm text-secondary-foreground theme-text-shadow break-words whitespace-normal">
                 {t("footer.poweredBy")}{" "}
                 <a
                   href="https://github.com/komari-monitor/komari"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-600 transition-colors">
+                  className="min-w-0 text-blue-500 hover:text-blue-600 transition-colors break-words">
                   Komari Monitor
                 </a>
                 {" | "}
@@ -160,7 +160,7 @@ const Footer = forwardRef<
                   href="https://github.com/YoungYannick/komari-theme-purcarte-plus"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-600 transition-colors">
+                  className="min-w-0 text-blue-500 hover:text-blue-600 transition-colors break-words">
                   PurCarte-Plus
                 </a>
               </p>
@@ -168,9 +168,9 @@ const Footer = forwardRef<
 
             {/* 服务器运行时间 */}
             {enableServerUptime && uptimeText && (
-              <div className="flex items-center justify-center text-sm text-secondary-foreground theme-text-shadow">
-                <Clock className="mr-2" size={14} />
-                <span>{uptimeText}</span>
+              <div className="flex max-w-full items-center justify-center text-sm text-secondary-foreground theme-text-shadow">
+                <Clock className="mr-2 shrink-0" size={14} />
+                <span className="min-w-0 break-words">{uptimeText}</span>
               </div>
             )}
 
@@ -178,7 +178,7 @@ const Footer = forwardRef<
             {customLines.map((line, index) => (
               <div
                 key={index}
-                className="flex items-center justify-center text-sm text-secondary-foreground theme-text-shadow"
+                className="max-w-full text-sm text-secondary-foreground theme-text-shadow break-words"
                 dangerouslySetInnerHTML={{ __html: parseMarkdown(line) }}
               />
             ))}
