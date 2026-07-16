@@ -28,6 +28,13 @@
 1.  前往 [Releases](https://github.com/YoungYannick/komari-theme-purcarte-plus/releases) 页面下载最新的 `komari-theme-purcarte-plus.zip` 文件。
 2.  进入 Komari 后台，上传 `zip` 压缩包并启用本主题。
 
+### 流量阈值的无限显示
+
+- Komari 官方 `traffic_limit` 字段按 `int64` / `bigint` 存储，理论上限为 `9223372036854775807 B`，约 `8 EiB`。
+- 为避免使用接近数据库上限的危险值，本主题不使用理论最大值表达无限。
+- 首页流量进度条中，`0 B` 仍表示禁用；`1000 PB` 或更高的流量阈值会被主题识别为“无限流量”，进度条/圆圈仍显示但进度固定为 0。
+- 该识别只看阈值大小，不绑定统计方式；总和、最大值、最小值、仅上传、仅下载都可以正常显示为无限。
+
 > [!NOTE]
 >
 > 本主题支持通过 Komari 后台或前端进行详细配置，所有可用选项如下
@@ -668,6 +675,7 @@ komari-theme-purcarte-plus/
 │   └── utils/                               # 工具函数
 │       ├── index.ts                         # 工具模块统一导出（cn、formatBytes 等）
 │       ├── formatHelper.ts                  # 数据格式化（字节、运行时间、流量限制）
+│       ├── trafficLimit.ts                  # 流量阈值无限显示识别
 │       ├── chartHelper.ts                   # 图表工具（OKLCH 颜色生成、标签格式化）
 │       ├── converters.ts                    # 类型转换工具（NodeStats ↔ RpcNodeStatus）
 │       ├── regionHelper.ts                  # 地区 Emoji → 名称映射

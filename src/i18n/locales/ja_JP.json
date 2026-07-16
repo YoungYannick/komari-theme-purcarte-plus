@@ -181,7 +181,7 @@
       "trafficLimitType_min": "最小値を取る",
       "trafficLimitType_sum": "合計",
       "trafficLimitType_up": "アップロードのみ",
-      "trafficLimit_description": "ホームページのトラフィック進捗バーに使用され、0 Bに設定すると無効になります。",
+      "trafficLimit_description": "ホームページのトラフィック進捗バーに使用されます。0 B で無効、1000 PB 以上でこのテーマでは統計方式に関係なく無制限として表示します。",
       "waiting": "待機中..."
     },
     "nodeTable": {
@@ -481,7 +481,7 @@
       "billingDays": "{{days}}日",
       "trafficUnlimited": "無制限",
       "trafficPerMonth": "/月",
-      "trafficInfinite": "∞TB/月",
+      "trafficInfinite": "∞/月",
       "share": "リンクを共有",
       "shareCopied": "共有リンクがクリップボードにコピーされました",
       "shareDisabled": "高度な検索が有効になっていないため、取引リンクの共有は禁止されています",
@@ -554,6 +554,7 @@
     "billingThreeYears": "3年",
     "billingFiveYears": "5年",
     "trafficLimitUnset": "未設定",
+    "trafficLimitInfinite": "無制限トラフィック",
     "trafficLimitTemplate": "合計 {{limit}} ({{type}})",
     "trafficLimitType": {
       "sum": "合計",

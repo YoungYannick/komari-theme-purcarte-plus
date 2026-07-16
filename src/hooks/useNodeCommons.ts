@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { formatPrice } from "@/utils";
+import { formatPrice, isTrafficLimitInfinite } from "@/utils";
 import type { NodeData } from "@/types/node";
 import type { RpcNodeStatus } from "@/types/rpc";
 import { useNodeData } from "@/contexts/NodeDataContext";
@@ -164,6 +164,8 @@ export const useNodeCommons = (node: NodeData & { stats?: any; _liveDataReady?: 
   const { stats, _liveDataReady } = node;
   const { t } = useLocale();
   const isOnline = stats ? stats.online : false;
+  const trafficLimitInfinite = isTrafficLimitInfinite(node.traffic_limit);
+  const trafficLimitEnabled = Boolean(node.traffic_limit);
   // 离线确认：liveData 已到达且节点不在线（包括 stats 为 undefined 的从未上线节点）
   const isConfirmedOffline = _liveDataReady ? !isOnline : false;
   const price = formatPrice(node.price, node.currency, node.billing_cycle, t);
@@ -243,7 +245,8 @@ export const useNodeCommons = (node: NodeData & { stats?: any; _liveDataReady?: 
 
   // 计算流量使用百分比
   const trafficPercentage = useMemo(() => {
-    if (!node.traffic_limit || !stats || !isOnline) return 0;
+    if (!node.traffic_limit || trafficLimitInfinite || !stats || !isOnline)
+      return 0;
 
     // 根据流量限制类型确定使用的流量值
     let usedTraffic = 0;
@@ -266,7 +269,13 @@ export const useNodeCommons = (node: NodeData & { stats?: any; _liveDataReady?: 
     }
 
     return (usedTraffic / node.traffic_limit) * 100;
-  }, [node.traffic_limit, node.traffic_limit_type, stats, isOnline]);
+  }, [
+    node.traffic_limit,
+    node.traffic_limit_type,
+    stats,
+    isOnline,
+    trafficLimitInfinite,
+  ]);
 
   return {
     stats,
@@ -280,5 +289,7 @@ export const useNodeCommons = (node: NodeData & { stats?: any; _liveDataReady?: 
     load,
     expired_at,
     trafficPercentage,
+    trafficLimitEnabled,
+    trafficLimitInfinite,
   };
 };

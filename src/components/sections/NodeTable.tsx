@@ -100,6 +100,8 @@ const NodeTableRow = ({
     load,
     expired_at,
     trafficPercentage,
+    trafficLimitEnabled,
+    trafficLimitInfinite,
   } = useNodeCommons(node);
   const gridCols = enableSwap ? "grid-cols-9" : "grid-cols-8";
   const { pingChartTimeInPreview, enableInstanceDetail, enablePingChart, tableExpiredAtDisplay, tableUptimeDisplay } =
@@ -277,12 +279,17 @@ const NodeTableRow = ({
                     : t("node.notAvailable")}
                 </div>
               </div>
-              {node.traffic_limit !== 0 && isOnline && stats && (
+              {trafficLimitEnabled && isOnline && stats && (
                 <>
                   <div className="w-[80%] flex items-center gap-1">
-                    <ProgressBar value={trafficPercentage} h="h-2" />
+                    <ProgressBar
+                      value={trafficLimitInfinite ? 0 : trafficPercentage}
+                      h="h-2"
+                    />
                     <span className="text-right text-xs">
-                      {node.traffic_limit !== 0
+                      {trafficLimitInfinite
+                        ? "∞"
+                        : trafficLimitEnabled
                         ? `${trafficPercentage.toFixed(0)}%`
                         : ""}
                     </span>
@@ -314,7 +321,7 @@ const NodeTableRow = ({
                       : t("node.notAvailable")}
                   </div>
                 </div>
-                {node.traffic_limit !== 0 && isOnline && stats && (
+                {trafficLimitEnabled && isOnline && stats && (
                   <div>
                     {formatTrafficLimit(
                       node.traffic_limit,
@@ -324,10 +331,10 @@ const NodeTableRow = ({
                   </div>
                 )}
               </div>
-              {node.traffic_limit !== 0 && isOnline && stats && (
+              {trafficLimitEnabled && isOnline && stats && (
                 <div>
                   <CircleProgress
-                    value={trafficPercentage}
+                    value={trafficLimitInfinite ? 0 : trafficPercentage}
                     maxValue={100}
                     size={32}
                     strokeWidth={4}

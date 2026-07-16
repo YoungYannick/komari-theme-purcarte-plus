@@ -78,6 +78,8 @@ export const NodeGrid = ({
     load,
     expired_at,
     trafficPercentage,
+    trafficLimitEnabled,
+    trafficLimitInfinite,
   } = useNodeCommons(node);
   const { isShowHWBarInCard, isShowValueUnderProgressBar, gridExpiredAtDisplay, gridUptimeDisplay } = useAppConfig();
   const { t } = useLocale();
@@ -226,9 +228,13 @@ export const NodeGrid = ({
             <div className="flex items-center justify-between">
               <span>{t("node.traffic")}</span>
               <div className="w-3/4 flex items-center gap-2">
-                <ProgressBar value={trafficPercentage} />
+                <ProgressBar
+                  value={trafficLimitInfinite ? 0 : trafficPercentage}
+                />
                 <span className="w-12 text-right">
-                  {node.traffic_limit !== 0
+                  {trafficLimitInfinite
+                    ? "∞"
+                    : trafficLimitEnabled
                     ? `${trafficPercentage.toFixed(0)}%`
                     : t("node.off")}
                 </span>
@@ -276,9 +282,9 @@ export const NodeGrid = ({
               <span className="w-1/5">{t("node.traffic")}</span>
               <div className="flex items-center justify-between w-4/5">
                 <div className="flex items-center justify-center w-1/4 h-8">
-                  {node.traffic_limit !== 0 && (
+                  {trafficLimitEnabled && (
                     <CircleProgress
-                      value={trafficPercentage}
+                      value={trafficLimitInfinite ? 0 : trafficPercentage}
                       maxValue={100}
                       size={32}
                       strokeWidth={4}
@@ -301,7 +307,7 @@ export const NodeGrid = ({
                         : t("node.notAvailable")}
                     </span>
                   </div>
-                  {node.traffic_limit !== 0 && isOnline && stats && (
+                  {trafficLimitEnabled && isOnline && stats && (
                     <div className="text-right">
                       {formatTrafficLimit(
                         node.traffic_limit,

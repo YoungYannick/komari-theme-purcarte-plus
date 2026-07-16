@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { normalizeCurrencyToCode } from "@/components/enhanced/financeUtils";
 import { CURRENCY_SYMBOLS } from "@/components/enhanced/useExchangeRates";
+import { isTrafficLimitInfinite } from "./trafficLimit";
 
 type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
 
@@ -113,6 +114,8 @@ export const formatTrafficLimit = (
   t?: TranslateFn
 ) => {
   if (!limit) return tr(t, "format.trafficLimitUnset", "未设置");
+  if (isTrafficLimitInfinite(limit))
+    return tr(t, "format.trafficLimitInfinite", "无限流量");
 
   const limitText = formatBytes(limit);
 

@@ -181,7 +181,7 @@
       "trafficLimitType_min": "Minimum",
       "trafficLimitType_sum": "Total",
       "trafficLimitType_up": "Unggah Saja",
-      "trafficLimit_description": "Digunakan untuk menampilkan progres lalu lintas di beranda. Atur ke 0 B untuk menonaktifkan.",
+      "trafficLimit_description": "Digunakan untuk progres lalu lintas beranda. Atur ke 0 B untuk menonaktifkan; atur ke 1000 PB atau lebih agar tema menampilkan lalu lintas tanpa batas, apa pun jenis lalu lintas yang dipilih.",
       "waiting": "Menunggu..."
     },
     "nodeTable": {
@@ -481,7 +481,7 @@
       "billingDays": "{{days}} hari",
       "trafficUnlimited": "Tidak terbatas",
       "trafficPerMonth": "/bln",
-      "trafficInfinite": "∞TB/bln",
+      "trafficInfinite": "∞/bln",
       "share": "Bagikan Tautan",
       "shareCopied": "Tautan dibagikan telah disalin ke clipboard",
       "shareDisabled": "Pencarian lanjutan belum diaktifkan, berbagi tautan transaksi dilarang",
@@ -554,6 +554,7 @@
     "billingThreeYears": "3 tahun",
     "billingFiveYears": "5 tahun",
     "trafficLimitUnset": "Belum diatur",
+    "trafficLimitInfinite": "Lalu lintas tanpa batas",
     "trafficLimitTemplate": "Total {{limit}} ({{type}})",
     "trafficLimitType": {
       "sum": "jumlah",

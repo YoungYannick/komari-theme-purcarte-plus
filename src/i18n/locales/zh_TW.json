@@ -181,7 +181,7 @@
       "trafficLimitType_min": "取最小",
       "trafficLimitType_sum": "總和",
       "trafficLimitType_up": "僅上傳",
-      "trafficLimit_description": "用於首頁流量進度條，設置為 0 B 禁用。",
+      "trafficLimit_description": "用於首頁流量進度條，設置為 0 B 禁用；設置為 1000 PB 或更高時主題顯示為無限流量，統計方式無需調整。",
       "waiting": "等待..."
     },
     "nodeTable": {
@@ -481,7 +481,7 @@
       "billingDays": "{{days}}天",
       "trafficUnlimited": "無限制",
       "trafficPerMonth": "/月",
-      "trafficInfinite": "∞TB/月",
+      "trafficInfinite": "∞/月",
       "share": "分享連結",
       "shareCopied": "分享連結已複製到剪貼簿",
       "shareDisabled": "進階搜尋未啟用，禁止分享交易連結",
@@ -554,6 +554,7 @@
     "billingThreeYears": "三年",
     "billingFiveYears": "五年",
     "trafficLimitUnset": "未設定",
+    "trafficLimitInfinite": "無限流量",
     "trafficLimitTemplate": "總 {{limit}} ({{type}})",
     "trafficLimitType": {
       "sum": "總和",

@@ -1,5 +1,6 @@
 import type { NodeData } from "@/types/node.d";
 import type { ExchangeRates } from "./useExchangeRates";
+import { isTrafficLimitInfinite } from "@/utils/trafficLimit";
 
 // 到期时间超过多少年视为无限期（按原价计算）
 const LONG_TERM_YEARS = 100;
@@ -198,7 +199,7 @@ export function formatBytes(bytes: number): string {
  * 格式化流量
  */
 export function formatTraffic(bytes: number, t?: (key: string) => string): string {
-  if (bytes === 362838837166080) return t ? t("enhanced.trade.trafficInfinite") : "∞TB/月";
+  if (isTrafficLimitInfinite(bytes)) return t ? t("enhanced.trade.trafficInfinite") : "∞/月";
   if (bytes === 0) return t ? t("enhanced.trade.trafficUnlimited") : "无限制";
   return formatBytes(bytes) + (t ? t("enhanced.trade.trafficPerMonth") : "/月");
 }

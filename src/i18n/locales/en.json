@@ -181,7 +181,7 @@
       "trafficLimitType_min": "Min",
       "trafficLimitType_sum": "Sum",
       "trafficLimitType_up": "Upload Only",
-      "trafficLimit_description": "Used for the homepage traffic progress bar, set to 0 B to disable.",
+      "trafficLimit_description": "Used for the homepage traffic progress bar. Set to 0 B to disable; set to 1000 PB or higher to show unlimited traffic in this theme, regardless of the selected traffic type.",
       "waiting": "wait..."
     },
     "nodeTable": {
@@ -481,7 +481,7 @@
       "billingDays": "{{days}} days",
       "trafficUnlimited": "Unlimited",
       "trafficPerMonth": "/mo",
-      "trafficInfinite": "∞TB/mo",
+      "trafficInfinite": "∞/mo",
       "share": "Share Link",
       "shareCopied": "Share link copied to clipboard",
       "shareDisabled": "Advanced search is disabled, sharing trade links is not allowed",
@@ -554,6 +554,7 @@
     "billingThreeYears": "3 years",
     "billingFiveYears": "5 years",
     "trafficLimitUnset": "Not set",
+    "trafficLimitInfinite": "Unlimited traffic",
     "trafficLimitTemplate": "Total {{limit}} ({{type}})",
     "trafficLimitType": {
       "sum": "sum",
