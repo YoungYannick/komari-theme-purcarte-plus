@@ -9,9 +9,7 @@ import {
 import type { ExchangeRates } from "./useExchangeRates";
 import type { NodeData } from "@/types/node.d";
 import {
-  parsePriceToBase,
-  calculateRemainingValue,
-  calculateMonthlyExpense,
+  calculateFinanceNodeValues,
   normalizeCurrencyToCode,
 } from "./financeUtils";
 import { hasDelimitedTag, normalizeFreeTag } from "@/utils/tagHelper";
@@ -87,13 +85,17 @@ function calculateFinanceData(
 
   const items = sorted.map((node) => {
     const isFreeTag = hasDelimitedTag(node.tags, freeTag);
-    const { price: priceBase, isSpecialFree } = parsePriceToBase(node, rates);
-    const { remainingValue, isLongTerm } = calculateRemainingValue(
+    const {
+      priceBase,
+      monthlyExpense,
+      remainingValue,
+      isSpecialFree,
+      isLongTerm,
+    } = calculateFinanceNodeValues(
       node,
       rates,
       now
     );
-    const monthly = calculateMonthlyExpense(priceBase, node.billing_cycle);
 
     let tooltipText = "";
     if (isSpecialFree) {
@@ -111,7 +113,7 @@ function calculateFinanceData(
     const excludeFromTotal = isSpecialFree || (excludeFree && isFreeTag);
     if (!excludeFromTotal) {
       totalPrice += priceBase;
-      monthlyPrice += monthly;
+      monthlyPrice += monthlyExpense;
       totalRemainVal += remainingValue;
     }
 
@@ -170,6 +172,19 @@ export function FinanceWidget() {
     return () => window.removeEventListener("toggle-finance-widget", handler);
   }, []);
 
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const uuid = (event as CustomEvent<{ uuid?: string }>).detail?.uuid;
+      if (!uuid) return;
+      const targetNode = nodes.find((node) => node.uuid === uuid);
+      if (targetNode) {
+        setTradeNode(targetNode);
+      }
+    };
+    window.addEventListener("open-server-trade-modal", handler);
+    return () => window.removeEventListener("open-server-trade-modal", handler);
+  }, [nodes, isAdvancedSearchEnabled]);
+
   // 从 URL 加载交易模态框参数（仅在首次加载时执行）
   useEffect(() => {
     if (urlTradeHandled.current || nodes.length === 0) return;
@@ -188,6 +203,9 @@ export function FinanceWidget() {
     if (tmCur) {
       setUserCurrency(tmCur);
       localStorage.setItem("fin_currency", tmCur);
+      window.dispatchEvent(
+        new CustomEvent("finance-currency-change", { detail: tmCur })
+      );
     }
 
     // 如果有 t_q（UUID搜索），尝试打开交易模态框
@@ -200,7 +218,7 @@ export function FinanceWidget() {
         setTradeNode(targetNode);
       }
     }
-  }, [nodes]);
+  }, [nodes, isAdvancedSearchEnabled]);
 
   const financeData = useMemo(
     () => calculateFinanceData(nodes, rates, excludeFree, sortBy, t, configuredFreeTag),
@@ -213,6 +231,7 @@ export function FinanceWidget() {
     (val: string) => {
       setUserCurrency(val);
       localStorage.setItem("fin_currency", val);
+      window.dispatchEvent(new CustomEvent("finance-currency-change", { detail: val }));
     },
     []
   );
@@ -230,6 +249,9 @@ export function FinanceWidget() {
     setExcludeFree((prev) => {
       const next = !prev;
       localStorage.setItem("fin_exclude_free", String(next));
+      window.dispatchEvent(
+        new CustomEvent("finance-exclude-free-change", { detail: next })
+      );
       return next;
     });
   }, []);

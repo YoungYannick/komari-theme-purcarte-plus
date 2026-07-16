@@ -226,13 +226,17 @@ export const useNodeCommons = (node: NodeData & { stats?: any; _liveDataReady?: 
         })
       : t("node.notSet");
 
+  const publicRemarkTagList = node.public_remark
+    ? node.public_remark
+        .split(";")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    : [];
+
+  const priceTagIndex = price ? publicRemarkTagList.length : -1;
+
   const tagList = [
-    ...(node.public_remark
-      ? node.public_remark
-          .split(";")
-          .map((tag) => tag.trim())
-          .filter(Boolean)
-      : []),
+    ...publicRemarkTagList,
     ...(price ? [price] : []),
     ...(daysLeftTag ? [daysLeftTag] : []),
     ...(typeof node.tags === "string"
@@ -282,11 +286,13 @@ export const useNodeCommons = (node: NodeData & { stats?: any; _liveDataReady?: 
     isOnline,
     isConfirmedOffline,
     tagList,
+    priceTagIndex,
     cpuUsage,
     memUsage,
     swapUsage,
     diskUsage,
     load,
+    price,
     expired_at,
     trafficPercentage,
     trafficLimitEnabled,

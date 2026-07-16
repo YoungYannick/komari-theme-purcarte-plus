@@ -115,7 +115,7 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   selectedDefaultView: "grid",
   selectedDefaultAppearance: "system",
   statusCardsVisibility:
-    "currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true",
+    "currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true,assetValue:true,monthlyExpense:true",
   selectedHeaderStyle: "fixed",
   enableLogo: true,
   logoUrl: "/assets/logo.png",

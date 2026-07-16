@@ -436,7 +436,11 @@
       "ratesUpdating": "匯率更新中...",
       "excludeFreeOn": "目前：已排除 {{tag}} 標籤",
       "excludeFreeOff": "目前：包含 {{tag}} 標籤",
-      "refresh": "重新整理資料"
+      "refresh": "重新整理資料",
+      "priceTooltipExpiry": "到期時間",
+      "priceTooltipBillingAmount": "帳單金額",
+      "priceTooltipBillingCycle": "計費週期",
+      "priceTooltipRemainingValue": "剩餘價值"
     },
     "trade": {
       "title": "伺服器交易",
@@ -1052,13 +1056,21 @@
   },
   "statsBar": {
     "_": "狀態列",
+    "assetValue": "資產價值",
+    "assetValueOption": "總價值 / 剩餘總價值",
+    "assetValueShort": "資產",
     "currentOnline": "當前在線",
     "currentTime": "當前時間",
     "displayOptionsTitle": "狀態顯示設定",
+    "monthlyExpenseShort": "月支",
     "networkSpeed": "網路速率",
     "networkSpeedShort": "網速",
     "region": "點亮地區",
+    "remainingTotalValue": "剩餘總價值",
+    "remainingValueShort": "剩",
+    "specialCases": "特殊計費說明",
     "statsHidden": "統計資訊已隱藏",
+    "totalValueShort": "總",
     "traffic": "流量概覽",
     "trafficShort": "流量"
   },

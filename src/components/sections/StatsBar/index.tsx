@@ -9,6 +9,13 @@ import { StatsToggleMenu } from "./StatsToggleMenu";
 import { useLocale } from "@/config/hooks";
 import type { StatsBarProps, SortKey } from "./types";
 import { Card } from "@/components/ui/card";
+import { useNodeData } from "@/contexts/NodeDataContext";
+import {
+  CURRENCY_SYMBOLS,
+  useExchangeRates,
+} from "@/components/enhanced/useExchangeRates";
+import { calculateFinanceNodeValues } from "@/components/enhanced/financeUtils";
+import { hasDelimitedTag, normalizeFreeTag } from "@/utils/tagHelper";
 export type { StatsBarProps };
 
 interface StatEntry {
@@ -17,6 +24,7 @@ interface StatEntry {
   lines: string[];
   isLabelVertical?: boolean;
   textLeft?: boolean;
+  helpText?: string;
 }
 
 export const StatsBar = (props: StatsBarProps) => {
@@ -66,9 +74,115 @@ export const StatsBar = (props: StatsBarProps) => {
     mergeGroupsWithStats,
     enableGroupedBar,
     enableSortControl,
+    enableFinanceWidget,
+    freeTag,
   } = useAppConfig();
   const isMobile = useIsMobile();
   const { t } = useLocale();
+  const { nodes } = useNodeData();
+  const [financeCurrency, setFinanceCurrency] = useState(
+    () => localStorage.getItem("fin_currency") || "CNY"
+  );
+  const [excludeFree, setExcludeFree] = useState(() => {
+    const stored = localStorage.getItem("fin_exclude_free");
+    return stored === null ? true : stored === "true";
+  });
+  const showFinanceStats =
+    enableFinanceWidget &&
+    (displayOptions.assetValue || displayOptions.monthlyExpense);
+  const { rates } = useExchangeRates(financeCurrency, showFinanceStats);
+  const financeSymbol = CURRENCY_SYMBOLS[financeCurrency] || financeCurrency;
+  const configuredFreeTag = normalizeFreeTag(freeTag);
+
+  useEffect(() => {
+    if (!enableFinanceWidget) return;
+
+    const handleCurrencyChange = (event: Event) => {
+      const next =
+        (event as CustomEvent<string>).detail ||
+        localStorage.getItem("fin_currency") ||
+        "CNY";
+      setFinanceCurrency(next);
+    };
+    const handleExcludeFreeChange = (event: Event) => {
+      const next = (event as CustomEvent<boolean>).detail;
+      setExcludeFree(
+        typeof next === "boolean"
+          ? next
+          : localStorage.getItem("fin_exclude_free") !== "false"
+      );
+    };
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === "fin_currency") {
+        setFinanceCurrency(event.newValue || "CNY");
+      }
+      if (event.key === "fin_exclude_free") {
+        setExcludeFree(event.newValue !== "false");
+      }
+    };
+
+    window.addEventListener("finance-currency-change", handleCurrencyChange);
+    window.addEventListener(
+      "finance-exclude-free-change",
+      handleExcludeFreeChange
+    );
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener(
+        "finance-currency-change",
+        handleCurrencyChange
+      );
+      window.removeEventListener(
+        "finance-exclude-free-change",
+        handleExcludeFreeChange
+      );
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, [enableFinanceWidget]);
+
+  const financeSummary = useMemo(() => {
+    let totalPrice = 0;
+    let monthlyExpense = 0;
+    let totalRemainingValue = 0;
+    const specialCases: string[] = [];
+    const now = new Date();
+
+    if (!showFinanceStats) {
+      return { totalPrice, monthlyExpense, totalRemainingValue, specialCases };
+    }
+
+    for (const node of nodes) {
+      const isFreeTag = hasDelimitedTag(node.tags, configuredFreeTag);
+      const values = calculateFinanceNodeValues(node, rates, now);
+
+      if (values.isSpecialFree) {
+        specialCases.push(
+          `${node.name} (${t("enhanced.finance.freeChicken")})`
+        );
+      } else if (values.isLongTerm) {
+        specialCases.push(
+          `${node.name} (${t("enhanced.finance.longTermChicken")})`
+        );
+      } else if (isFreeTag && excludeFree) {
+        specialCases.push(`${node.name} (${configuredFreeTag})`);
+      }
+
+      if (values.isSpecialFree || (excludeFree && isFreeTag)) continue;
+
+      totalPrice += values.priceBase;
+      monthlyExpense += values.monthlyExpense;
+      totalRemainingValue += values.remainingValue;
+    }
+
+    return { totalPrice, monthlyExpense, totalRemainingValue, specialCases };
+  }, [
+    configuredFreeTag,
+    excludeFree,
+    nodes,
+    rates,
+    showFinanceStats,
+    t,
+  ]);
 
   const resolvedStats = useMemo<StatEntry[]>(() => {
     const getLabel = (compactLabel: string, fullLabel: string) =>
@@ -90,6 +204,47 @@ export const StatsBar = (props: StatsBarProps) => {
         key: "regionOverview",
         label: getLabel(t("statsBar.region"), t("statsBar.region")),
         lines: [loading ? "..." : String(stats.uniqueRegions)],
+      });
+    }
+    const useCompactFinanceText = isShowStatsInHeader && !isMobile;
+    const specialCasesText = financeSummary.specialCases.join("\n");
+    const formatMoney = (value: number) =>
+      `${financeSymbol} ${value.toFixed(2)}`;
+
+    if (enableFinanceWidget && displayOptions.assetValue) {
+      entries.push({
+        key: "assetValue",
+        label: getLabel(
+          t("statsBar.assetValueShort"),
+          t("statsBar.assetValue")
+        ),
+        lines: loading
+          ? ["...", "..."]
+          : [
+              `${t("statsBar.totalValueShort")} ${formatMoney(
+                financeSummary.totalPrice
+              )}`,
+              `${t("statsBar.remainingValueShort")} ${formatMoney(
+                financeSummary.totalRemainingValue
+              )}`,
+            ],
+        isLabelVertical: useCompactFinanceText,
+        textLeft: true,
+        helpText: specialCasesText || undefined,
+      });
+    }
+    if (enableFinanceWidget && displayOptions.monthlyExpense) {
+      entries.push({
+        key: "monthlyExpense",
+        label: getLabel(
+          t("statsBar.monthlyExpenseShort"),
+          t("enhanced.finance.monthlyExpense")
+        ),
+        lines: [
+          loading ? "..." : formatMoney(financeSummary.monthlyExpense),
+        ],
+        isLabelVertical: useCompactFinanceText,
+        helpText: specialCasesText || undefined,
       });
     }
     if (displayOptions.trafficOverview) {
@@ -130,13 +285,30 @@ export const StatsBar = (props: StatsBarProps) => {
       });
     }
     return entries;
-  }, [displayOptions, loading, stats, isMobile, isShowStatsInHeader, t]);
+  }, [
+    displayOptions,
+    enableFinanceWidget,
+    financeSummary,
+    financeSymbol,
+    loading,
+    stats,
+    isMobile,
+    isShowStatsInHeader,
+    t,
+  ]);
 
-  const hasVisibleStats = Object.values(displayOptions).some(Boolean);
+  const hasVisibleStats =
+    displayOptions.currentTime ||
+    displayOptions.currentOnline ||
+    displayOptions.regionOverview ||
+    displayOptions.trafficOverview ||
+    displayOptions.networkSpeed ||
+    (enableFinanceWidget &&
+      (displayOptions.assetValue || displayOptions.monthlyExpense));
 
   if (isShowStatsInHeader && !isMobile) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center justify-center gap-2">
         {enableGroupedBar && mergeGroupsWithStats && (
           <GroupSelector
             groups={groups}
@@ -144,7 +316,7 @@ export const StatsBar = (props: StatsBarProps) => {
             onSelectGroup={onSelectGroup}
           />
         )}
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
           {displayOptions.currentTime && (
             <CurrentTimeChip isInHeader={true} isMobile={isMobile} />
           )}
@@ -174,14 +346,17 @@ export const StatsBar = (props: StatsBarProps) => {
 
   const getGridTemplateColumns = () => {
     if (!isMobile) {
-      return "repeat(auto-fit, minmax(100px, 1fr))";
+      return `repeat(auto-fit, minmax(${showFinanceStats ? "120px" : "100px"}, 1fr))`;
     }
     const visibleCount =
       resolvedStats.length +
       (displayOptions.currentTime ? 1 : 0) +
       (enableGroupedBar && mergeGroupsWithStats ? 1 : 0);
 
-    return visibleCount >= 5 ? "repeat(3, 1fr)" : "repeat(2, 1fr)";
+    if (showFinanceStats) return "repeat(2, minmax(0, 1fr))";
+    return visibleCount >= 5
+      ? "repeat(3, minmax(0, 1fr))"
+      : "repeat(2, minmax(0, 1fr))";
   };
 
   return (

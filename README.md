@@ -153,8 +153,8 @@
 
 - **状态卡片显示控制** (`statusCardsVisibility`)
   - **类型:** `string`
-  - **默认值:** `currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true`
-  - **说明:** 控制状态卡片的显示与隐藏，格式为 卡片名称:显示状态（true/false），多个卡片使用逗号分隔，支持的卡片名称包括 currentTime（当前时间）, currentOnline（当前在线）, regionOverview（点亮地区）, trafficOverview（流量概览）, networkSpeed（网络速率）
+  - **默认值:** `currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true,assetValue:true,monthlyExpense:true`
+  - **说明:** 控制状态卡片的显示与隐藏，格式为 卡片名称:显示状态（true/false），多个卡片使用逗号分隔；也可在状态栏的“状态显示设置”中分别切换
 
 </details>
 
@@ -230,7 +230,7 @@
 
 - **语言切换** — 标题栏内置语言切换按钮，支持简体中文、繁体中文、English、日本語、Bahasa Indonesia 五种语言，选择后自动保存到浏览器
 
-- **资产统计 & 3D 地球入口** — 标题栏内置资产统计和 3D 地球按钮（位于延迟总览按钮左侧），移动端集成到汉堡菜单中，受后台 `enableFinanceWidget` 和 `enableEarthGlobe` 配置控制
+- **资产统计 & 3D 地球入口** — 标题栏内置资产统计和 3D 地球按钮（位于延迟总览按钮左侧），移动端集成到汉堡菜单中，受后台 `enableFinanceWidget` 和 `enableEarthGlobe` 配置控制；网格、紧凑、表格视图中的金额标签也可悬浮/点击查看到期时间、账单金额、计费周期和剩余价值，并可直接打开服务器交易弹窗
 
 </details>
 
@@ -281,7 +281,7 @@
 - **是否在标题栏中显示统计信息** (`isShowStatsInHeader`)
   - **类型:** `switch`
   - **默认值:** `false`
-  - **说明:** 启用后将在标题栏中显示统计信息，仅在大屏桌面端有效，当标题栏空间不足时将恢复原统计栏位置
+  - **说明:** 启用后将在标题栏中显示统计信息，仅在大屏桌面端有效；资产价值使用紧凑双行布局，月均支出独立显示，统计项较多时允许在标题栏中自动换行以避免与操作按钮重叠
 
 - **合并分组栏与统计栏** (`mergeGroupsWithStats`)
   - **类型:** `switch`
@@ -466,7 +466,7 @@
 - **启用资产统计** (`enableFinanceWidget`)
   - **类型:** `switch`
   - **默认值:** `true`
-  - **说明:** 启用后将在标题栏显示资产统计入口按钮，可查看服务器总价值、月均支出、剩余价值等信息，并支持服务器交易计算
+  - **说明:** 启用后将在标题栏显示资产统计入口按钮，可查看服务器总价值、月均支出、剩余价值等信息，并支持服务器交易计算；首页三种视图中的金额标签会同步提供资产 Tooltip 和交易入口，状态栏可显示总价值、剩余总价值和月均支出，货币单位与免费标签排除规则均跟随资产统计面板实时更新
 
 - **启用地球组件** (`enableEarthGlobe`)
   - **类型:** `switch`
@@ -618,6 +618,7 @@ komari-theme-purcarte-plus/
 │   │       ├── EnhancedFeatures.tsx         # 增强功能总入口（统一管理各增强组件的挂载）
 │   │       ├── WelcomeBubble.tsx             # 欢迎气泡（展示访客 IP、地理位置、浏览器信息）
 │   │       ├── FinanceWidget.tsx             # 资产统计面板（服务器总价值、月均支出、剩余价值，入口在标题栏）
+│   │       ├── FinancePriceTag.tsx           # 首页金额标签资产 Tooltip 与服务器交易入口
 │   │       ├── ServerTradeModal.tsx          # 服务器交易计算弹窗
 │   │       ├── AdvancedSearchModal.tsx       # 高级搜索模态框（多条件筛选、URL同步）
 │   │       ├── AdvancedSearchModal.css       # 高级搜索模态框样式

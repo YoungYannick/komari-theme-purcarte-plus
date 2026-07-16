@@ -12,6 +12,7 @@ import { Settings2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import type { DisplayOptions, StatsBarProps } from "./types";
 import { useLocale } from "@/config/hooks";
+import { useAppConfig } from "@/config";
 
 export const StatsToggleMenu = memo(
   ({
@@ -19,6 +20,12 @@ export const StatsToggleMenu = memo(
     setDisplayOptions,
   }: Pick<StatsBarProps, "displayOptions" | "setDisplayOptions">) => {
     const { t } = useLocale();
+    const { enableFinanceWidget } = useAppConfig();
+    const optionKeys = (Object.keys(displayOptions) as Array<keyof DisplayOptions>).filter(
+      (key) =>
+        enableFinanceWidget || (key !== "assetValue" && key !== "monthlyExpense")
+    );
+
     return (
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
@@ -34,8 +41,7 @@ export const StatsToggleMenu = memo(
             {t("statsBar.displayOptionsTitle")}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {(Object.keys(displayOptions) as Array<keyof DisplayOptions>).map(
-            (key) => (
+          {optionKeys.map((key) => (
               <DropdownMenuItem
                 key={key}
                 className="flex items-center justify-between cursor-pointer">
@@ -47,6 +53,8 @@ export const StatsToggleMenu = memo(
                       regionOverview: t("statsBar.region"),
                       trafficOverview: t("statsBar.traffic"),
                       networkSpeed: t("statsBar.networkSpeed"),
+                      assetValue: t("statsBar.assetValueOption"),
+                      monthlyExpense: t("enhanced.finance.monthlyExpense"),
                     }[key]
                   }
                 </span>
@@ -57,8 +65,7 @@ export const StatsToggleMenu = memo(
                   }
                 />
               </DropdownMenuItem>
-            )
-          )}
+            ))}
         </DropdownMenuContent>
       </DropdownMenu>
     );

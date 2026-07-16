@@ -17,7 +17,9 @@ import { CircleProgress } from "../ui/progress-circle";
 import { useAppConfig } from "@/config";
 import { useLocale } from "@/config/hooks";
 import { NodeDisplayContainer } from "./NodeDisplay";
+import { useState } from "react";
 import { useRowHeightAlignment } from "@/hooks/useRowHeightAlignment";
+import { FinancePriceTag } from "@/components/enhanced/FinancePriceTag";
 
 interface NodeGridContainerProps {
   nodes: NodeData[];
@@ -66,11 +68,13 @@ export const NodeGrid = ({
   selectTrafficProgressStyle,
   onShowDetails,
 }: NodeGridProps) => {
+  const [priceTagElement, setPriceTagElement] = useState<HTMLElement | null>(null);
   const {
     stats,
     isOnline,
     isConfirmedOffline,
     tagList,
+    priceTagIndex,
     cpuUsage,
     memUsage,
     swapUsage,
@@ -81,7 +85,7 @@ export const NodeGrid = ({
     trafficLimitEnabled,
     trafficLimitInfinite,
   } = useNodeCommons(node);
-  const { isShowHWBarInCard, isShowValueUnderProgressBar, gridExpiredAtDisplay, gridUptimeDisplay } = useAppConfig();
+  const { isShowHWBarInCard, isShowValueUnderProgressBar, gridExpiredAtDisplay, gridUptimeDisplay, enableFinanceWidget } = useAppConfig();
   const { t } = useLocale();
 
   return (
@@ -113,7 +117,15 @@ export const NodeGrid = ({
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm text-nowrap">
         <div className="flex flex-wrap gap-1 mb-2" data-section="tags">
-          <Tag tags={tagList} />
+          <Tag
+            tags={tagList}
+            getTagInteraction={({ index }) =>
+              enableFinanceWidget && index === priceTagIndex
+                ? { ref: setPriceTagElement, className: "cursor-pointer" }
+                : undefined
+            }
+          />
+          <FinancePriceTag node={node} triggerElement={priceTagElement} />
         </div>
         <div className="border-t border-(--accent-4)/50 my-2"></div>
         {isShowHWBarInCard && (

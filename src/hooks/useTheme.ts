@@ -21,6 +21,8 @@ export interface ThemeContextType {
     regionOverview: boolean;
     trafficOverview: boolean;
     networkSpeed: boolean;
+    assetValue: boolean;
+    monthlyExpense: boolean;
   };
   setStatusCardsVisibility: (
     visibility: Partial<ThemeContextType["statusCardsVisibility"]>
@@ -41,6 +43,8 @@ export const ThemeContext = createContext<ThemeContextType>({
     regionOverview: true,
     trafficOverview: true,
     networkSpeed: true,
+    assetValue: true,
+    monthlyExpense: true,
   },
   setStatusCardsVisibility: () => {},
 });
@@ -145,7 +149,15 @@ export const useThemeManager = () => {
   const isMobile = useIsMobile();
   const defaultViewMode = isMobile ? selectMobileDefaultView : selectedDefaultView;
   const defaultStatusCardsVisibility = useMemo(() => {
-    const visibility: { [key: string]: boolean } = {};
+    const visibility: { [key: string]: boolean } = {
+      currentTime: true,
+      currentOnline: true,
+      regionOverview: true,
+      trafficOverview: true,
+      networkSpeed: true,
+      assetValue: true,
+      monthlyExpense: true,
+    };
     defaultstatusCardsVisibility.split(",").forEach((item) => {
       const [key, value] = item.split(":");
       visibility[key] = value === "true";
@@ -176,6 +188,11 @@ export const useThemeManager = () => {
     defaultStatusCardsVisibility
   );
 
+  const resolvedStatusCardsVisibility = useMemo(
+    () => ({ ...defaultStatusCardsVisibility, ...statusCardsVisibility }),
+    [defaultStatusCardsVisibility, statusCardsVisibility]
+  );
+
   const handleSetStatusCardsVisibility = (
     newVisibility: Partial<ThemeContextType["statusCardsVisibility"]>
   ) => {
@@ -192,7 +209,7 @@ export const useThemeManager = () => {
     setColor,
     viewMode,
     setViewMode,
-    statusCardsVisibility,
+    statusCardsVisibility: resolvedStatusCardsVisibility,
     setStatusCardsVisibility: handleSetStatusCardsVisibility,
   };
 };

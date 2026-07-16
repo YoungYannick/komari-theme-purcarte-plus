@@ -8,6 +8,18 @@ import Tips from "./tips";
 
 interface TagProps extends React.HTMLAttributes<HTMLDivElement> {
   tags: string[];
+  getTagInteraction?: (context: {
+    tag: string;
+    text: string;
+    index: number;
+    badgeColor: ColorType;
+    enableTransparentTags: boolean;
+  }) =>
+    | {
+        ref?: (element: HTMLElement | null) => void;
+        className?: string;
+      }
+    | undefined;
 }
 
 // 解析带颜色的标签
@@ -28,16 +40,25 @@ interface TagItemProps {
   tag: string;
   badgeColor: ColorType;
   enableTransparentTags: boolean;
+  interaction?: {
+    ref?: (element: HTMLElement | null) => void;
+    className?: string;
+  };
 }
 
 const TagItem: React.FC<TagItemProps> = ({
   tag,
   badgeColor,
   enableTransparentTags,
+  interaction,
 }) => {
   const [isOverflow, setIsOverflow] = useState(false);
-  const tagRef = useRef<HTMLDivElement>(null);
+  const tagRef = useRef<HTMLElement | null>(null);
   const { text } = parseTagWithColor(tag);
+  const setTagElement = (element: HTMLElement | null) => {
+    tagRef.current = element;
+    interaction?.ref?.(element);
+  };
 
   useLayoutEffect(() => {
     const element = tagRef.current;
@@ -48,18 +69,22 @@ const TagItem: React.FC<TagItemProps> = ({
 
   const tagContent = !enableTransparentTags ? (
     <Badge
-      ref={tagRef}
+      ref={setTagElement}
       color={badgeColor}
       variant="surface"
-      className="text-sm !block !flex-shrink overflow-hidden !text-ellipsis">
+      className={cn(
+        "text-sm !block !flex-shrink overflow-hidden !text-ellipsis",
+        interaction?.className
+      )}>
       <label className="text-xs">{text}</label>
     </Badge>
   ) : (
     <div
-      ref={tagRef}
+      ref={setTagElement}
       data-accent-color={badgeColor}
       className={cn(
-        "rt-reset rt-Badge rt-r-size-1 !text-xs transition-colors rt-Badge-tag-transparent !block !flex-shrink overflow-hidden text-ellipsis"
+        "rt-reset rt-Badge rt-r-size-1 !text-xs transition-colors rt-Badge-tag-transparent !block !flex-shrink overflow-hidden text-ellipsis",
+        interaction?.className
       )}>
       {text}
     </div>
@@ -77,7 +102,7 @@ const TagItem: React.FC<TagItemProps> = ({
 };
 
 const Tag = React.forwardRef<HTMLDivElement, TagProps>(
-  ({ className, tags, ...props }, ref) => {
+  ({ className, tags, getTagInteraction, ...props }, ref) => {
     const { enableTransparentTags, tagDefaultColorList } = useAppConfig();
 
     const colorList = React.useMemo(() => {
@@ -92,14 +117,22 @@ const Tag = React.forwardRef<HTMLDivElement, TagProps>(
         className={cn("flex flex-wrap gap-1 w-full", className)}
         {...props}>
         {tags.map((tag, index) => {
-          const { color } = parseTagWithColor(tag);
+          const { text, color } = parseTagWithColor(tag);
           const badgeColor = color || colorList[index % colorList.length];
+          const interaction = getTagInteraction?.({
+            tag,
+            text,
+            index,
+            badgeColor,
+            enableTransparentTags,
+          });
           return (
             <TagItem
               key={index}
               tag={tag}
               badgeColor={badgeColor}
               enableTransparentTags={enableTransparentTags}
+              interaction={interaction}
             />
           );
         })}

@@ -4,6 +4,8 @@ export type DisplayOptions = {
   regionOverview: boolean;
   trafficOverview: boolean;
   networkSpeed: boolean;
+  assetValue: boolean;
+  monthlyExpense: boolean;
 };
 
 export type StatsSnapshot = {

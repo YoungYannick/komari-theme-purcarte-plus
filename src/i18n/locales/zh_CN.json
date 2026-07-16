@@ -436,7 +436,11 @@
       "ratesUpdating": "汇率更新中...",
       "excludeFreeOn": "当前：已排除 {{tag}} 标签",
       "excludeFreeOff": "当前：包含 {{tag}} 标签",
-      "refresh": "刷新数据"
+      "refresh": "刷新数据",
+      "priceTooltipExpiry": "到期时间",
+      "priceTooltipBillingAmount": "账单金额",
+      "priceTooltipBillingCycle": "计费周期",
+      "priceTooltipRemainingValue": "剩余价值"
     },
     "trade": {
       "title": "服务器交易",
@@ -1052,13 +1056,21 @@
   },
   "statsBar": {
     "_": "状态栏",
+    "assetValue": "资产价值",
+    "assetValueOption": "总价值 / 剩余总价值",
+    "assetValueShort": "资产",
     "currentOnline": "当前在线",
     "currentTime": "当前时间",
     "displayOptionsTitle": "状态显示设置",
+    "monthlyExpenseShort": "月支",
     "networkSpeed": "网络速率",
     "networkSpeedShort": "网速",
     "region": "点亮地区",
+    "remainingTotalValue": "剩余总价值",
+    "remainingValueShort": "剩",
+    "specialCases": "特殊计费说明",
     "statsHidden": "统计信息已隐藏",
+    "totalValueShort": "总",
     "traffic": "流量概览",
     "trafficShort": "流量"
   },

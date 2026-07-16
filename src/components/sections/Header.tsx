@@ -454,7 +454,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
         right: isSettingsOpen && !isMobile ? "var(--setting-width)" : "0",
       }}>
       <Card className="rounded-none w-full flex items-center justify-center">
-        <div className="w-(--main-width) max-w-screen-2xl py-2 flex items-center justify-between">
+        <div className="w-(--main-width) max-w-screen-2xl py-2 flex items-center justify-between gap-2">
           <div className="flex items-center theme-text-shadow text-accent-foreground">
             <a href="/" className="flex items-center gap-2 text-2xl font-bold">
               {enableLogo && logoUrl && (
@@ -468,12 +468,12 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
             isShowStatsInHeader &&
             !isMobile &&
             !isPrivate && (
-              <div className="flex-1 flex justify-center">
+              <div className="min-w-0 flex-1 flex justify-center">
                 <StatsBar {...(props as Required<StatsBarProps>)} />
               </div>
             )}
 
-          <div className="flex items-center space-x-2">
+          <div className="flex shrink-0 items-center space-x-2">
             {isMobile ? (
               <>
                 {!isSubPage && (

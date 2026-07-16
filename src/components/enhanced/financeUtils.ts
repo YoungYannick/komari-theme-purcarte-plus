@@ -137,6 +137,35 @@ export function calculateMonthlyExpense(
   return cycleMonths > 0 ? priceBase / cycleMonths : 0;
 }
 
+export interface FinanceNodeValues {
+  priceBase: number;
+  monthlyExpense: number;
+  remainingValue: number;
+  isSpecialFree: boolean;
+  isLongTerm: boolean;
+}
+
+export function calculateFinanceNodeValues(
+  node: NodeData,
+  rates: ExchangeRates,
+  date: Date = new Date()
+): FinanceNodeValues {
+  const { price: priceBase, isSpecialFree } = parsePriceToBase(node, rates);
+  const { remainingValue, isLongTerm } = calculateRemainingValue(
+    node,
+    rates,
+    date
+  );
+
+  return {
+    priceBase,
+    monthlyExpense: calculateMonthlyExpense(priceBase, node.billing_cycle),
+    remainingValue,
+    isSpecialFree,
+    isLongTerm,
+  };
+}
+
 /**
  * 根据选择的日期计算剩余价值（以 rates 基准货币计）
  */

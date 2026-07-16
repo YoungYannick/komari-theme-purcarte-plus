@@ -19,6 +19,7 @@ import { useAppConfig } from "@/config";
 import { useLocale } from "@/config/hooks";
 import { Card } from "../ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { FinancePriceTag } from "@/components/enhanced/FinancePriceTag";
 
 interface NodeTableProps {
   nodes: NodeData[];
@@ -81,6 +82,7 @@ const NodeTableRow = ({
 }: NodeTableRowProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [shouldRenderChart, setShouldRenderChart] = useState(false);
+  const [priceTagElement, setPriceTagElement] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -93,6 +95,7 @@ const NodeTableRow = ({
     isOnline,
     isConfirmedOffline,
     tagList,
+    priceTagIndex,
     cpuUsage,
     memUsage,
     swapUsage,
@@ -104,7 +107,7 @@ const NodeTableRow = ({
     trafficLimitInfinite,
   } = useNodeCommons(node);
   const gridCols = enableSwap ? "grid-cols-9" : "grid-cols-8";
-  const { pingChartTimeInPreview, enableInstanceDetail, enablePingChart, tableExpiredAtDisplay, tableUptimeDisplay } =
+  const { pingChartTimeInPreview, enableInstanceDetail, enablePingChart, tableExpiredAtDisplay, tableUptimeDisplay, enableFinanceWidget } =
     useAppConfig();
   const { t } = useLocale();
 
@@ -132,7 +135,16 @@ const NodeTableRow = ({
               className="text-inherit transition-opacity duration-200 hover:opacity-80">
               <div className="text-base font-bold truncate md:whitespace-normal md:break-words">{node.name}</div>
             </Link>
-            <Tag className="text-xs" tags={tagList} />
+            <Tag
+              className="text-xs"
+              tags={tagList}
+              getTagInteraction={({ index }) =>
+                enableFinanceWidget && index === priceTagIndex
+                  ? { ref: setPriceTagElement, className: "cursor-pointer" }
+                  : undefined
+              }
+            />
+            <FinancePriceTag node={node} triggerElement={priceTagElement} />
             {(() => {
               const showExpiry = tableExpiredAtDisplay === "show" ||
                 (tableExpiredAtDisplay === "hideUnset" && expired_at !== t("node.notSet"));

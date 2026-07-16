@@ -436,7 +436,11 @@
       "ratesUpdating": "為替レート更新中...",
       "excludeFreeOn": "現在：{{tag}} タグ除外中",
       "excludeFreeOff": "現在：{{tag}} タグ含む",
-      "refresh": "データ更新"
+      "refresh": "データ更新",
+      "priceTooltipExpiry": "有効期限",
+      "priceTooltipBillingAmount": "請求金額",
+      "priceTooltipBillingCycle": "課金周期",
+      "priceTooltipRemainingValue": "残存価値"
     },
     "trade": {
       "title": "サーバー取引",
@@ -1052,13 +1056,21 @@
   },
   "statsBar": {
     "_": "ステータスバー",
+    "assetValue": "資産価値",
+    "assetValueOption": "総額 / 残存総価値",
+    "assetValueShort": "資産",
     "currentOnline": "オンライン",
     "currentTime": "現在時刻",
     "displayOptionsTitle": "表示設定",
+    "monthlyExpenseShort": "月額",
     "networkSpeed": "ネットワーク速度",
     "networkSpeedShort": "速度",
     "region": "地域",
+    "remainingTotalValue": "残存総価値",
+    "remainingValueShort": "残",
+    "specialCases": "特別な課金説明",
     "statsHidden": "統計情報は非表示です",
+    "totalValueShort": "総",
     "traffic": "トラフィック概要",
     "trafficShort": "トラフィック"
   },

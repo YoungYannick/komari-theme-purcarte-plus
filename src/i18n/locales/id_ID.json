@@ -436,7 +436,11 @@
       "ratesUpdating": "Memperbarui kurs...",
       "excludeFreeOn": "Saat ini: Tag {{tag}} dikecualikan",
       "excludeFreeOff": "Saat ini: Tag {{tag}} disertakan",
-      "refresh": "Segarkan Data"
+      "refresh": "Segarkan Data",
+      "priceTooltipExpiry": "Waktu Kedaluwarsa",
+      "priceTooltipBillingAmount": "Jumlah Tagihan",
+      "priceTooltipBillingCycle": "Siklus Tagihan",
+      "priceTooltipRemainingValue": "Sisa Nilai"
     },
     "trade": {
       "title": "Perdagangan Server",
@@ -1052,13 +1056,21 @@
   },
   "statsBar": {
     "_": "Bar Statistik",
+    "assetValue": "Nilai Aset",
+    "assetValueOption": "Total / Sisa Nilai",
+    "assetValueShort": "Aset",
     "currentOnline": "Online",
     "currentTime": "Waktu Saat Ini",
     "displayOptionsTitle": "Pengaturan Tampilan",
+    "monthlyExpenseShort": "Bulanan",
     "networkSpeed": "Kecepatan Jaringan",
     "networkSpeedShort": "Kecepatan",
     "region": "Wilayah",
+    "remainingTotalValue": "Total Sisa Nilai",
+    "remainingValueShort": "Sisa",
+    "specialCases": "Detail penagihan khusus",
     "statsHidden": "Statistik tersembunyi",
+    "totalValueShort": "Total",
     "traffic": "Ikhtisar Lalu Lintas",
     "trafficShort": "Traffic"
   },

@@ -421,7 +421,7 @@
                     "id": "Visibilitas Kartu Status"
                 },
                 "type": "string",
-                "default": "currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true",
+                "default": "currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true,assetValue:true,monthlyExpense:true",
                 "help": {
                     "zh-CN": "控制状态卡片的显示与隐藏，格式为 卡片名称:true/false，逗号分隔",
                     "zh-TW": "控制狀態卡片的顯示與隱藏，格式為 卡片名稱:true/false，逗號分隔",

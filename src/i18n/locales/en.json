@@ -436,7 +436,11 @@
       "ratesUpdating": "Updating rates...",
       "excludeFreeOn": "Current: {{tag}} tag excluded",
       "excludeFreeOff": "Current: {{tag}} tag included",
-      "refresh": "Refresh Data"
+      "refresh": "Refresh Data",
+      "priceTooltipExpiry": "Expiry Time",
+      "priceTooltipBillingAmount": "Billing Amount",
+      "priceTooltipBillingCycle": "Billing Cycle",
+      "priceTooltipRemainingValue": "Remaining Value"
     },
     "trade": {
       "title": "Server Trade",
@@ -1052,13 +1056,21 @@
   },
   "statsBar": {
     "_": "Stats Bar",
+    "assetValue": "Asset Value",
+    "assetValueOption": "Total / Remaining Value",
+    "assetValueShort": "Assets",
     "currentOnline": "Online",
     "currentTime": "Current Time",
     "displayOptionsTitle": "Display Settings",
+    "monthlyExpenseShort": "Monthly",
     "networkSpeed": "Network Speed",
     "networkSpeedShort": "Speed",
     "region": "Regions",
+    "remainingTotalValue": "Remaining Total Value",
+    "remainingValueShort": "Remain",
+    "specialCases": "Special billing details",
     "statsHidden": "Stats hidden",
+    "totalValueShort": "Total",
     "traffic": "Traffic Overview",
     "trafficShort": "Traffic"
   },
