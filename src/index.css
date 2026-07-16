@@ -125,12 +125,30 @@
     scrollbar-width: thin;
     scrollbar-color: var(--gray-a6) transparent;
   }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
   body {
     @apply bg-background;
+    overscroll-behavior: none;
   }
+
   button {
     cursor: pointer;
   }
+}
+
+/* 应用使用内部 ScrollArea，弹层锁滚动时无需补偿原生页面滚动条 */
+body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* 全局统一滚动条样式（亮色/暗色模式自动适配） */
@@ -165,8 +183,6 @@
 
   .purcarte-blur {
     @apply bg-(--purcarte-card-color)! backdrop-blur-(--purcarte-blur)!;
-    will-change: backdrop-filter;
-    backface-visibility: hidden;
   }
 
   .rt-Badge-tag-transparent {
@@ -220,7 +236,15 @@
 .main-content-layer {
   isolation: isolate;
   contain: layout style;
-  will-change: transform;
+}
+
+/* 将实时更新的节点列表压平为单独合成层，避免与上层磨砂浮层交叉重绘 */
+.node-live-surface {
+  isolation: isolate;
+  position: relative;
+  z-index: 0;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
 .fade-out {

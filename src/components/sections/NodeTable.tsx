@@ -39,7 +39,7 @@ export const NodeTable = ({
 
   return (
     <ScrollArea className="w-full" showHorizontalScrollbar>
-      <div className="min-w-[1080px] px-2 pb-2">
+      <div className="node-live-surface min-w-[1080px] px-2 pb-2">
         <div className="space-y-1">
           <Card
             className={`theme-card-style text-primary font-bold grid ${gridCols} text-center gap-4 p-2 items-center transition-colors duration-200`}>

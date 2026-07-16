@@ -83,7 +83,9 @@ export const NodeDisplayContainer = ({
 
   return (
     <>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4" data-view-type={viewType}>
+      <div
+        className="node-live-surface grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4"
+        data-view-type={viewType}>
         {nodes.map((node) => children(node, () => setSelectedNode(node)))}
       </div>
       {selectedNode && (
