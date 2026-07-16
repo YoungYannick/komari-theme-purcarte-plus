@@ -269,7 +269,7 @@
 - **启用 JSON-RPC2 API 适配** (`enableJsonRPC2Api`)
   - **类型:** `switch`
   - **默认值:** `true`
-  - **说明:** 启用后将在支持的 Komari 版本优先使用 JSON-RPC2 API 获取节点、负载与 Ping 历史数据；Komari 1.2.6 的负载/Ping 历史适配 metrics RPC（`public:queryMetrics` / `public:getPingMetricStats`），优先请求原始 metrics 点并过滤 `fill_empty` 空桶以兼容现有图表结构；短时间 Ping 优先使用 `public:getPingRecords` raw records，metrics 原始点无效时继续回退聚合 metrics、旧 records 接口，时间范围上限按 `public:listMetricDefinitions` 中负载与 Ping 对应指标的 retention 分别判断，未登录用户最多查询 1 天历史，实时负载首屏按官方主题使用 `/api/recent`，旧版本自动回退到 common RPC 或 REST API
+  - **说明:** 启用后将在支持的 Komari 版本优先使用新版接口获取节点、负载与 Ping 数据，并兼容 Komari 1.2.6 的新增公开信息；旧版本会自动回退，无需手动处理
 
 - **是否在标题栏中显示统计信息** (`isShowStatsInHeader`)
   - **类型:** `switch`

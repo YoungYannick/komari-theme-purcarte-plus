@@ -10,7 +10,8 @@ export function convertNodeStatsToRpcNodeStatus(
     client: clientUuid,
     time: stats.updated_at,
     cpu: stats.cpu.usage,
-    gpu: 0, // Old API does not provide GPU usage
+    gpu: stats.gpu?.average_usage ?? 0,
+    gpu_detail: stats.gpu?.detailed_info,
     ram: stats.ram.used,
     ram_total: stats.ram.total,
     swap: stats.swap.used,

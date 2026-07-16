@@ -5,6 +5,7 @@ export interface NodeData {
   virtualization: string;
   arch: string;
   cpu_cores: number;
+  cpu_physical_cores?: number;
   os: string;
   kernel_version: string;
   gpu_name: string;
@@ -35,6 +36,17 @@ export interface NodeStats {
   disk: { total: number; used: number };
   network: { up: number; down: number; totalUp: number; totalDown: number };
   load: { load1: number; load5: number; load15: number };
+  gpu?: {
+    count: number;
+    average_usage: number;
+    detailed_info?: Array<{
+      name: string;
+      memory_total: number;
+      memory_used: number;
+      utilization: number;
+      temperature: number;
+    }>;
+  };
   uptime: number;
   process: number;
   connections: { tcp: number; udp: number };
@@ -54,7 +66,8 @@ export interface ApiResponse<T> {
 }
 
 export interface PublicInfo {
-  allow_cors: boolean;
+  cors_origin_check_enabled?: boolean;
+  allow_cors?: boolean;
   custom_body: string;
   custom_head: string;
   description: string;

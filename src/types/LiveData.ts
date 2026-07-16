@@ -31,6 +31,17 @@ export type Record = {
     tcp: number;
     udp: number;
   };
+  gpu?: {
+    count: number;
+    average_usage: number;
+    detailed_info?: {
+      name: string;
+      memory_total: number;
+      memory_used: number;
+      utilization: number;
+      temperature: number;
+    }[];
+  };
   uptime: number;
   process: number;
   message: string;

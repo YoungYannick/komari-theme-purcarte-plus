@@ -837,11 +837,11 @@
                 "type": "switch",
                 "default": true,
                 "help": {
-                    "zh-CN": "启用后在支持的 Komari 版本优先使用 JSON-RPC2 获取节点、负载与延迟历史数据；Komari 1.2.6 历史数据使用 metrics RPC，并按负载/Ping 对应指标的 retention 分别判断时间范围上限；实时负载首屏仍按官方主题使用 /api/recent，旧版本会回退 common RPC 或 REST",
-                    "zh-TW": "啟用後在支援的 Komari 版本優先使用 JSON-RPC2 取得節點、負載與延遲歷史資料；Komari 1.2.6 歷史資料使用 metrics RPC，並按負載/Ping 對應指標的 retention 分別判斷時間範圍上限；實時負載首屏仍按官方主題使用 /api/recent，舊版本會回退 common RPC 或 REST",
-                    "en": "When enabled, supported Komari versions prefer JSON-RPC2 for nodes plus load and ping history. Komari 1.2.6 history uses metrics RPC and separates load/ping time-range limits by the matching metric retention. Realtime load still follows the official theme through /api/recent, and older versions fall back to common RPC or REST.",
-                    "ja": "有効にすると、対応する Komari バージョンでノード、負荷履歴、Ping 履歴の取得に JSON-RPC2 を優先します。Komari 1.2.6 の履歴は metrics RPC を使用し、負荷/Ping それぞれの該当指標 retention で時間範囲上限を判定します。リアルタイム負荷の初期表示は公式テーマと同じく /api/recent を使用します。旧バージョンは common RPC または REST にフォールバックします。",
-                    "id": "Saat diaktifkan, versi Komari yang didukung memprioritaskan JSON-RPC2 untuk node serta riwayat load dan ping. Riwayat Komari 1.2.6 memakai metrics RPC dan batas rentang waktu load/ping dipisahkan berdasarkan retensi metrik terkait. Load realtime awal tetap mengikuti tema resmi melalui /api/recent, dan versi lama fallback ke common RPC atau REST."
+                    "zh-CN": "启用后优先使用新版接口获取节点、负载与延迟数据，并兼容 Komari 1.2.6 的新增公开信息；旧版本会自动回退，无需手动处理",
+                    "zh-TW": "啟用後優先使用新版介面取得節點、負載與延遲資料，並相容 Komari 1.2.6 的新增公開資訊；舊版本會自動回退，無需手動處理",
+                    "en": "Prefer the newer API for node, load, and latency data, with compatibility for Komari 1.2.6 public information. Older versions fall back automatically.",
+                    "ja": "ノード、負荷、遅延データの取得に新しい API を優先し、Komari 1.2.6 の追加公開情報にも対応します。古いバージョンでは自動的にフォールバックします。",
+                    "id": "Memprioritaskan API yang lebih baru untuk data node, load, dan latensi, serta kompatibel dengan informasi publik Komari 1.2.6. Versi lama akan fallback otomatis."
                 }
             },
             {

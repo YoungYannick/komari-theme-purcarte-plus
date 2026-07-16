@@ -5,6 +5,7 @@ export interface RpcClient {
   virtualization: string;
   arch: string;
   cpu_cores: number;
+  cpu_physical_cores?: number;
   os: string;
   kernel_version: string;
   gpu_name: string;
@@ -33,6 +34,13 @@ export interface RpcNodeStatus {
   time: string;
   cpu: number;
   gpu: number;
+  gpu_detail?: Array<{
+    name: string;
+    memory_total: number;
+    memory_used: number;
+    utilization: number;
+    temperature: number;
+  }>;
   ram: number;
   ram_total: number;
   swap: number;
@@ -73,7 +81,8 @@ export interface RpcPublicInfo {
   oauth_provider: string | null;
   custom_head: string;
   custom_body: string;
-  allow_cors: boolean;
+  cors_origin_check_enabled?: boolean;
+  allow_cors?: boolean;
 }
 
 export interface RpcVersionInfo {
