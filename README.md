@@ -1,8 +1,8 @@
 <div align="center">
 
-<img width="900" src="./preview.png" alt="PurCarte Theme Preview">
+<img width="2560" src="./preview.png" alt="PurCarte Theme Preview">
 
-## ✨ PurCarte-Plus ✨
+# PurCarte-Plus
 
 一款为 [Komari](https://github.com/komari-monitor/komari) 设计的磨砂玻璃风格个性化增强版主题
 
@@ -12,32 +12,23 @@
 
 > [!NOTE]
 > 本主题在 [原作者:Montia37 v1.2.5](https://github.com/Montia37/komari-theme-purcarte/releases/tag/v1.2.5) 版本基础上进行二次开发的主题，且是在 Codex 的辅助下完成
->
-> 本主题的增强功能（欢迎气泡、资产统计、3D 地球、访客保护等）源自 [KomariBeautify](https://github.com/YoungYannick/KomariBeautify) 自定义代码版本（后台 自定义头部 & 自定义 Body），后为便于使用与维护整合至本主题包中
-> 
-> **此版本肯定不会满足所有人的需求,我只针对我发现的问题，我用着不好的，或者喜欢的方向开发，如果介意，请使用原版**
+
+---
 
 ## 📝 更新总结
 
 [UPDATES](./UPDATES.md)
 
+---
+
 ## 🚀 快速开始
 
 ### 安装与启用
 
-1.  前往 [Releases](https://github.com/YoungYannick/komari-theme-purcarte-plus/releases) 页面下载最新的 `komari-theme-purcarte-plus.zip` 文件。
-2.  进入 Komari 后台，上传 `zip` 压缩包并启用本主题。
+1.  前往 [Releases](https://github.com/YoungYannick/komari-theme-purcarte-plus/releases) 页面下载最新的 `komari-theme-purcarte-plus.zip` 文件
+2.  进入 Komari 后台，上传 `zip` 压缩包并启用本主题
 
-### 流量阈值的无限显示
-
-- Komari 官方 `traffic_limit` 字段按 `int64` / `bigint` 存储，理论上限为 `9223372036854775807 B`，约 `8 EiB`。
-- 为避免使用接近数据库上限的危险值，本主题不使用理论最大值表达无限。
-- 首页流量进度条中，`0 B` 仍表示禁用；`1000 PB` 或更高的流量阈值会被主题识别为“无限流量”，进度条/圆圈仍显示但进度固定为 0。
-- 该识别只看阈值大小，不绑定统计方式；总和、最大值、最小值、仅上传、仅下载都可以正常显示为无限。
-
-> [!NOTE]
->
-> 本主题支持通过 Komari 后台或前端进行详细配置，所有可用选项如下
+### 可用配置
 
 <details>
 <summary><b>前端管理开关</b></summary>
@@ -532,6 +523,8 @@
 
 </details>
 
+---
+
 ## 📁 项目结构
 
 <details>
@@ -708,6 +701,8 @@ komari-theme-purcarte-plus/
 
 </details>
 
+---
+
 ## 🛠️ 本地开发
 
 1.  **克隆仓库**
@@ -729,7 +724,7 @@ komari-theme-purcarte-plus/
     yarn dev
     ```
 
-4.  在浏览器中打开 `http://localhost:5173` (或 Vite 提示的其他端口) 即可进行预览和调试。
+4.  在浏览器中打开 `http://localhost:5173` (或 Vite 提示的其他端口) 即可进行预览和调试
 
 ## 🔗 相关项目
 
