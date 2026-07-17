@@ -54,6 +54,8 @@ import { cn } from "@/utils";
 import { lttbDownsample, calculateAutoMaxPoints } from "@/utils/downsample";
 import { apiService } from "@/services/api";
 import {
+  buildMetricQuickRangeDays,
+  buildMetricRangeHours,
   limitMetricRetentionHours,
   resolveMetricRetentionHours,
 } from "@/utils/metricRetention";
@@ -323,29 +325,13 @@ const PingOverview = memo(() => {
 
   // 时间范围
   const timeRanges = useMemo(() => {
-    const ranges = [
-      { label: t("instancePage.hours", { count: 1 }), hours: 1 },
-      { label: t("instancePage.hours", { count: 4 }), hours: 4 },
-      { label: t("instancePage.days", { count: 1 }), hours: 24 },
-      { label: t("instancePage.days", { count: 7 }), hours: 168 },
-      { label: t("instancePage.days", { count: 30 }), hours: 720 },
-    ];
-    const filtered = ranges.filter(
-      (range) => range.hours <= maxPingRecordPreserveTime
-    );
-    if (maxPingRecordPreserveTime > 720) {
-      const dynamicLabel =
-        maxPingRecordPreserveTime % 24 === 0
-          ? t("instancePage.days", {
-              count: Math.floor(maxPingRecordPreserveTime / 24),
-            })
-          : t("instancePage.hours", { count: maxPingRecordPreserveTime });
-      filtered.push({
-        label: dynamicLabel,
-        hours: maxPingRecordPreserveTime,
-      });
-    }
-    return filtered;
+    return buildMetricRangeHours(maxPingRecordPreserveTime).map((hours) => ({
+      label:
+        hours % 24 === 0
+          ? t("instancePage.days", { count: hours / 24 })
+          : t("instancePage.hours", { count: hours }),
+      hours,
+    }));
   }, [t, maxPingRecordPreserveTime]);
 
   const [hours, setHours] = useState<number>(1);
@@ -367,10 +353,7 @@ const PingOverview = memo(() => {
   const queryRange = isCustomRange ? customQuery : null;
   const chartHours = isCustomRange ? rangeHours(customQuery) : hours;
   const customQuickRanges = useMemo(
-    () =>
-      [1, 7, 15, 30].filter(
-        (days) => days * 24 <= maxPingRecordPreserveTime
-      ),
+    () => buildMetricQuickRangeDays(maxPingRecordPreserveTime),
     [maxPingRecordPreserveTime]
   );
   const customInputMax = toDateTimeLocalValue(new Date());

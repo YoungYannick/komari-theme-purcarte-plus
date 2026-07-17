@@ -38,3 +38,36 @@ export function limitMetricRetentionHours(
 ): number {
   return isAuthenticated ? hours : Math.min(hours, 24);
 }
+
+export function buildMetricRangeHours(
+  maxRetentionHours: number,
+  includeLive = false
+): number[] {
+  const maxHours = toNonNegativeNumber(maxRetentionHours) ?? 0;
+  const ranges = includeLive ? [0] : [];
+
+  for (const hours of [1, 4, 24]) {
+    if (hours <= maxHours) ranges.push(hours);
+  }
+
+  if (maxHours > 24) {
+    const halfwayHours = Math.ceil(maxHours / 48) * 24;
+    if (halfwayHours > 24 && halfwayHours < maxHours) {
+      ranges.push(halfwayHours);
+    }
+    if (!ranges.includes(maxHours)) ranges.push(maxHours);
+  }
+
+  return ranges;
+}
+
+export function buildMetricQuickRangeDays(
+  maxRetentionHours: number
+): number[] {
+  const maxHours = toNonNegativeNumber(maxRetentionHours) ?? 0;
+  const wholeDayHours = Math.floor(maxHours / 24) * 24;
+
+  return buildMetricRangeHours(wholeDayHours)
+    .filter((hours) => hours >= 24 && hours % 24 === 0)
+    .map((hours) => hours / 24);
+}

@@ -16,6 +16,8 @@ import { useLocale } from "@/config/hooks";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  buildMetricQuickRangeDays,
+  buildMetricRangeHours,
   limitMetricRetentionHours,
   resolveMetricRetentionHours,
 } from "@/utils/metricRetention";
@@ -107,57 +109,27 @@ const InstancePage = () => {
     isAuthenticated
   );
 
-  const timeRanges = useMemo(() => {
-    return [
-      { label: t("instancePage.live"), hours: 0 },
-      { label: t("instancePage.hours", { count: 1 }), hours: 1 },
-      { label: t("instancePage.hours", { count: 4 }), hours: 4 },
-      { label: t("instancePage.days", { count: 1 }), hours: 24 },
-      { label: t("instancePage.days", { count: 7 }), hours: 168 },
-      { label: t("instancePage.days", { count: 30 }), hours: 720 },
-    ];
-  }, [t]);
-
   const pingTimeRanges = useMemo(() => {
-    const filtered = timeRanges.filter(
-      (range) => range.hours !== 0 && range.hours <= maxPingRecordPreserveTime
-    );
-
-    if (maxPingRecordPreserveTime > 720) {
-      const dynamicLabel =
-        maxPingRecordPreserveTime % 24 === 0
-          ? t("instancePage.days", {
-              count: Math.floor(maxPingRecordPreserveTime / 24),
-            })
-          : t("instancePage.hours", { count: maxPingRecordPreserveTime });
-      filtered.push({
-        label: dynamicLabel,
-        hours: maxPingRecordPreserveTime,
-      });
-    }
-
-    return filtered;
-  }, [timeRanges, maxPingRecordPreserveTime, t]);
+    return buildMetricRangeHours(maxPingRecordPreserveTime).map((hours) => ({
+      label:
+        hours % 24 === 0
+          ? t("instancePage.days", { count: hours / 24 })
+          : t("instancePage.hours", { count: hours }),
+      hours,
+    }));
+  }, [maxPingRecordPreserveTime, t]);
 
   const loadTimeRanges = useMemo(() => {
-    const filtered = timeRanges.filter(
-      (range) => range.hours <= maxRecordPreserveTime
-    );
-    if (maxRecordPreserveTime > 720) {
-      const dynamicLabel =
-        maxRecordPreserveTime % 24 === 0
-          ? t("instancePage.days", {
-              count: Math.floor(maxRecordPreserveTime / 24),
-            })
-          : t("instancePage.hours", { count: maxRecordPreserveTime });
-      filtered.push({
-        label: dynamicLabel,
-        hours: maxRecordPreserveTime,
-      });
-    }
-
-    return filtered;
-  }, [timeRanges, maxRecordPreserveTime, t]);
+    return buildMetricRangeHours(maxRecordPreserveTime, true).map((hours) => ({
+      label:
+        hours === 0
+          ? t("instancePage.live")
+          : hours % 24 === 0
+            ? t("instancePage.days", { count: hours / 24 })
+            : t("instancePage.hours", { count: hours }),
+      hours,
+    }));
+  }, [maxRecordPreserveTime, t]);
 
   useEffect(() => {
     if (
@@ -202,7 +174,7 @@ const InstancePage = () => {
   const activeMaxRecordHours =
     chartType === "load" ? maxRecordPreserveTime : maxPingRecordPreserveTime;
   const customQuickRanges = useMemo(
-    () => [1, 7, 15, 30].filter((days) => days * 24 <= activeMaxRecordHours),
+    () => buildMetricQuickRangeDays(activeMaxRecordHours),
     [activeMaxRecordHours]
   );
   const loadQueryRange =
