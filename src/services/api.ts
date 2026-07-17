@@ -286,8 +286,16 @@ class ApiService {
   }
 
   private metricTags(value: any): Record<string, string> | undefined {
-    const tags = value?.tag || value?.tags || value?.labels;
-    return tags && typeof tags === "object" ? tags : undefined;
+    for (const tags of [value?.tags, value?.tag, value?.labels]) {
+      if (
+        tags &&
+        typeof tags === "object" &&
+        Object.keys(tags).length > 0
+      ) {
+        return tags;
+      }
+    }
+    return undefined;
   }
 
   private metricValue(value: unknown): number | null {
