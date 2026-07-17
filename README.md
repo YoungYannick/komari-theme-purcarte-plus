@@ -276,7 +276,7 @@
 - **启用 JSON-RPC2 API 适配** (`enableJsonRPC2Api`)
   - **类型:** `switch`
   - **默认值:** `true`
-  - **说明:** 启用后将在支持的 Komari 版本优先使用新版接口获取节点、负载与 Ping 数据，并兼容 Komari 1.2.6 的新增公开信息；旧版本会自动回退，无需手动处理
+  - **说明:** 启用后将在支持的 Komari 版本优先使用新版接口获取节点、负载与 Ping 数据，并兼容 Komari 1.2.6 及后续预发布版本的独立指标保留策略；历史范围直接读取各指标 `retention_days`，支持保留期为 `0` 的禁用语义和关闭降采样场景，旧版本会自动回退
 
 - **是否在标题栏中显示统计信息** (`isShowStatsInHeader`)
   - **类型:** `switch`
@@ -677,6 +677,7 @@ komari-theme-purcarte-plus/
 │       ├── index.ts                         # 工具模块统一导出（cn、formatBytes 等）
 │       ├── formatHelper.ts                  # 数据格式化（字节、运行时间、流量限制）
 │       ├── trafficLimit.ts                  # 流量阈值无限显示识别
+│       ├── metricRetention.ts               # 新旧 Komari 指标保留期解析与访问范围限制
 │       ├── chartHelper.ts                   # 图表工具（OKLCH 颜色生成、标签格式化）
 │       ├── converters.ts                    # 类型转换工具（NodeStats ↔ RpcNodeStatus）
 │       ├── regionHelper.ts                  # 地区 Emoji → 名称映射

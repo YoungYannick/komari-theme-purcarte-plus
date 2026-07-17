@@ -35,7 +35,6 @@ const LOAD_HISTORY_METRIC_KEYS = [
   "connections.udp",
 ];
 
-const PING_HISTORY_METRIC_KEYS = ["ping.latency_ms", "ping.loss"];
 const METRIC_DEFAULT_MAX_POINTS = 700;
 const METRIC_RAW_MAX_POINTS = 200_000;
 const METRIC_RAW_POINT_INTERVAL_SECONDS = 30;
@@ -43,6 +42,17 @@ const METRIC_RAW_POINT_INTERVAL_SECONDS = 30;
 export type HistoryQueryRange = {
   start: string;
   end: string;
+};
+
+type MetricDefinitionRetention = {
+  name?: string;
+  metric_key?: string;
+  retention_days?: number;
+};
+
+const toNonNegativeNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 };
 
 class ApiService {
@@ -58,7 +68,9 @@ class ApiService {
       timeout: ReturnType<typeof setTimeout>;
     }
   >();
-  private metricDefinitionKeysPromise: Promise<Set<string> | null> | null = null;
+  private metricDefinitionsPromise: Promise<
+    MetricDefinitionRetention[] | null
+  > | null = null;
 
   constructor() {
     this.baseUrl = "";
@@ -453,24 +465,33 @@ class ApiService {
     return null;
   }
 
-  private async getMetricDefinitionKeys() {
-    if (!this.metricDefinitionKeysPromise) {
-      this.metricDefinitionKeysPromise = this.rpcCall<
-        Array<{ name?: string; metric_key?: string }>
-      >("public:listMetricDefinitions", {}, { silent: true }).then((response) => {
-        if (response.status !== "success" || !Array.isArray(response.data)) {
-          return null;
-        }
-        return new Set(
-          response.data
-            .map((definition) =>
-              String(definition.name || definition.metric_key || "")
-            )
-            .filter(Boolean)
-        );
-      });
+  private async getMetricDefinitions() {
+    if (!this.metricDefinitionsPromise) {
+      this.metricDefinitionsPromise = this.rpcCall<
+        MetricDefinitionRetention[]
+      >("public:listMetricDefinitions", {}, { silent: true }).then((response) =>
+        response.status === "success" && Array.isArray(response.data)
+          ? response.data
+          : null
+      );
     }
-    return this.metricDefinitionKeysPromise;
+    return this.metricDefinitionsPromise;
+  }
+
+  private async getMetricDefinitionKeys() {
+    const definitions = await this.getMetricDefinitions();
+    if (definitions === null) return null;
+    return new Set(
+      definitions
+        .filter(
+          (definition) =>
+            (toNonNegativeNumber(definition.retention_days) ?? 0) > 0
+        )
+        .map((definition) =>
+          String(definition.name || definition.metric_key || "")
+        )
+        .filter(Boolean)
+    );
   }
 
   private async filterAvailableMetricKeys(metricKeys: string[]) {
@@ -478,8 +499,7 @@ class ApiService {
     if (!available) {
       return metricKeys;
     }
-    const filtered = metricKeys.filter((key) => available.has(key));
-    return filtered.length > 0 ? filtered : metricKeys;
+    return metricKeys.filter((key) => available.has(key));
   }
 
   private async queryMetrics(params: any): Promise<any | null> {
@@ -489,57 +509,76 @@ class ApiService {
     return response.status === "success" ? response.data : null;
   }
 
-  private async getMetricRetentionDays(
-    metricKeys: string[],
-    publicInfo?: PublicInfo | null,
-    strategy: "max" | "min" = "max"
-  ): Promise<number> {
-    if (this.useRpc) {
-      const response = await this.rpcCall<
-        Array<{ name?: string; metric_key?: string; retention_days?: number }>
-      >(
-        "public:listMetricDefinitions",
-        {},
-        { silent: true }
-      );
-      if (response.status === "success" && Array.isArray(response.data)) {
-        const keySet = new Set(metricKeys);
-        const retentionDays = response.data
-          .filter((definition) =>
-            keySet.has(String(definition.name || definition.metric_key))
-          )
-          .map((definition) => Number(definition.retention_days))
-          .filter((days) => Number.isFinite(days) && days > 0);
-        if (retentionDays.length > 0) {
-          return strategy === "min"
-            ? Math.min(...retentionDays)
-            : Math.max(...retentionDays);
-        }
-      }
-    }
+  private legacyMetricRetentionDays(
+    publicInfo: PublicInfo | null | undefined,
+    kind: "load" | "ping"
+  ): number | null {
+    const specificDays = toNonNegativeNumber(
+      kind === "load"
+        ? publicInfo?.load_metric_retention_days
+        : publicInfo?.ping_metric_retention_days
+    );
+    if (specificDays !== null) return specificDays;
 
-    const fallback = Number(publicInfo?.metric_retention_days);
-    return Number.isFinite(fallback) && fallback > 0 ? fallback : 0;
+    const legacyDays = toNonNegativeNumber(publicInfo?.metric_retention_days);
+    if (legacyDays !== null) return legacyDays;
+
+    const legacyHours = toNonNegativeNumber(
+      kind === "load"
+        ? publicInfo?.record_preserve_time
+        : publicInfo?.ping_record_preserve_time
+    );
+    return legacyHours === null ? null : legacyHours / 24;
   }
 
   async getLoadMetricRetentionDays(
     publicInfo?: PublicInfo | null
-  ): Promise<number> {
-    return this.getMetricRetentionDays(
-      LOAD_HISTORY_METRIC_KEYS,
-      publicInfo,
-      "max"
-    );
+  ): Promise<number | null> {
+    if (this.useRpc) {
+      const definitions = await this.getMetricDefinitions();
+      if (definitions !== null) {
+        const keySet = new Set(LOAD_HISTORY_METRIC_KEYS);
+        const retentionDays = definitions
+          .filter((definition) =>
+            keySet.has(String(definition.name || definition.metric_key || ""))
+          )
+          .map((definition) => toNonNegativeNumber(definition.retention_days))
+          .filter((days): days is number => days !== null);
+        if (retentionDays.length > 0) {
+          const enabledDays = retentionDays.filter((days) => days > 0);
+          return enabledDays.length > 0 ? Math.max(...enabledDays) : 0;
+        }
+      }
+    }
+    return this.legacyMetricRetentionDays(publicInfo, "load");
   }
 
   async getPingMetricRetentionDays(
     publicInfo?: PublicInfo | null
-  ): Promise<number> {
-    return this.getMetricRetentionDays(
-      PING_HISTORY_METRIC_KEYS,
-      publicInfo,
-      "min"
-    );
+  ): Promise<number | null> {
+    if (this.useRpc) {
+      const definitions = await this.getMetricDefinitions();
+      if (definitions !== null) {
+        const findRetention = (metricKey: string) => {
+          const definition = definitions.find(
+            (item) =>
+              String(item.name || item.metric_key || "") === metricKey
+          );
+          return definition
+            ? toNonNegativeNumber(definition.retention_days)
+            : null;
+        };
+        const latencyDays = findRetention("ping.latency_ms");
+        if (latencyDays !== null) {
+          if (latencyDays === 0) return 0;
+          const lossDays = findRetention("ping.loss");
+          return lossDays !== null && lossDays > 0
+            ? Math.min(latencyDays, lossDays)
+            : latencyDays;
+        }
+      }
+    }
+    return this.legacyMetricRetentionDays(publicInfo, "ping");
   }
 
   private async getLoadHistoryFromMetrics(
@@ -569,6 +608,7 @@ class ApiService {
     const metricKeys = await this.filterAvailableMetricKeys(
       Object.keys(metricToRecordKey)
     );
+    if (metricKeys.length === 0) return null;
     const buildRecords = (data: any) => {
       const seriesList = Array.isArray(data?.series) ? data.series : [];
       if (seriesList.length === 0) return null;
@@ -634,6 +674,7 @@ class ApiService {
     range?: HistoryQueryRange | null
   ): Promise<PingHistoryResponse | null> {
     const metricKeys = await this.filterAvailableMetricKeys(["ping.latency_ms"]);
+    if (metricKeys.length === 0) return null;
     const baseMetricParams = {
       metric_keys: metricKeys,
       entity_id: uuid,

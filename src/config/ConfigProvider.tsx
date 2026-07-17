@@ -101,11 +101,18 @@ export function ConfigProvider({ children }: ConfigProviderProps) {
             apiService.getLoadMetricRetentionDays(publicInfoForState),
             apiService.getPingMetricRetentionDays(publicInfoForState),
           ]);
-        if (loadMetricRetentionDays > 0 || pingMetricRetentionDays > 0) {
+        if (
+          loadMetricRetentionDays !== null ||
+          pingMetricRetentionDays !== null
+        ) {
           publicInfoForState = {
             ...publicInfoForState,
-            load_metric_retention_days: loadMetricRetentionDays || undefined,
-            ping_metric_retention_days: pingMetricRetentionDays || undefined,
+            ...(loadMetricRetentionDays !== null
+              ? { load_metric_retention_days: loadMetricRetentionDays }
+              : {}),
+            ...(pingMetricRetentionDays !== null
+              ? { ping_metric_retention_days: pingMetricRetentionDays }
+              : {}),
           };
         }
       }

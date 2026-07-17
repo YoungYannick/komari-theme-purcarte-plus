@@ -74,6 +74,7 @@ export interface PublicInfo {
   disable_password_login: boolean;
   oauth_enable: boolean;
   oauth_provider: string | null;
+  visitor_audit_enabled?: boolean;
   metric_retention_days?: number;
   load_metric_retention_days?: number;
   ping_metric_retention_days?: number;

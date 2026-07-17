@@ -15,17 +15,16 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { useLocale } from "@/config/hooks";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  limitMetricRetentionHours,
+  resolveMetricRetentionHours,
+} from "@/utils/metricRetention";
 
 const CUSTOM_RANGE_HOURS = -1;
 
 type CustomTimeRange = {
   start: string;
   end: string;
-};
-
-const toPositiveNumber = (value: unknown) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 };
 
 const toDateTimeLocalValue = (date: Date) => {
@@ -99,27 +98,13 @@ const InstancePage = () => {
 
   const isAuthenticated =
     siteStatus === "authenticated" || siteStatus === "private-authenticated";
-  const limitHistoryHours = (value: number, fallback = 24) => {
-    const hours = toPositiveNumber(value) || fallback;
-    return isAuthenticated ? hours : Math.min(hours, 24);
-  };
-  const loadMetricRetentionHours =
-    toPositiveNumber(
-      publicSettings?.load_metric_retention_days ??
-        publicSettings?.metric_retention_days
-    ) * 24;
-  const pingMetricRetentionHours =
-    toPositiveNumber(
-      publicSettings?.ping_metric_retention_days ??
-        publicSettings?.metric_retention_days
-    ) * 24;
-  const maxRecordPreserveTime = limitHistoryHours(
-    loadMetricRetentionHours ||
-      toPositiveNumber(publicSettings?.record_preserve_time)
+  const maxRecordPreserveTime = limitMetricRetentionHours(
+    resolveMetricRetentionHours(publicSettings, "load"),
+    isAuthenticated
   );
-  const maxPingRecordPreserveTime = limitHistoryHours(
-    pingMetricRetentionHours ||
-      toPositiveNumber(publicSettings?.ping_record_preserve_time)
+  const maxPingRecordPreserveTime = limitMetricRetentionHours(
+    resolveMetricRetentionHours(publicSettings, "ping"),
+    isAuthenticated
   );
 
   const timeRanges = useMemo(() => {
@@ -175,10 +160,17 @@ const InstancePage = () => {
   }, [timeRanges, maxRecordPreserveTime, t]);
 
   useEffect(() => {
-    if (loadHours !== CUSTOM_RANGE_HOURS && loadHours > maxRecordPreserveTime) {
+    if (
+      (loadHours === CUSTOM_RANGE_HOURS && maxRecordPreserveTime <= 0) ||
+      (loadHours !== CUSTOM_RANGE_HOURS && loadHours > maxRecordPreserveTime)
+    ) {
       setLoadHours(Math.min(24, maxRecordPreserveTime));
     }
-    if (pingHours !== CUSTOM_RANGE_HOURS && pingHours > maxPingRecordPreserveTime) {
+    if (
+      (pingHours === CUSTOM_RANGE_HOURS && maxPingRecordPreserveTime <= 0) ||
+      (pingHours !== CUSTOM_RANGE_HOURS &&
+        pingHours > maxPingRecordPreserveTime)
+    ) {
       setPingHours(Math.min(24, maxPingRecordPreserveTime));
     }
   }, [loadHours, pingHours, maxRecordPreserveTime, maxPingRecordPreserveTime]);
@@ -372,14 +364,20 @@ const InstancePage = () => {
                   {range.label}
                 </Button>
               ))}
-              <Button
-                variant={
-                  loadHours === CUSTOM_RANGE_HOURS ? "default" : "ghost"
-                }
-                size="sm"
-                onClick={handleCustomSelect}>
-                {t("instancePage.customRange")}
-              </Button>
+              {maxRecordPreserveTime > 0 && (
+                <Button
+                  variant={
+                    loadHours === CUSTOM_RANGE_HOURS ? "default" : "ghost"
+                  }
+                  size="sm"
+                  onClick={handleCustomSelect}>
+                  {t("instancePage.customRange")}
+                </Button>
+              )}
+            </div>
+          ) : maxPingRecordPreserveTime <= 0 ? (
+            <div className="px-2 py-1 text-sm text-secondary-foreground">
+              {t("pingOverview.noData")}
             </div>
           ) : (
             <div className="flex space-x-2 overflow-x-auto whitespace-nowrap">
@@ -403,7 +401,7 @@ const InstancePage = () => {
             </div>
           )}
         </Card>
-        {isCustomRange && (
+        {isCustomRange && activeMaxRecordHours > 0 && (
           <Card className="w-full p-3">
             <div className="flex flex-col gap-3 @md:flex-row @md:flex-wrap @md:items-end">
               <div className="flex items-center gap-2 text-sm font-medium @md:self-center">
@@ -494,12 +492,18 @@ const InstancePage = () => {
               liveData={stats}
               isOnline={isOnline}
             />
-          ) : displayedChartType === "ping" && staticNode ? (
+          ) : displayedChartType === "ping" &&
+            staticNode &&
+            maxPingRecordPreserveTime > 0 ? (
             <PingChart
               node={staticNode}
               hours={pingChartHours}
               range={pingQueryRange}
             />
+          ) : displayedChartType === "ping" ? (
+            <div className="flex min-h-96 items-center justify-center text-secondary-foreground">
+              {t("pingOverview.noData")}
+            </div>
           ) : null}
         </Suspense>
       </div>

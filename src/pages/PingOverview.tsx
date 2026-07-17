@@ -53,6 +53,10 @@ import {
 import { cn } from "@/utils";
 import { lttbDownsample, calculateAutoMaxPoints } from "@/utils/downsample";
 import { apiService } from "@/services/api";
+import {
+  limitMetricRetentionHours,
+  resolveMetricRetentionHours,
+} from "@/utils/metricRetention";
 
 // 排序类型定义
 type ServerSortKey = "weight" | "name";
@@ -65,11 +69,6 @@ type CustomTimeRange = {
 // localStorage 键
 const SERVER_SORT_KEY = "pingOverview_serverSort";
 const CUSTOM_RANGE_HOURS = -1;
-
-const toPositiveNumber = (value: unknown) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-};
 
 const toDateTimeLocalValue = (date: Date) => {
   const offset = date.getTimezoneOffset() * 60_000;
@@ -315,24 +314,12 @@ const PingOverview = memo(() => {
     });
   };
 
-  const metricRetentionHours =
-    toPositiveNumber(
-      publicSettings?.ping_metric_retention_days ??
-        publicSettings?.metric_retention_days
-    ) * 24;
   const isAuthenticated =
     siteStatus === "authenticated" || siteStatus === "private-authenticated";
-  const maxPingRecordPreserveTime =
+  const maxPingRecordPreserveTime = limitMetricRetentionHours(
+    resolveMetricRetentionHours(publicSettings, "ping"),
     isAuthenticated
-      ? metricRetentionHours ||
-        toPositiveNumber(publicSettings?.ping_record_preserve_time) ||
-        24
-      : Math.min(
-          metricRetentionHours ||
-            toPositiveNumber(publicSettings?.ping_record_preserve_time) ||
-            24,
-          24
-        );
+  );
 
   // 时间范围
   const timeRanges = useMemo(() => {
@@ -389,7 +376,10 @@ const PingOverview = memo(() => {
   const customInputMax = toDateTimeLocalValue(new Date());
 
   useEffect(() => {
-    if (hours !== CUSTOM_RANGE_HOURS && hours > maxPingRecordPreserveTime) {
+    if (
+      (hours === CUSTOM_RANGE_HOURS && maxPingRecordPreserveTime <= 0) ||
+      (hours !== CUSTOM_RANGE_HOURS && hours > maxPingRecordPreserveTime)
+    ) {
       setHours(Math.min(24, maxPingRecordPreserveTime));
     }
   }, [hours, maxPingRecordPreserveTime]);
@@ -423,6 +413,16 @@ const PingOverview = memo(() => {
   const fetchAllPingData = useCallback(async () => {
     if (!nodes || nodes.length === 0) return;
     const requestId = ++fetchRequestIdRef.current;
+    if (maxPingRecordPreserveTime <= 0) {
+      setAllPingData(new Map());
+      setTimeRange(null);
+      setBrushIndices({});
+      setDataError(null);
+      setDataLoading(false);
+      hasLoadedPingDataRef.current = true;
+      setHasLoadedPingData(true);
+      return;
+    }
     if (!hasLoadedPingDataRef.current) {
       setAllPingData(new Map());
     }
@@ -470,7 +470,14 @@ const PingOverview = memo(() => {
       setHasLoadedPingData(true);
       setDataLoading(false);
     }
-  }, [nodes, chartHours, queryRange?.start, queryRange?.end, getPingHistory]);
+  }, [
+    nodes,
+    chartHours,
+    queryRange?.start,
+    queryRange?.end,
+    getPingHistory,
+    maxPingRecordPreserveTime,
+  ]);
 
   useEffect(() => {
     if (!nodesLoading && nodes && nodes.length > 0) {
@@ -1181,28 +1188,34 @@ const PingOverview = memo(() => {
       {/* 时间范围选择器 */}
       <div className="flex flex-col items-center w-full space-y-4">
         <Card className={`justify-center p-2 ${isMobile ? "w-full" : ""}`}>
-          <div className="flex space-x-2 overflow-x-auto whitespace-nowrap">
-            {timeRanges.map((range) => (
+          {maxPingRecordPreserveTime > 0 ? (
+            <div className="flex space-x-2 overflow-x-auto whitespace-nowrap">
+              {timeRanges.map((range) => (
+                <Button
+                  key={range.label}
+                  variant={hours === range.hours ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setHours(range.hours)}>
+                  {range.label}
+                </Button>
+              ))}
               <Button
-                key={range.label}
-                variant={hours === range.hours ? "default" : "ghost"}
+                variant={isCustomRange ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setHours(range.hours)}>
-                {range.label}
+                onClick={() => {
+                  setHours(CUSTOM_RANGE_HOURS);
+                  setCustomRangeError(null);
+                }}>
+                {t("instancePage.customRange")}
               </Button>
-            ))}
-            <Button
-              variant={isCustomRange ? "default" : "ghost"}
-              size="sm"
-              onClick={() => {
-                setHours(CUSTOM_RANGE_HOURS);
-                setCustomRangeError(null);
-              }}>
-              {t("instancePage.customRange")}
-            </Button>
-          </div>
+            </div>
+          ) : (
+            <div className="px-2 py-1 text-sm text-secondary-foreground">
+              {t("pingOverview.noData")}
+            </div>
+          )}
         </Card>
-        {isCustomRange && (
+        {isCustomRange && maxPingRecordPreserveTime > 0 && (
           <Card className="w-full p-3">
             <div className="flex flex-col gap-3 @md:flex-row @md:flex-wrap @md:items-end">
               <div className="flex items-center gap-2 text-sm font-medium @md:self-center">

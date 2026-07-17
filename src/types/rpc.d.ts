@@ -79,6 +79,7 @@ export interface RpcPublicInfo {
   disable_password_login: boolean;
   oauth_enable: boolean;
   oauth_provider: string | null;
+  visitor_audit_enabled?: boolean;
   custom_head: string;
   custom_body: string;
   cors_origin_check_enabled?: boolean;
