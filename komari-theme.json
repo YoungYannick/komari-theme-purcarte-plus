@@ -1311,11 +1311,11 @@
                 "type": "switch",
                 "default": false,
                 "help": {
-                    "zh-CN": "启用后图表中的曲线将会跨过断点形成连续的线条",
-                    "zh-TW": "啟用後圖表中的曲線將會跨過斷點形成連續的線條",
-                    "en": "Connect breaks in the chart to form a continuous line.",
-                    "ja": "チャートの断絶箇所をまたいで線を連続させます。",
-                    "id": "Hubungkan jeda di grafik untuk membentuk garis kontinu."
+                    "zh-CN": "启用后图表曲线将跨过断点形成连续线条；此开关仅影响图表显示，不参与丢包率计算",
+                    "zh-TW": "啟用後圖表曲線將跨過斷點形成連續線條；此開關僅影響圖表顯示，不參與丟包率計算",
+                    "en": "Connect chart gaps into continuous lines. This only affects rendering and does not affect packet loss statistics.",
+                    "ja": "チャートの断点をまたいで線を接続します。表示のみに影響し、パケットロス率の計算には使用されません。",
+                    "id": "Hubungkan jeda grafik menjadi garis kontinu. Opsi ini hanya memengaruhi tampilan dan tidak memengaruhi statistik packet loss."
                 }
             },
             {

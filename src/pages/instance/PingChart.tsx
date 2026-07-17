@@ -417,7 +417,7 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
         pingHistory.records,
         task.id,
         timeRange,
-        task.interval
+        task.loss
       );
       return {
         ...task,

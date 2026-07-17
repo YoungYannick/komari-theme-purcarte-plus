@@ -140,6 +140,7 @@ interface CombinedLineInfo {
   taskName: string;
   serverName: string;
   interval: number;
+  loss: number;
 }
 
 // 合并线条的颜色生成（按服务器分色相，同服务器内按监测节点偏移色相+亮度+饱和度）
@@ -483,6 +484,7 @@ const PingOverview = memo(() => {
           taskName: task.name,
           serverName: node.name,
           interval: task.interval,
+          loss: task.loss,
         });
       }
     }
@@ -1060,7 +1062,7 @@ const PingOverview = memo(() => {
         pingData.records,
         line.taskId,
         timeRange,
-        line.interval
+        line.loss
       );
       return {
         ...line,

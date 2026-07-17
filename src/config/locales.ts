@@ -195,11 +195,12 @@ export const defaultTexts = {
 
 export const otherTexts = {
   chart: {
-    packetLossCalculationWarning: "<p>丢包率计算算法并不准确，谨慎参考</p>",
+    packetLossCalculationWarning:
+      "<p>丢包率使用服务端返回的监测任务统计值，不根据前端图表断点或采样间隔推算。</p>",
     smoothTooltipContent:
       '<h2 class="text-lg font-bold">关于数据平滑的提示</h2><p>当您开启平滑后，您在统计图中看到的曲线经过<strong>指数加权移动平均 (EWMA)</strong> 算法处理，这是一种常用的数据平滑技术。</p></br><p>需要注意的是，经过EWMA算法平滑后的曲线所展示的数值，<strong>并非原始的、真实的测量数据</strong>。它们是根据EWMA算法计算得出的一个<strong>平滑趋势线</strong>，旨在减少数据波动，使数据模式和趋势更容易被识别。</p></br><p>因此，您看到的数值更像是<strong>视觉上的呈现</strong>，帮助您更好地理解数据的整体走向和长期趋势，而不是每一个时间点的精确真实值。如果您需要查看具体、原始的数据点，请参考未经平滑处理的数据视图。</p>',
     connectBreaksTooltipContent:
-      '<h2 class="text-lg font-bold">关于连接断点的提示</h2><p><strong>默认关闭，可在后台配置</strong></p><p>当您开启"连接断点"功能后，图表中的曲线将会跨过那些由于网络问题或其他原因导致的丢包点，形成一条连续的线条。同时，系统会在丢包位置显示<strong>半透明的垂直参考线</strong>来标记断点位置。</p>',
+      '<h2 class="text-lg font-bold">关于连接断点的提示</h2><p><strong>默认关闭，可在后台配置</strong></p><p>开启后，图表曲线会跨过断点形成连续线条，并使用<strong>半透明垂直参考线</strong>标记断点位置。此开关只影响图表显示，不参与丢包率计算。</p>',
   },
   setting: {
     title: "编辑配置",

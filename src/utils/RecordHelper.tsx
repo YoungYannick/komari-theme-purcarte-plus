@@ -451,14 +451,14 @@ export function sampleDataByRetention(
  * @param records - ping 历史记录数组。
  * @param taskId - 要计算的任务 ID。
  * @param timeRange - 用于筛选记录的可选时间范围 [开始, 结束]。
- * @param intervalSeconds
+ * @param authoritativeLoss - 服务端返回的任务丢包率百分比。
  * @returns 包含丢包率和最新值的对象。
  */
 export function calculateTaskStats(
   records: { time: string; task_id: number; value: number | null }[],
   taskId: number,
   timeRange: [number, number] | null,
-  intervalSeconds?: number
+  authoritativeLoss?: number
 ): { loss: number; latestValue: number | null; latestTime: string | null } {
   const relevantRecords = timeRange
     ? records.filter((rec) => {
@@ -479,50 +479,13 @@ export function calculateTaskStats(
       Number.isFinite(rec.value) &&
       rec.value >= 0
   );
-  let inferredLostPings = 0;
-  const intervalMs =
-    typeof intervalSeconds === "number" && intervalSeconds > 0
-      ? intervalSeconds * 1000
-      : 0;
-
-  if (intervalMs > 0) {
-    const inferMissing = (from: number, to: number) => {
-      if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) {
-        return 0;
-      }
-      const expectedSteps = Math.round((to - from) / intervalMs);
-      return Math.max(0, expectedSteps - 1);
-    };
-
-    for (let i = 0; i < sortedTaskRecords.length - 1; i++) {
-      inferredLostPings += inferMissing(
-        new Date(sortedTaskRecords[i].time).getTime(),
-        new Date(sortedTaskRecords[i + 1].time).getTime()
-      );
-    }
-
-    if (timeRange) {
-      if (sortedTaskRecords.length === 0) {
-        inferredLostPings += Math.max(
-          1,
-          Math.floor((timeRange[1] - timeRange[0]) / intervalMs)
-        );
-      } else {
-        inferredLostPings += inferMissing(
-          timeRange[0],
-          new Date(sortedTaskRecords[0].time).getTime()
-        );
-        inferredLostPings += inferMissing(
-          new Date(sortedTaskRecords[sortedTaskRecords.length - 1].time).getTime(),
-          timeRange[1]
-        );
-      }
-    }
-  }
-
-  const totalPings = sortedTaskRecords.length + inferredLostPings;
+  const reportedLoss = Number(authoritativeLoss);
   const loss =
-    totalPings > 0 ? (1 - successfulPings.length / totalPings) * 100 : 0;
+    Number.isFinite(reportedLoss) && reportedLoss >= 0
+      ? Math.min(100, reportedLoss)
+      : sortedTaskRecords.length > 0
+        ? (1 - successfulPings.length / sortedTaskRecords.length) * 100
+        : 0;
 
   let latestValue: number | null = null;
   let latestTime: string | null = null;
