@@ -52,8 +52,10 @@ export function buildMetricRangeHours(
 
   if (maxHours > 24) {
     const halfwayHours = Math.ceil(maxHours / 48) * 24;
-    if (halfwayHours > 24 && halfwayHours < maxHours) {
-      ranges.push(halfwayHours);
+    const rollupBoundaryHours = 14 * 24;
+    const intermediateHours = Math.min(halfwayHours, rollupBoundaryHours);
+    if (intermediateHours > 24 && intermediateHours < maxHours) {
+      ranges.push(intermediateHours);
     }
     if (!ranges.includes(maxHours)) ranges.push(maxHours);
   }

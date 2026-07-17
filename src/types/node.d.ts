@@ -118,6 +118,7 @@ export interface PingHistoryRecord {
 export interface PingTask {
   id: number;
   interval: number;
+  data_interval?: number;
   name: string;
   loss: number;
 }

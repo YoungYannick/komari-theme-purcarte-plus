@@ -483,7 +483,7 @@ const PingOverview = memo(() => {
           taskId: task.id,
           taskName: task.name,
           serverName: node.name,
-          interval: task.interval,
+          interval: task.data_interval || task.interval,
           loss: task.loss,
         });
       }

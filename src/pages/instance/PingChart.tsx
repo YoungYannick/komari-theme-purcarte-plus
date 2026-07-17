@@ -42,14 +42,17 @@ interface PingChartProps {
 const insertPingBreakRows = (
   rows: any[],
   taskKeys: string[],
-  tasks: Array<{ id: number; interval: number }>
+  tasks: Array<{ id: number; interval: number; data_interval?: number }>
 ) => {
   if (rows.length < 2 || taskKeys.length === 0) return rows;
 
   const intervalByKey = new Map(
     tasks.map((task) => [
       String(task.id),
-      Math.max(30, Number(task.interval) || 60) * 1000,
+      Math.max(
+        30,
+        Number(task.data_interval) || Number(task.interval) || 60
+      ) * 1000,
     ])
   );
   const result: any[] = [];
@@ -150,7 +153,7 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
     if (!data.length || !tasks.length) return [];
 
     const taskIntervals = tasks
-      .map((t) => t.interval)
+      .map((t) => t.data_interval || t.interval)
       .filter((v): v is number => typeof v === "number" && v > 0);
     const fallbackIntervalSec = taskIntervals.length
       ? Math.min(...taskIntervals)
