@@ -1290,7 +1290,7 @@
                     "id": "Aktifkan Pemulusan"
                 },
                 "type": "switch",
-                "default": true,
+                "default": false,
                 "help": {
                     "zh-CN": "启用后延迟图表将使用 EWMA 平滑算法消除毛刺和突变值",
                     "zh-TW": "啟用後延遲圖表將使用 EWMA 平滑演算法消除毛刺和突變值",
@@ -1309,7 +1309,7 @@
                     "id": "Hubungkan Jeda Grafik"
                 },
                 "type": "switch",
-                "default": false,
+                "default": true,
                 "help": {
                     "zh-CN": "启用后图表曲线将跨过断点形成连续线条；此开关仅影响图表显示，不参与丢包率计算",
                     "zh-TW": "啟用後圖表曲線將跨過斷點形成連續線條；此開關僅影響圖表顯示，不參與丟包率計算",
