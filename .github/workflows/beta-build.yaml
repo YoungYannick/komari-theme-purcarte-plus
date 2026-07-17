@@ -1,0 +1,131 @@
+name: Build Beta Release
+
+on:
+  push:
+    branches:
+      - beta
+
+concurrency:
+  group: beta-release
+  cancel-in-progress: true
+
+jobs:
+  build-beta:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Generate beta version
+        shell: bash
+        run: |
+          BETA_VERSION="beta-$(TZ=Asia/Shanghai date +'%Y%m%d%H%M')"
+          echo "BETA_VERSION=${BETA_VERSION}" >> "$GITHUB_ENV"
+
+          jq --arg version "$BETA_VERSION" \
+            '.version = $version' \
+            komari-theme.json > komari-theme-updated.json
+          mv komari-theme-updated.json komari-theme.json
+
+          echo "Generated beta version: ${BETA_VERSION}"
+
+      - name: Build project
+        run: yarn build
+
+      - name: Verify required files
+        shell: bash
+        run: |
+          test -f preview.png
+          test -f komari-theme.json
+          test -d dist
+
+      - name: Create beta package
+        shell: bash
+        run: |
+          PACKAGE_DIR="theme-package"
+          ZIP_NAME="komari-theme-purcarte-plus-beta.zip"
+
+          mkdir -p "$PACKAGE_DIR"
+          cp preview.png "$PACKAGE_DIR/"
+          cp komari-theme.json "$PACKAGE_DIR/"
+          cp -r dist "$PACKAGE_DIR/"
+
+          (
+            cd "$PACKAGE_DIR"
+            zip -r "../${ZIP_NAME}" .
+          )
+
+          echo "ZIP_NAME=${ZIP_NAME}" >> "$GITHUB_ENV"
+
+      - name: Generate beta release notes
+        shell: bash
+        run: |
+          git fetch --force --tags
+
+          STABLE_TAG=$(git describe --tags --abbrev=0 \
+            --match 'v*' \
+            --match '𝙫*' \
+            HEAD 2>/dev/null || true)
+
+          if [ -n "$STABLE_TAG" ]; then
+            BASE_REF="$STABLE_TAG"
+            BASE_LABEL="$STABLE_TAG"
+          else
+            BASE_REF=$(git rev-list --max-parents=0 HEAD)
+            BASE_LABEL="$BASE_REF"
+          fi
+
+          CHANGELOG=$(git log "${BASE_REF}..HEAD" \
+            --no-merges \
+            --pretty=format:'- %s (`%h`)')
+
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="- 当前测试版与最新正式版没有新的提交"
+          fi
+
+          {
+            echo 'RELEASE_BODY<<EOF'
+            echo "测试包版本：\`${BETA_VERSION}\`"
+            echo "基于正式版：\`${BASE_LABEL}\`"
+            echo "源码提交：\`${GITHUB_SHA}\`"
+            echo
+            echo '## 最新正式版至当前测试版'
+            echo "$CHANGELOG"
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+
+      - name: Move Beta tag to current commit
+        shell: bash
+        run: |
+          git tag --force Beta "$GITHUB_SHA"
+          git push origin refs/tags/Beta --force
+
+      - name: Update Beta release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: Beta
+          name: Beta
+          body: ${{ env.RELEASE_BODY }}
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: ${{ env.ZIP_NAME }}
