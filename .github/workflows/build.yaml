@@ -94,14 +94,40 @@ jobs:
       - name: Generate Changelog
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/𝙫'))
         id: changelog
+        shell: bash
         run: |
-          git fetch --prune
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 `git rev-list --tags --skip=1 --max-count=1` 2>/dev/null || git rev-list --max-parents=0 HEAD)
-          echo "Previous tag: $PREVIOUS_TAG"
-          CHANGELOG=$(git log $PREVIOUS_TAG..${{ github.ref_name }} --pretty=format:"* %s (%h)")
-          echo "CHANGELOG<<EOF" >> $GITHUB_ENV
-          echo "$CHANGELOG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          git fetch --force --tags --prune
+
+          CURRENT_TAG="$GITHUB_REF_NAME"
+          CURRENT_COMMIT=$(git rev-parse "${CURRENT_TAG}^{commit}")
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 \
+            --match 'v*' \
+            --match '𝙫*' \
+            "${CURRENT_COMMIT}^" 2>/dev/null || true)
+
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Previous stable tag: $PREVIOUS_TAG"
+            CHANGELOG=$(git log \
+              --no-merges \
+              --pretty=format:'* %s (%h)' \
+              "${PREVIOUS_TAG}..${CURRENT_TAG}")
+          else
+            echo "No previous stable tag found; using full history"
+            CHANGELOG=$(git log \
+              --no-merges \
+              --pretty=format:'* %s (%h)' \
+              "$CURRENT_TAG")
+          fi
+
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="* No new commits since ${PREVIOUS_TAG:-repository start}"
+          fi
+
+          {
+            echo 'CHANGELOG<<EOF'
+            echo "$CHANGELOG"
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
 
       - name: Create Release
         if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/𝙫'))
