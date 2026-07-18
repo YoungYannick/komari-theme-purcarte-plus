@@ -41,12 +41,28 @@
 </details>
 
 <details>
+<summary><b>浏览器本地存储配置</b></summary>
+
+- **启用 localStorage 配置** (`enableLocalStorage`)
+  - **类型:** `switch`
+  - **默认值:** `true`
+  - **说明:** 启用后将优先使用用户浏览器本地配置的视图和外观设置。关闭后将强制使用下方的主题配置（含桌面/移动端默认视图），本地可调整但刷新即恢复
+
+</details>
+
+<details>
 <summary><b>样式调整</b></summary>
 
 - **主要内容宽度** (`mainWidth`)
   - **类型:** `number`
   - **默认值:** `85`
   - **说明:** 调整主要内容的最大宽度，单位为视口宽度的百分比（vw），建议值为 80-90
+
+- **背景模式** (`backgroundMode`)
+  - **类型:** `select`
+  - **可选项:** `image`, `video`, `solidColor`
+  - **默认值:** `image`
+  - **说明:** 选择背景模式：image（图片背景）、video（视频背景）、solidColor（纯色背景）
 
 - **桌面端背景图片链接** (`backgroundImage`)
   - **类型:** `string`
@@ -57,12 +73,6 @@
   - **类型:** `string`
   - **默认值:** `(空)`
   - **说明:** 移动端背景图片链接，多个使用“,”分割并按伪随机顺序轮换，与桌面端一样区分亮暗模式，留空则使用桌面端背景
-
-- **背景模式** (`backgroundMode`)
-  - **类型:** `select`
-  - **可选项:** `image`, `video`, `solidColor`
-  - **默认值:** `image`
-  - **说明:** 选择背景模式：image（图片背景）、video（视频背景）、solidColor（纯色背景）
 
 - **纯色背景颜色值** (`solidColorBackground`)
   - **类型:** `string`
@@ -120,32 +130,11 @@
   - **默认值:** `violet`
   - **说明:** 设置默认主题颜色，颜色对照请参考：[Radix Color](https://www.radix-ui.com/themes/docs/theme/color)
 
-</details>
-
-<details>
-<summary><b>浏览器本地存储配置</b></summary>
-
-- **启用 localStorage 配置** (`enableLocalStorage`)
-  - **类型:** `switch`
-  - **默认值:** `true`
-  - **说明:** 启用后将优先使用用户浏览器本地配置的视图和外观设置。关闭后将强制使用下方的主题配置（含桌面/移动端默认视图），本地可调整但刷新即恢复
-
-- **桌面端默认展示视图** (`selectedDefaultView`)
-  - **类型:** `select`
-  - **可选项:** `grid`, `table`, `compact`
-  - **默认值:** `grid`
-  - **说明:** 设置默认展示视图为网格、表格或紧凑型
-
 - **默认外观** (`selectedDefaultAppearance`)
   - **类型:** `select`
   - **可选项:** `system`, `light`, `dark`
   - **默认值:** `system`
   - **说明:** 设置默认外观为浅色、深色或系统主题
-
-- **状态卡片显示控制** (`statusCardsVisibility`)
-  - **类型:** `string`
-  - **默认值:** `currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true,assetValue:true,monthlyExpense:true`
-  - **说明:** 控制状态卡片的显示与隐藏，格式为 卡片名称:显示状态（true/false），多个卡片使用逗号分隔；也可在状态栏的“状态显示设置”中分别切换
 
 </details>
 
@@ -226,58 +215,12 @@
 </details>
 
 <details>
-<summary><b>底栏设置</b></summary>
-
-- **底栏样式** (`selectedFooterStyle`)
-  - **类型:** `select`
-  - **可选项:** `fixed`, `levitation`, `followContent`, `hidden`
-  - **默认值:** `followContent`
-  - **说明:** 设置底栏样式为 fixed（固定）, levitation（悬浮）, followContent（跟随内容）或 hidden（隐藏）
-
-- **隐藏底栏原始内容** (`hideFooterOriginal`)
-  - **类型:** `switch`
-  - **默认值:** `false`
-  - **说明:** 启用后将隐藏底栏中的 'Powered by Komari Monitor | Theme by PurCarte-Plus' 内容
-
-- **启用服务器运行时间** (`enableServerUptime`)
-  - **类型:** `switch`
-  - **默认值:** `false`
-  - **说明:** 启用后将在底栏显示服务器运行时间计时器
-
-- **服务器启动时间（UTC+8）** (`serverStartTime`)
-  - **类型:** `string`
-  - **默认值:** `(空)`
-  - **说明:** 格式: 年,月,日,时,分,秒（eg: 2025,11,5,20,30,5 表示2025年11月5日20时30分5秒），留空则不显示
-
-- **运行时间显示模板** (`serverUptimeTemplate`)
-  - **类型:** `string`
-  - **默认值:** `已不稳定运行 {days} 天 {hours} 小时 {minutes} 分钟 {seconds} 秒`
-  - **说明:** 自定义运行时间的显示格式，可用变量: {days}（天）、{hours}（时）、{minutes}（分）、{seconds}（秒），自由排列组合（eg: Running {days}d {hours}h {minutes}m {seconds}s）
-
-- **底栏自定义内容** (`footerCustomContent`)
-  - **类型:** `richtext`
-  - **默认值:** `(空)`
-  - **说明:** 自定义底栏内容，支持直接换行，也兼容 ${n} 分割多行，支持Markdown格式的链接 `[文本](链接)` 和图片 `![描述](图片链接)`
-
-</details>
-
-<details>
 <summary><b>内容设置</b></summary>
 
 - **启用 JSON-RPC2 API 适配** (`enableJsonRPC2Api`)
   - **类型:** `switch`
   - **默认值:** `true`
   - **说明:** 启用后将在支持的 Komari 版本优先使用新版接口获取节点、负载与 Ping 数据，并兼容 Komari 1.2.6 及后续预发布版本的独立指标保留策略；旧版本会自动回退
-
-- **是否在标题栏中显示统计信息** (`isShowStatsInHeader`)
-  - **类型:** `switch`
-  - **默认值:** `false`
-  - **说明:** 启用后将在标题栏中显示统计信息，仅在大屏桌面端有效；资产价值使用紧凑双行布局，月均支出独立显示，统计项较多时允许在标题栏中自动换行以避免与操作按钮重叠
-
-- **合并分组栏与统计栏** (`mergeGroupsWithStats`)
-  - **类型:** `switch`
-  - **默认值:** `false`
-  - **说明:** 启用后分组栏将合并到统计栏中，并以下拉菜单形式展示
 
 - **启用统计栏** (`enableStatsBar`)
   - **类型:** `switch`
@@ -289,20 +232,41 @@
   - **默认值:** `true`
   - **说明:** 启用后在统计栏添加排序控制下拉菜单选项，分别对流量上下行和网速上下行进行升降排序，仅在启用统计栏时有效
 
-- **启用离线节点置后显示** (`isOfflineNodesBehind`)
+- **状态卡片显示控制** (`statusCardsVisibility`)
+  - **类型:** `string`
+  - **默认值:** `currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true,assetValue:true,monthlyExpense:true`
+  - **说明:** 控制状态卡片的显示与隐藏，格式为 卡片名称:显示状态（true/false），多个卡片使用逗号分隔；也可在状态栏的“状态显示设置”中分别切换
+
+- **是否在标题栏中显示统计信息** (`isShowStatsInHeader`)
   - **类型:** `switch`
   - **默认值:** `false`
-  - **说明:** 启用后离线节点将被自动置后显示
+  - **说明:** 启用后将在标题栏中显示统计信息 (仅在大屏桌面端有效)
 
 - **启用分组栏** (`enableGroupedBar`)
   - **类型:** `switch`
   - **默认值:** `true`
   - **说明:** 启用后默认显示分组栏
 
+- **合并分组栏与统计栏** (`mergeGroupsWithStats`)
+  - **类型:** `switch`
+  - **默认值:** `false`
+  - **说明:** 启用后分组栏将合并到统计栏中，并以下拉菜单形式展示
+
 - **默认选择展示分组** (`defaultSelectedGroup`)
   - **类型:** `string`
   - **默认值:** `(空)`
   - **说明:** 设置默认选择展示的分组，填写后端设置的分组名，留空则默认展示“所有”分组
+
+- **启用离线节点置后显示** (`isOfflineNodesBehind`)
+  - **类型:** `switch`
+  - **默认值:** `false`
+  - **说明:** 启用后离线节点将被自动置后显示
+
+- **桌面端默认展示视图** (`selectedDefaultView`)
+  - **类型:** `select`
+  - **可选项:** `grid`, `table`, `compact`
+  - **默认值:** `grid`
+  - **说明:** 设置默认展示视图为网格、表格或紧凑型
 
 - **移动端默认展示视图** (`selectMobileDefaultView`)
   - **类型:** `select`
@@ -314,11 +278,6 @@
   - **类型:** `switch`
   - **默认值:** `true`
   - **说明:** 启用后默认显示 SWAP 信息
-
-- **预览详情的延迟图表时间范围** (`pingChartTimeInPreview`)
-  - **类型:** `number`
-  - **默认值:** `1`
-  - **说明:** 设置卡片右上角弹窗详情和表格下拉详情中延迟图表的时间范围，单位为小时，建议值为 1-24，时间范围太大容易导致页面卡顿
 
 - **是否在卡片中显示硬件信息栏** (`isShowHWBarInCard`)
   - **类型:** `switch`
@@ -380,6 +339,42 @@
 </details>
 
 <details>
+<summary><b>底栏设置</b></summary>
+
+- **底栏样式** (`selectedFooterStyle`)
+  - **类型:** `select`
+  - **可选项:** `fixed`, `levitation`, `followContent`, `hidden`
+  - **默认值:** `followContent`
+  - **说明:** 设置底栏样式为 fixed（固定）, levitation（悬浮）, followContent（跟随内容）或 hidden（隐藏）
+
+- **隐藏底栏原始内容** (`hideFooterOriginal`)
+  - **类型:** `switch`
+  - **默认值:** `false`
+  - **说明:** 启用后将隐藏底栏中的 'Powered by Komari Monitor | Theme by PurCarte-Plus' 内容
+
+- **启用服务器运行时间** (`enableServerUptime`)
+  - **类型:** `switch`
+  - **默认值:** `false`
+  - **说明:** 启用后将在底栏显示服务器运行时间计时器
+
+- **服务器启动时间（UTC+8）** (`serverStartTime`)
+  - **类型:** `string`
+  - **默认值:** `(空)`
+  - **说明:** 格式: 年,月,日,时,分,秒（eg: 2025,11,5,20,30,5 表示2025年11月5日20时30分5秒），留空则不显示
+
+- **运行时间显示模板** (`serverUptimeTemplate`)
+  - **类型:** `string`
+  - **默认值:** `已不稳定运行 {days} 天 {hours} 小时 {minutes} 分钟 {seconds} 秒`
+  - **说明:** 自定义运行时间的显示格式，可用变量: {days}（天）、{hours}（时）、{minutes}（分）、{seconds}（秒），自由排列组合（eg: Running {days}d {hours}h {minutes}m {seconds}s）
+
+- **底栏自定义内容** (`footerCustomContent`)
+  - **类型:** `richtext`
+  - **默认值:** `(空)`
+  - **说明:** 自定义底栏内容，支持直接换行，也兼容 ${n} 分割多行，支持Markdown格式的链接 `[文本](链接)` 和图片 `![描述](图片链接)`
+
+</details>
+
+<details>
 <summary><b>Instance 设置</b></summary>
 
 - **启用 Instance 详情信息** (`enableInstanceDetail`)
@@ -402,6 +397,11 @@
   - **默认值:** `true`
   - **说明:** 启用后图表中的曲线将会跨过断点形成连续的线条，并使用半透明的垂直参考线来标记断点位置；该开关仅影响图表渲染，不参与丢包率计算，丢包率使用服务端返回的监测任务统计值
 
+- **预览详情的延迟图表时间范围** (`pingChartTimeInPreview`)
+  - **类型:** `number`
+  - **默认值:** `1`
+  - **说明:** 设置卡片右上角弹窗详情和表格下拉详情中延迟图表的时间范围，单位为小时，建议值为 1-24，时间范围太大容易导致页面卡顿
+
 - **延迟图表最大渲染点数** (`pingChartMaxPoints`)
   - **类型:** `number`
   - **默认值:** `0`
@@ -417,16 +417,6 @@
   - **类型:** `richtext`
   - **默认值:** `(空)`
   - **说明:** 仅在排序方式为"自定义"时生效。每行填写一个监测节点名称（与后台设置的名称一致），按填写顺序排序。未列出的节点将按 ID 正序排列在最后
-
-</details>
-
-<details>
-<summary><b>UI 自定义</b></summary>
-
-- **自定义 UI 文本（实验性，不推荐手动填写任何东西）** (`customTexts`)
-  - **类型:** `string`
-  - **默认值:** `(空)`
-  - **说明:** 使用 key:value,key2:value2 的格式自定义UI文本，value 使用 URL 编码以避免特殊符号。推荐使用管理员登录后的编辑功能而不是手动填写此项，以避免格式错误导致的问题
 
 </details>
 
@@ -520,6 +510,16 @@
   - **可选项:** `circle`, `original`
   - **默认值:** `circle`
   - **说明:** circle: 圆形固定缩放（32×32）；original: 原图等比缩放（高32px，宽度自适应）
+
+</details>
+
+<details>
+<summary><b>UI 自定义</b></summary>
+
+- **自定义 UI 文本（实验性，不推荐手动填写任何东西）** (`customTexts`)
+  - **类型:** `string`
+  - **默认值:** `(空)`
+  - **说明:** 使用 key:value,key2:value2 的格式自定义UI文本，value 使用 URL 编码以避免特殊符号。推荐使用管理员登录后的编辑功能而不是手动填写此项，以避免格式错误导致的问题
 
 </details>
 

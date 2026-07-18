@@ -45,6 +45,37 @@
                     "id": "Aktifkan untuk menampilkan tombol edit konfigurasi di sisi kanan header saat login."
                 }
             },
+
+            {
+                "name": {
+                    "zh-CN": "浏览器本地存储配置",
+                    "zh-TW": "瀏覽器本地存儲配置",
+                    "en": "Local Storage Config",
+                    "ja": "ローカルストレージ設定",
+                    "id": "Konfigurasi Penyimpanan Lokal"
+                },
+                "type": "title"
+            },
+            {
+                "key": "enableLocalStorage",
+                "name": {
+                    "zh-CN": "启用 localStorage 配置",
+                    "zh-TW": "啟用 localStorage 配置",
+                    "en": "Enable localStorage",
+                    "ja": "localStorageを有効化",
+                    "id": "Aktifkan localStorage"
+                },
+                "type": "switch",
+                "default": true,
+                "help": {
+                    "zh-CN": "启用后将优先使用用户浏览器本地配置的视图和外观设置。关闭后将强制使用下方的主题配置",
+                    "zh-TW": "啟用後將優先使用用戶瀏覽器本地配置的視圖和外觀設置。關閉後將強制使用下方的主題配置",
+                    "en": "Prioritize user's local browser settings for view and appearance. If disabled, theme config is enforced.",
+                    "ja": "ユーザーのブラウザのローカル設定（表示や外観）を優先します。無効にすると、テーマ設定が強制されます。",
+                    "id": "Prioritaskan pengaturan browser lokal pengguna untuk tampilan dan penampilan. Jika dinonaktifkan, konfigurasi tema dipaksakan."
+                }
+            },
+
             {
                 "name": {
                     "zh-CN": "样式调整",
@@ -72,6 +103,26 @@
                     "en": "Adjust the max width of main content in viewport width percentage (vw). Recommended: 80-90.",
                     "ja": "メインコンテンツの最大幅をビューポート幅のパーセンテージ（vw）で調整します。推奨値：80-90。",
                     "id": "Sesuaikan lebar maksimum konten utama dalam persentase lebar viewport (vw). Disarankan: 80-90."
+                }
+            },
+            {
+                "key": "backgroundMode",
+                "name": {
+                    "zh-CN": "背景模式",
+                    "zh-TW": "背景模式",
+                    "en": "Background Mode",
+                    "ja": "背景モード",
+                    "id": "Mode Latar Belakang"
+                },
+                "type": "select",
+                "options": "image,video,solidColor",
+                "default": "image",
+                "help": {
+                    "zh-CN": "选择背景模式：image（图片）、video（视频）、solidColor（纯色）",
+                    "zh-TW": "選擇背景模式：image（圖片）、video（視頻）、solidColor（純色）",
+                    "en": "Select background mode: image, video, or solidColor.",
+                    "ja": "背景モードを選択：image（画像）、video（動画）、solidColor（単色）。",
+                    "id": "Pilih mode latar belakang: image (gambar), video, atau solidColor (warna solid)."
                 }
             },
             {
@@ -110,26 +161,6 @@
                     "en": "Mobile background URL. Multiple entries separated by comma rotate in pseudo-random order. Supports Light/Dark mode separation like desktop. Uses desktop background if empty.",
                     "ja": "モバイル用背景URL。複数項目はカンマ区切りで疑似ランダム順にローテーションします。デスクトップ同様にライト/ダークモードを区別します。空の場合はデスクトップ背景を使用します。",
                     "id": "URL latar mobile. Beberapa entri dipisahkan koma dan bergiliran dalam urutan pseudo-acak. Mendukung pemisahan mode Terang/Gelap seperti desktop. Menggunakan latar desktop jika kosong."
-                }
-            },
-            {
-                "key": "backgroundMode",
-                "name": {
-                    "zh-CN": "背景模式",
-                    "zh-TW": "背景模式",
-                    "en": "Background Mode",
-                    "ja": "背景モード",
-                    "id": "Mode Latar Belakang"
-                },
-                "type": "select",
-                "options": "image,video,solidColor",
-                "default": "image",
-                "help": {
-                    "zh-CN": "选择背景模式：image（图片）、video（视频）、solidColor（纯色）",
-                    "zh-TW": "選擇背景模式：image（圖片）、video（視頻）、solidColor（純色）",
-                    "en": "Select background mode: image, video, or solidColor.",
-                    "ja": "背景モードを選択：image（画像）、video（動画）、solidColor（単色）。",
-                    "id": "Pilih mode latar belakang: image (gambar), video, atau solidColor (warna solid)."
                 }
             },
             {
@@ -343,55 +374,6 @@
                 }
             },
             {
-                "name": {
-                    "zh-CN": "浏览器本地存储配置",
-                    "zh-TW": "瀏覽器本地存儲配置",
-                    "en": "Local Storage Config",
-                    "ja": "ローカルストレージ設定",
-                    "id": "Konfigurasi Penyimpanan Lokal"
-                },
-                "type": "title"
-            },
-            {
-                "key": "enableLocalStorage",
-                "name": {
-                    "zh-CN": "启用 localStorage 配置",
-                    "zh-TW": "啟用 localStorage 配置",
-                    "en": "Enable localStorage",
-                    "ja": "localStorageを有効化",
-                    "id": "Aktifkan localStorage"
-                },
-                "type": "switch",
-                "default": true,
-                "help": {
-                    "zh-CN": "启用后将优先使用用户浏览器本地配置的视图和外观设置。关闭后将强制使用下方的主题配置",
-                    "zh-TW": "啟用後將優先使用用戶瀏覽器本地配置的視圖和外觀設置。關閉後將強制使用下方的主題配置",
-                    "en": "Prioritize user's local browser settings for view and appearance. If disabled, theme config is enforced.",
-                    "ja": "ユーザーのブラウザのローカル設定（表示や外観）を優先します。無効にすると、テーマ設定が強制されます。",
-                    "id": "Prioritaskan pengaturan browser lokal pengguna untuk tampilan dan penampilan. Jika dinonaktifkan, konfigurasi tema dipaksakan."
-                }
-            },
-            {
-                "key": "selectedDefaultView",
-                "name": {
-                    "zh-CN": "桌面端默认展示视图",
-                    "zh-TW": "桌面端默認展示視圖",
-                    "en": "Desktop Default View",
-                    "ja": "デスクトップデフォルト表示",
-                    "id": "Tampilan Desktop Bawaan"
-                },
-                "type": "select",
-                "options": "grid,table,compact",
-                "default": "grid",
-                "help": {
-                    "zh-CN": "设置默认展示视图为网格、表格或紧凑型",
-                    "zh-TW": "設置默認展示視圖為網格、表格或緊湊型",
-                    "en": "Set default view to Grid, Table, or Compact.",
-                    "ja": "デフォルト表示をグリッド、テーブル、またはコンパクトに設定します。",
-                    "id": "Atur tampilan bawaan ke Grid, Tabel, atau Ringkas."
-                }
-            },
-            {
                 "key": "selectedDefaultAppearance",
                 "name": {
                     "zh-CN": "默认外观",
@@ -411,25 +393,7 @@
                     "id": "Atur penampilan bawaan ke Terang, Gelap, atau Sistem."
                 }
             },
-            {
-                "key": "statusCardsVisibility",
-                "name": {
-                    "zh-CN": "状态卡片显示控制",
-                    "zh-TW": "狀態卡片顯示控制",
-                    "en": "Status Cards Visibility",
-                    "ja": "ステータスカード表示設定",
-                    "id": "Visibilitas Kartu Status"
-                },
-                "type": "string",
-                "default": "currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true,assetValue:true,monthlyExpense:true",
-                "help": {
-                    "zh-CN": "控制状态卡片的显示与隐藏，格式为 卡片名称:true/false，逗号分隔",
-                    "zh-TW": "控制狀態卡片的顯示與隱藏，格式為 卡片名稱:true/false，逗號分隔",
-                    "en": "Control visibility of status cards. Format: cardName:true/false, comma separated.",
-                    "ja": "ステータスカードの表示/非表示を制御します。形式：cardName:true/false（カンマ区切り）。",
-                    "id": "Kontrol visibilitas kartu status. Format: namaKartu:true/false, dipisahkan koma."
-                }
-            },
+
             {
                 "name": {
                     "zh-CN": "标题栏设置",
@@ -690,131 +654,7 @@
                     "id": "Aktifkan untuk menampilkan tombol pengalih bahasa di header."
                 }
             },
-            {
-                "name": {
-                    "zh-CN": "底栏设置",
-                    "zh-TW": "底欄設置",
-                    "en": "Footer Settings",
-                    "ja": "フッター設定",
-                    "id": "Pengaturan Footer"
-                },
-                "type": "title"
-            },
-            {
-                "key": "selectedFooterStyle",
-                "name": {
-                    "zh-CN": "底栏样式",
-                    "zh-TW": "底欄樣式",
-                    "en": "Footer Style",
-                    "ja": "フッタースタイル",
-                    "id": "Gaya Footer"
-                },
-                "type": "select",
-                "options": "fixed,levitation,followContent,hidden",
-                "default": "followContent",
-                "help": {
-                    "zh-CN": "设置底栏样式为 fixed, levitation, followContent 或 hidden",
-                    "zh-TW": "設置底欄樣式為 fixed, levitation, followContent 或 hidden",
-                    "en": "Set footer style: Fixed, Levitation, FollowContent, or Hidden.",
-                    "ja": "フッタースタイルを設定：固定、浮遊、内容追従、または非表示。",
-                    "id": "Atur gaya footer: Fixed (Tetap), Levitation (Melayang), FollowContent (Ikuti Konten), atau Hidden (Tersembunyi)."
-                }
-            },
-            {
-                "key": "hideFooterOriginal",
-                "name": {
-                    "zh-CN": "隐藏底栏原始内容",
-                    "zh-TW": "隱藏底欄原本內容",
-                    "en": "Hide Original Footer",
-                    "ja": "元のフッターを隠す",
-                    "id": "Sembunyikan Footer Asli"
-                },
-                "type": "switch",
-                "default": false,
-                "help": {
-                    "zh-CN": "启用后将隐藏底栏中的 'Powered by Komari Monitor' 等版权内容",
-                    "zh-TW": "啟用後將隱藏底欄中的 'Powered by Komari Monitor' 等版權內容",
-                    "en": "Hide 'Powered by Komari Monitor' content in the footer.",
-                    "ja": "フッターの「Powered by Komari Monitor」等の内容を非表示にします。",
-                    "id": "Sembunyikan konten 'Powered by Komari Monitor' di footer."
-                }
-            },
-            {
-                "key": "enableServerUptime",
-                "name": {
-                    "zh-CN": "启用服务器运行时间",
-                    "zh-TW": "啟用伺服器運行時間",
-                    "en": "Enable Server Uptime",
-                    "ja": "サーバー稼働時間を有効化",
-                    "id": "Aktifkan Waktu Aktif Server"
-                },
-                "type": "switch",
-                "default": false,
-                "help": {
-                    "zh-CN": "启用后将在底栏显示服务器运行时间计时器",
-                    "zh-TW": "啟用後將在底欄顯示伺服器運行時間計時器",
-                    "en": "Show server uptime timer in the footer.",
-                    "ja": "フッターにサーバー稼働時間タイマーを表示します。",
-                    "id": "Tampilkan pengatur waktu aktif server di footer."
-                }
-            },
-            {
-                "key": "serverStartTime",
-                "name": {
-                    "zh-CN": "服务器启动时间（UTC+8）",
-                    "zh-TW": "伺服器啟動時間（UTC+8）",
-                    "en": "Server Start Time (UTC+8)",
-                    "ja": "サーバー起動時間（UTC+8）",
-                    "id": "Waktu Mulai Server (UTC+8)"
-                },
-                "type": "string",
-                "default": "",
-                "help": {
-                    "zh-CN": "格式: 年,月,日,时,分,秒（eg: 2025,11,5,20,30,5）",
-                    "zh-TW": "格式: 年,月,日,時,分,秒（eg: 2025,11,5,20,30,5）",
-                    "en": "Format: YYYY,MM,DD,HH,MM,SS (e.g., 2025,11,5,20,30,5)",
-                    "ja": "形式：年,月,日,時,分,秒（例：2025,11,5,20,30,5）",
-                    "id": "Format: YYYY,MM,DD,HH,MM,SS (contoh: 2025,11,5,20,30,5)"
-                }
-            },
-            {
-                "key": "serverUptimeTemplate",
-                "name": {
-                    "zh-CN": "运行时间显示模板",
-                    "zh-TW": "運行時間顯示模板",
-                    "en": "Uptime Display Template",
-                    "ja": "稼働時間表示テンプレート",
-                    "id": "Template Tampilan Waktu Aktif"
-                },
-                "type": "string",
-                "default": "已不稳定运行 {days} 天 {hours} 小时 {minutes} 分钟 {seconds} 秒",
-                "help": {
-                    "zh-CN": "自定义运行时间格式，可用变量: {days}, {hours}, {minutes}, {seconds}",
-                    "zh-TW": "自定義運行時間格式，可用變量: {days}, {hours}, {minutes}, {seconds}",
-                    "en": "Custom format. Vars: {days}, {hours}, {minutes}, {seconds}",
-                    "ja": "カスタム表示形式。変数: {days}, {hours}, {minutes}, {seconds}",
-                    "id": "Format kustom. Variabel: {days}, {hours}, {minutes}, {seconds}"
-                }
-            },
-            {
-                "key": "footerCustomContent",
-                "name": {
-                    "zh-CN": "底栏自定义内容",
-                    "zh-TW": "底欄自定義內容",
-                    "en": "Custom Footer Content",
-                    "ja": "カスタムフッター内容",
-                    "id": "Konten Footer Kustom"
-                },
-                "type": "richtext",
-                "default": "",
-                "help": {
-                    "zh-CN": "自定义底栏内容，支持Markdown链接和图片，兼容 ${n} 换行",
-                    "zh-TW": "自定義底欄內容，支持Markdown鏈接和圖片，兼容 ${n} 換行",
-                    "en": "Custom footer content. Supports Markdown links/images and ${n} for newlines.",
-                    "ja": "カスタムフッター内容。Markdownリンク/画像および改行コード ${n} に対応。",
-                    "id": "Konten footer kustom. Mendukung tautan/gambar Markdown dan ${n} untuk baris baru."
-                }
-            },
+
             {
                 "name": {
                     "zh-CN": "内容设置",
@@ -842,44 +682,6 @@
                     "en": "Prefer the newer API for node, load, and latency data, with compatibility for Komari 1.2.6 public information. Older versions fall back automatically.",
                     "ja": "ノード、負荷、遅延データの取得に新しい API を優先し、Komari 1.2.6 の追加公開情報にも対応します。古いバージョンでは自動的にフォールバックします。",
                     "id": "Memprioritaskan API yang lebih baru untuk data node, load, dan latensi, serta kompatibel dengan informasi publik Komari 1.2.6. Versi lama akan fallback otomatis."
-                }
-            },
-            {
-                "key": "isShowStatsInHeader",
-                "name": {
-                    "zh-CN": "是否在标题栏中显示统计信息",
-                    "zh-TW": "是否在標題欄中顯示統計信息",
-                    "en": "Show Stats in Header",
-                    "ja": "ヘッダーに統計を表示",
-                    "id": "Tampilkan Statistik di Header"
-                },
-                "type": "switch",
-                "default": false,
-                "help": {
-                    "zh-CN": "启用后将在标题栏中显示统计信息（仅大屏有效）",
-                    "zh-TW": "啟用後將在標題欄中顯示統計信息（僅大屏有效）",
-                    "en": "Show statistics in the header (Desktop only).",
-                    "ja": "ヘッダーに統計情報を表示します（デスクトップのみ）。",
-                    "id": "Tampilkan statistik di header (Hanya Desktop)."
-                }
-            },
-            {
-                "key": "mergeGroupsWithStats",
-                "name": {
-                    "zh-CN": "合并分组栏与统计栏",
-                    "zh-TW": "合併分組欄與統計欄",
-                    "en": "Merge Groups with Stats",
-                    "ja": "グループと統計を統合",
-                    "id": "Gabungkan Grup dengan Statistik"
-                },
-                "type": "switch",
-                "default": false,
-                "help": {
-                    "zh-CN": "启用后分组栏将合并到统计栏中，以下拉菜单展示",
-                    "zh-TW": "啟用後分組欄將合併到統計欄中，以下拉菜單展示",
-                    "en": "Merge group bar into stats bar as a dropdown menu.",
-                    "ja": "グループバーを統計バーに統合し、ドロップダウンメニューとして表示します。",
-                    "id": "Gabungkan bar grup ke bar statistik sebagai menu dropdown."
                 }
             },
             {
@@ -921,22 +723,41 @@
                 }
             },
             {
-                "key": "isOfflineNodesBehind",
+                "key": "statusCardsVisibility",
                 "name": {
-                    "zh-CN": "启用离线节点置后显示",
-                    "zh-TW": "啟用離線節點置後顯示",
-                    "en": "Move Offline Nodes to End",
-                    "ja": "オフラインノードを最後に表示",
-                    "id": "Pindahkan Node Offline ke Akhir"
+                    "zh-CN": "状态卡片显示控制",
+                    "zh-TW": "狀態卡片顯示控制",
+                    "en": "Status Cards Visibility",
+                    "ja": "ステータスカード表示設定",
+                    "id": "Visibilitas Kartu Status"
+                },
+                "type": "string",
+                "default": "currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,networkSpeed:true,assetValue:true,monthlyExpense:true",
+                "help": {
+                    "zh-CN": "控制状态卡片的显示与隐藏，格式为 卡片名称:true/false，逗号分隔",
+                    "zh-TW": "控制狀態卡片的顯示與隱藏，格式為 卡片名稱:true/false，逗號分隔",
+                    "en": "Control visibility of status cards. Format: cardName:true/false, comma separated.",
+                    "ja": "ステータスカードの表示/非表示を制御します。形式：cardName:true/false（カンマ区切り）。",
+                    "id": "Kontrol visibilitas kartu status. Format: namaKartu:true/false, dipisahkan koma."
+                }
+            },
+            {
+                "key": "isShowStatsInHeader",
+                "name": {
+                    "zh-CN": "是否在标题栏中显示统计信息",
+                    "zh-TW": "是否在標題欄中顯示統計信息",
+                    "en": "Show Stats in Header",
+                    "ja": "ヘッダーに統計を表示",
+                    "id": "Tampilkan Statistik di Header"
                 },
                 "type": "switch",
                 "default": false,
                 "help": {
-                    "zh-CN": "启用后离线节点将被自动置后显示",
-                    "zh-TW": "啟用後離線節點將被自動置後顯示",
-                    "en": "Automatically move offline nodes to the bottom of the list.",
-                    "ja": "オフラインのノードを自動的にリストの最後に移動します。",
-                    "id": "Otomatis pindahkan node offline ke bagian bawah daftar."
+                    "zh-CN": "启用后将在标题栏中显示统计信息（仅大屏有效）",
+                    "zh-TW": "啟用後將在標題欄中顯示統計信息（僅大屏有效）",
+                    "en": "Show statistics in the header (Desktop only).",
+                    "ja": "ヘッダーに統計情報を表示します（デスクトップのみ）。",
+                    "id": "Tampilkan statistik di header (Hanya Desktop)."
                 }
             },
             {
@@ -959,6 +780,25 @@
                 }
             },
             {
+                "key": "mergeGroupsWithStats",
+                "name": {
+                    "zh-CN": "合并分组栏与统计栏",
+                    "zh-TW": "合併分組欄與統計欄",
+                    "en": "Merge Groups with Stats",
+                    "ja": "グループと統計を統合",
+                    "id": "Gabungkan Grup dengan Statistik"
+                },
+                "type": "switch",
+                "default": false,
+                "help": {
+                    "zh-CN": "启用后分组栏将合并到统计栏中，以下拉菜单展示",
+                    "zh-TW": "啟用後分組欄將合併到統計欄中，以下拉菜單展示",
+                    "en": "Merge group bar into stats bar as a dropdown menu.",
+                    "ja": "グループバーを統計バーに統合し、ドロップダウンメニューとして表示します。",
+                    "id": "Gabungkan bar grup ke bar statistik sebagai menu dropdown."
+                }
+            },
+            {
                 "key": "defaultSelectedGroup",
                 "name": {
                     "zh-CN": "默认选择展示分组",
@@ -975,6 +815,45 @@
                     "en": "Set default group name. Shows 'All' if empty.",
                     "ja": "デフォルトのグループ名を設定します。空の場合は「すべて」を表示。",
                     "id": "Atur nama grup bawaan. Menampilkan 'Semua' jika kosong."
+                }
+            },
+            {
+                "key": "isOfflineNodesBehind",
+                "name": {
+                    "zh-CN": "启用离线节点置后显示",
+                    "zh-TW": "啟用離線節點置後顯示",
+                    "en": "Move Offline Nodes to End",
+                    "ja": "オフラインノードを最後に表示",
+                    "id": "Pindahkan Node Offline ke Akhir"
+                },
+                "type": "switch",
+                "default": false,
+                "help": {
+                    "zh-CN": "启用后离线节点将被自动置后显示",
+                    "zh-TW": "啟用後離線節點將被自動置後顯示",
+                    "en": "Automatically move offline nodes to the bottom of the list.",
+                    "ja": "オフラインのノードを自動的にリストの最後に移動します。",
+                    "id": "Otomatis pindahkan node offline ke bagian bawah daftar."
+                }
+            },
+            {
+                "key": "selectedDefaultView",
+                "name": {
+                    "zh-CN": "桌面端默认展示视图",
+                    "zh-TW": "桌面端默認展示視圖",
+                    "en": "Desktop Default View",
+                    "ja": "デスクトップデフォルト表示",
+                    "id": "Tampilan Desktop Bawaan"
+                },
+                "type": "select",
+                "options": "grid,table,compact",
+                "default": "grid",
+                "help": {
+                    "zh-CN": "设置默认展示视图为网格、表格或紧凑型",
+                    "zh-TW": "設置默認展示視圖為網格、表格或緊湊型",
+                    "en": "Set default view to Grid, Table, or Compact.",
+                    "ja": "デフォルト表示をグリッド、テーブル、またはコンパクトに設定します。",
+                    "id": "Atur tampilan bawaan ke Grid, Tabel, atau Ringkas."
                 }
             },
             {
@@ -1014,25 +893,6 @@
                     "en": "Enable to show SWAP information.",
                     "ja": "SWAP情報を表示します。",
                     "id": "Aktifkan untuk menampilkan informasi SWAP."
-                }
-            },
-            {
-                "key": "pingChartTimeInPreview",
-                "name": {
-                    "zh-CN": "预览详情的延迟图表时间范围",
-                    "zh-TW": "預覽詳情的延遲圖表時間範圍",
-                    "en": "Ping Chart Time Range",
-                    "ja": "Pingチャート時間範囲",
-                    "id": "Rentang Waktu Grafik Ping"
-                },
-                "type": "number",
-                "default": 1,
-                "help": {
-                    "zh-CN": "设置详情中延迟图表的时间范围（小时），建议 1-24",
-                    "zh-TW": "設置詳情中延遲圖表的時間範圍（小時），建議 1-24",
-                    "en": "Time range for ping chart in details (hours). Recommended: 1-24.",
-                    "ja": "詳細のPingチャートの時間範囲（時間）。推奨：1-24。",
-                    "id": "Rentang waktu untuk grafik ping di halaman detail (jam). Disarankan: 1-24."
                 }
             },
             {
@@ -1232,6 +1092,133 @@
                     "id": "Kontrol tampilan waktu aktif di tampilan ringkas: show, hideAll, atau hideUnset (sembunyikan offline)."
                 }
             },
+
+            {
+                "name": {
+                    "zh-CN": "底栏设置",
+                    "zh-TW": "底欄設置",
+                    "en": "Footer Settings",
+                    "ja": "フッター設定",
+                    "id": "Pengaturan Footer"
+                },
+                "type": "title"
+            },
+            {
+                "key": "selectedFooterStyle",
+                "name": {
+                    "zh-CN": "底栏样式",
+                    "zh-TW": "底欄樣式",
+                    "en": "Footer Style",
+                    "ja": "フッタースタイル",
+                    "id": "Gaya Footer"
+                },
+                "type": "select",
+                "options": "fixed,levitation,followContent,hidden",
+                "default": "followContent",
+                "help": {
+                    "zh-CN": "设置底栏样式为 fixed, levitation, followContent 或 hidden",
+                    "zh-TW": "設置底欄樣式為 fixed, levitation, followContent 或 hidden",
+                    "en": "Set footer style: Fixed, Levitation, FollowContent, or Hidden.",
+                    "ja": "フッタースタイルを設定：固定、浮遊、内容追従、または非表示。",
+                    "id": "Atur gaya footer: Fixed (Tetap), Levitation (Melayang), FollowContent (Ikuti Konten), atau Hidden (Tersembunyi)."
+                }
+            },
+            {
+                "key": "hideFooterOriginal",
+                "name": {
+                    "zh-CN": "隐藏底栏原始内容",
+                    "zh-TW": "隱藏底欄原本內容",
+                    "en": "Hide Original Footer",
+                    "ja": "元のフッターを隠す",
+                    "id": "Sembunyikan Footer Asli"
+                },
+                "type": "switch",
+                "default": false,
+                "help": {
+                    "zh-CN": "启用后将隐藏底栏中的 'Powered by Komari Monitor' 等版权内容",
+                    "zh-TW": "啟用後將隱藏底欄中的 'Powered by Komari Monitor' 等版權內容",
+                    "en": "Hide 'Powered by Komari Monitor' content in the footer.",
+                    "ja": "フッターの「Powered by Komari Monitor」等の内容を非表示にします。",
+                    "id": "Sembunyikan konten 'Powered by Komari Monitor' di footer."
+                }
+            },
+            {
+                "key": "enableServerUptime",
+                "name": {
+                    "zh-CN": "启用服务器运行时间",
+                    "zh-TW": "啟用伺服器運行時間",
+                    "en": "Enable Server Uptime",
+                    "ja": "サーバー稼働時間を有効化",
+                    "id": "Aktifkan Waktu Aktif Server"
+                },
+                "type": "switch",
+                "default": false,
+                "help": {
+                    "zh-CN": "启用后将在底栏显示服务器运行时间计时器",
+                    "zh-TW": "啟用後將在底欄顯示伺服器運行時間計時器",
+                    "en": "Show server uptime timer in the footer.",
+                    "ja": "フッターにサーバー稼働時間タイマーを表示します。",
+                    "id": "Tampilkan pengatur waktu aktif server di footer."
+                }
+            },
+            {
+                "key": "serverStartTime",
+                "name": {
+                    "zh-CN": "服务器启动时间（UTC+8）",
+                    "zh-TW": "伺服器啟動時間（UTC+8）",
+                    "en": "Server Start Time (UTC+8)",
+                    "ja": "サーバー起動時間（UTC+8）",
+                    "id": "Waktu Mulai Server (UTC+8)"
+                },
+                "type": "string",
+                "default": "",
+                "help": {
+                    "zh-CN": "格式: 年,月,日,时,分,秒（eg: 2025,11,5,20,30,5）",
+                    "zh-TW": "格式: 年,月,日,時,分,秒（eg: 2025,11,5,20,30,5）",
+                    "en": "Format: YYYY,MM,DD,HH,MM,SS (e.g., 2025,11,5,20,30,5)",
+                    "ja": "形式：年,月,日,時,分,秒（例：2025,11,5,20,30,5）",
+                    "id": "Format: YYYY,MM,DD,HH,MM,SS (contoh: 2025,11,5,20,30,5)"
+                }
+            },
+            {
+                "key": "serverUptimeTemplate",
+                "name": {
+                    "zh-CN": "运行时间显示模板",
+                    "zh-TW": "運行時間顯示模板",
+                    "en": "Uptime Display Template",
+                    "ja": "稼働時間表示テンプレート",
+                    "id": "Template Tampilan Waktu Aktif"
+                },
+                "type": "string",
+                "default": "已不稳定运行 {days} 天 {hours} 小时 {minutes} 分钟 {seconds} 秒",
+                "help": {
+                    "zh-CN": "自定义运行时间格式，可用变量: {days}, {hours}, {minutes}, {seconds}",
+                    "zh-TW": "自定義運行時間格式，可用變量: {days}, {hours}, {minutes}, {seconds}",
+                    "en": "Custom format. Vars: {days}, {hours}, {minutes}, {seconds}",
+                    "ja": "カスタム表示形式。変数: {days}, {hours}, {minutes}, {seconds}",
+                    "id": "Format kustom. Variabel: {days}, {hours}, {minutes}, {seconds}"
+                }
+            },
+            {
+                "key": "footerCustomContent",
+                "name": {
+                    "zh-CN": "底栏自定义内容",
+                    "zh-TW": "底欄自定義內容",
+                    "en": "Custom Footer Content",
+                    "ja": "カスタムフッター内容",
+                    "id": "Konten Footer Kustom"
+                },
+                "type": "richtext",
+                "default": "",
+                "help": {
+                    "zh-CN": "自定义底栏内容，支持Markdown链接和图片，兼容 ${n} 换行",
+                    "zh-TW": "自定義底欄內容，支持Markdown鏈接和圖片，兼容 ${n} 換行",
+                    "en": "Custom footer content. Supports Markdown links/images and ${n} for newlines.",
+                    "ja": "カスタムフッター内容。Markdownリンク/画像および改行コード ${n} に対応。",
+                    "id": "Konten footer kustom. Mendukung tautan/gambar Markdown dan ${n} untuk baris baru."
+                }
+            },
+
             {
                 "name": {
                     "zh-CN": "Instance 设置",
@@ -1319,6 +1306,25 @@
                 }
             },
             {
+                "key": "pingChartTimeInPreview",
+                "name": {
+                    "zh-CN": "预览详情的延迟图表时间范围",
+                    "zh-TW": "預覽詳情的延遲圖表時間範圍",
+                    "en": "Ping Chart Time Range",
+                    "ja": "Pingチャート時間範囲",
+                    "id": "Rentang Waktu Grafik Ping"
+                },
+                "type": "number",
+                "default": 1,
+                "help": {
+                    "zh-CN": "设置详情中延迟图表的时间范围（小时），建议 1-24",
+                    "zh-TW": "設置詳情中延遲圖表的時間範圍（小時），建議 1-24",
+                    "en": "Time range for ping chart in details (hours). Recommended: 1-24.",
+                    "ja": "詳細のPingチャートの時間範囲（時間）。推奨：1-24。",
+                    "id": "Rentang waktu untuk grafik ping di halaman detail (jam). Disarankan: 1-24."
+                }
+            },
+            {
                 "key": "pingChartMaxPoints",
                 "name": {
                     "zh-CN": "延迟图表最大渲染点数",
@@ -1376,35 +1382,7 @@
                     "id": "Hanya berlaku saat mode urutan adalah 'kustom'. Masukkan satu nama node monitor per baris (sesuai nama yang dikonfigurasi di backend). Node diurutkan sesuai urutan input. Node yang tidak tercantum ditambahkan di akhir berdasarkan ID naik"
                 }
             },
-            {
-                "name": {
-                    "zh-CN": "UI 自定义",
-                    "zh-TW": "UI 自定義",
-                    "en": "UI Customization",
-                    "ja": "UI カスタマイズ",
-                    "id": "Kustomisasi UI"
-                },
-                "type": "title"
-            },
-            {
-                "key": "customTexts",
-                "name": {
-                    "zh-CN": "自定义 UI 文本（实验性）",
-                    "zh-TW": "自定義 UI 文本（實驗性）",
-                    "en": "Custom UI Texts (Experimental)",
-                    "ja": "カスタムUIテキスト（実験的）",
-                    "id": "Teks UI Kustom (Eksperimental)"
-                },
-                "type": "string",
-                "default": "",
-                "help": {
-                    "zh-CN": "格式 key:value,key2:value2。推荐使用编辑功能而非手动填写",
-                    "zh-TW": "格式 key:value,key2:value2。推薦使用編輯功能而非手動填寫",
-                    "en": "Format: key:value,key2:value2. Use editor instead of manual entry.",
-                    "ja": "形式: key:value,key2:value2。手動入力より編集機能の使用を推奨。",
-                    "id": "Format: key:value,key2:value2. Gunakan editor daripada entri manual."
-                }
-            },
+
             {
                 "name": {
                     "zh-CN": "增强功能",
@@ -1740,6 +1718,36 @@
                     "en": "circle: Circular fixed scale (32×32); original: Proportional scale (height 32px, auto width).",
                     "ja": "circle: 円形固定スケール（32×32）；original: 等比スケール（高さ32px、幅自動）。",
                     "id": "circle: Skala tetap bulat (32×32); original: Skala proporsional (tinggi 32px, lebar otomatis)."
+                }
+            },
+
+            {
+                "name": {
+                    "zh-CN": "UI 自定义",
+                    "zh-TW": "UI 自定義",
+                    "en": "UI Customization",
+                    "ja": "UI カスタマイズ",
+                    "id": "Kustomisasi UI"
+                },
+                "type": "title"
+            },
+            {
+                "key": "customTexts",
+                "name": {
+                    "zh-CN": "自定义 UI 文本（实验性）",
+                    "zh-TW": "自定義 UI 文本（實驗性）",
+                    "en": "Custom UI Texts (Experimental)",
+                    "ja": "カスタムUIテキスト（実験的）",
+                    "id": "Teks UI Kustom (Eksperimental)"
+                },
+                "type": "string",
+                "default": "",
+                "help": {
+                    "zh-CN": "格式 key:value,key2:value2。推荐使用编辑功能而非手动填写",
+                    "zh-TW": "格式 key:value,key2:value2。推薦使用編輯功能而非手動填寫",
+                    "en": "Format: key:value,key2:value2. Use editor instead of manual entry.",
+                    "ja": "形式: key:value,key2:value2。手動入力より編集機能の使用を推奨。",
+                    "id": "Format: key:value,key2:value2. Gunakan editor daripada entri manual."
                 }
             }
         ]
