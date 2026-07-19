@@ -246,6 +246,60 @@ export function interpolateNullsLinear<T extends { [key: string]: any }>(
   return out;
 }
 
+/** Insert one explicit null row for real timestamp gaps, per series. */
+export function insertSeriesGapRows<T extends { [key: string]: any }>(
+  rows: T[],
+  intervalByKey: ReadonlyMap<string, number>,
+  gapMultiplier: number = 2.5
+): T[] {
+  if (rows.length < 2 || intervalByKey.size === 0) return rows;
+
+  const rowByTime = new Map<number, { [key: string]: any }>();
+  for (const row of rows) {
+    const time = Number(
+      row.__ts ?? new Date(row.time ?? row.updated_at ?? "").getTime()
+    );
+    if (Number.isFinite(time)) rowByTime.set(time, { ...row });
+  }
+
+  for (const [key, intervalMs] of intervalByKey) {
+    let previousTime: number | null = null;
+    let previousWasValue = false;
+
+    for (const row of rows) {
+      const time = Number(
+        row.__ts ?? new Date(row.time ?? row.updated_at ?? "").getTime()
+      );
+      if (!Number.isFinite(time)) continue;
+
+      const value = row[key];
+      if (value === undefined) continue;
+      const isValue = typeof value === "number" && Number.isFinite(value);
+      if (
+        isValue &&
+        previousWasValue &&
+        previousTime !== null &&
+        time - previousTime > intervalMs * gapMultiplier
+      ) {
+        const gapTime = previousTime + intervalMs;
+        const gapRow = rowByTime.get(gapTime) || {
+          time: new Date(gapTime).toISOString(),
+          __ts: gapTime,
+        };
+        if (gapRow[key] === undefined) gapRow[key] = null;
+        rowByTime.set(gapTime, gapRow);
+      }
+
+      previousWasValue = isValue;
+      previousTime = time;
+    }
+  }
+
+  return Array.from(rowByTime.entries())
+    .sort(([left], [right]) => left - right)
+    .map(([, row]) => row as T);
+}
+
 /**
  * EWMA（指数加权移动平均）
  * 使用指数加权移动平均算法平滑数据，同时检测并过滤突变值，填充 null/undefined 值

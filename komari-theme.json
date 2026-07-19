@@ -1336,11 +1336,11 @@
                 "type": "number",
                 "default": 0,
                 "help": {
-                    "zh-CN": "设置延迟图表的最大渲染点数，0 表示使用自动智能降采样（根据数据量和线条数自动计算，使用 LTTB 保留视觉形状），设置正整数则强制使用该值。此项仅控制前端渲染，历史源数据精度仍由 Komari 后端的保留与聚合层级决定",
-                    "zh-TW": "設置延遲圖表的最大渲染點數，0 表示使用自動智能降採樣（根據資料量和線條數自動計算，使用 LTTB 保留視覺形狀），設置正整數則強制使用該值。此項僅控制前端渲染，歷史來源資料精度仍由 Komari 後端的保留與聚合層級決定",
-                    "en": "Set the maximum rendered ping-chart points. 0 uses automatic LTTB downsampling based on data volume and line count; a positive value overrides it. This only controls frontend rendering. Historical source resolution is still determined by Komari backend retention and rollup tiers.",
-                    "ja": "Pingチャートの最大描画点数を設定します。0ではデータ量とライン数に応じたLTTB自動ダウンサンプリングを使用し、正の値で上書きします。この設定はフロントエンド描画のみを制御し、履歴元データの精度はKomariバックエンドの保持・集約階層で決まります。",
-                    "id": "Atur jumlah maksimum titik render grafik ping. 0 menggunakan downsampling LTTB otomatis berdasarkan volume data dan jumlah garis; nilai positif akan menimpanya. Opsi ini hanya mengontrol render frontend. Resolusi sumber riwayat tetap ditentukan oleh retensi dan tingkat rollup backend Komari."
+                    "zh-CN": "设置延迟图表最大渲染点数，0 表示自动计算，正整数表示强制上限",
+                    "zh-TW": "設定延遲圖表最大繪製點數，0 表示自動計算，正整數表示強制上限",
+                    "en": "Set the maximum rendered ping-chart points. 0 selects it automatically; a positive value is a hard cap",
+                    "ja": "Pingチャートの最大描画点数を設定します。0は自動、正数は上限です",
+                    "id": "Atur jumlah maksimum titik grafik Ping. 0 memilih otomatis; angka positif menjadi batas tetap"
                 }
             },
             {

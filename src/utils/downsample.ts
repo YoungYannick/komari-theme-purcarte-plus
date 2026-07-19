@@ -81,6 +81,66 @@ export function lttbDownsample<T extends { time: number; [key: string]: any }>(
 }
 
 /**
+ * LTTB with explicit null-transition protection for multi-series charts.
+ * Undefined cells are ignored because combined charts commonly have staggered
+ * timestamps; only an explicit null starts a real gap.
+ */
+export function lttbDownsamplePreservingGaps<
+  T extends { time: number; [key: string]: any }
+>(data: T[], targetPoints: number, valueKeys: string[]): T[] {
+  const len = data.length;
+  if (targetPoints >= len || targetPoints <= 0) return data;
+  if (targetPoints === 1) return [data[0]];
+  if (targetPoints === 2) return [data[0], data[len - 1]];
+
+  const required = new Set<number>([0, len - 1]);
+  for (const key of valueKeys) {
+    let previous: "value" | "gap" | undefined;
+    for (let i = 0; i < len; i++) {
+      const value = data[i][key];
+      if (typeof value === "number" && Number.isFinite(value)) {
+        previous = "value";
+      } else if (value === null) {
+        if (previous === "value") required.add(i);
+        previous = "gap";
+      }
+    }
+  }
+
+  let requiredIndices = Array.from(required).sort((a, b) => a - b);
+  if (requiredIndices.length >= targetPoints) {
+    requiredIndices = sampleIndicesEvenly(requiredIndices, targetPoints);
+    return requiredIndices.map((index) => data[index]);
+  }
+
+  const remaining = targetPoints - requiredIndices.length;
+  const sampled = lttbDownsample(data, Math.min(len, remaining + 2), valueKeys);
+  const indexByPoint = new Map(data.map((point, index) => [point, index]));
+  for (const point of sampled) {
+    const index = indexByPoint.get(point);
+    if (index !== undefined) required.add(index);
+  }
+
+  return Array.from(required)
+    .sort((a, b) => a - b)
+    .slice(0, targetPoints)
+    .map((index) => data[index]);
+}
+
+function sampleIndicesEvenly(indices: number[], target: number): number[] {
+  if (target >= indices.length) return indices;
+  if (target <= 1) return [indices[0]];
+
+  const result: number[] = [];
+  for (let i = 0; i < target; i++) {
+    const position = Math.round((i * (indices.length - 1)) / (target - 1));
+    const index = indices[position];
+    if (result[result.length - 1] !== index) result.push(index);
+  }
+  return result;
+}
+
+/**
  * 计算数据行中所有值键的平均值 (忽略 null/undefined)
  */
 function getAvgValue(row: { [key: string]: any }, keys: string[]): number {

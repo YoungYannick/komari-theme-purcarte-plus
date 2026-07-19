@@ -397,24 +397,25 @@ class ApiService {
 
   private async getLoadHistoryFromRecordFallbacks(
     uuid: string,
-    hours: number
+    hours: number,
+    range?: HistoryQueryRange | null
   ): Promise<{ count: number; records: HistoryRecord[] } | null> {
-    const attempts = [
-      {
-        method: "public:getRecordsByUUID",
-        params: { uuid, hours: String(hours), load_type: "all" },
-      },
-      {
-        method: "common:getRecords",
-        params: {
-          uuid,
-          hours,
-          type: "load",
-          load_type: "all",
-          maxCount: -1,
-        },
-      },
-    ];
+    const commonParams = {
+      uuid,
+      type: "load",
+      load_type: "all",
+      maxCount: -1,
+      ...(range ? { start: range.start, end: range.end } : { hours }),
+    };
+    const attempts = range
+      ? [{ method: "common:getRecords", params: commonParams }]
+      : [
+          {
+            method: "public:getRecordsByUUID",
+            params: { uuid, hours: String(hours), load_type: "all" },
+          },
+          { method: "common:getRecords", params: commonParams },
+        ];
 
     for (let i = 0; i < attempts.length; i++) {
       const attempt = attempts[i];
@@ -438,24 +439,25 @@ class ApiService {
 
   private async getPingHistoryFromRecordFallbacks(
     uuid: string,
-    hours: number
+    hours: number,
+    range?: HistoryQueryRange | null
   ): Promise<PingHistoryResponse | null> {
-    const attempts = [
-      {
-        method: "public:getPingRecords",
-        params: { uuid, hours: String(hours) },
-      },
-      {
-        method: "common:getRecords",
-        params: {
-          uuid,
-          hours,
-          type: "ping",
-          task_id: -1,
-          maxCount: -1,
-        },
-      },
-    ];
+    const commonParams = {
+      uuid,
+      type: "ping",
+      task_id: -1,
+      maxCount: -1,
+      ...(range ? { start: range.start, end: range.end } : { hours }),
+    };
+    const attempts = range
+      ? [{ method: "common:getRecords", params: commonParams }]
+      : [
+          {
+            method: "public:getPingRecords",
+            params: { uuid, hours: String(hours) },
+          },
+          { method: "common:getRecords", params: commonParams },
+        ];
 
     for (let i = 0; i < attempts.length; i++) {
       const attempt = attempts[i];
@@ -672,8 +674,11 @@ class ApiService {
     hours: number,
     range?: HistoryQueryRange | null
   ): Promise<PingHistoryResponse | null> {
-    const metricKeys = await this.filterAvailableMetricKeys(["ping.latency_ms"]);
-    if (metricKeys.length === 0) return null;
+    const metricKeys = await this.filterAvailableMetricKeys([
+      "ping.latency_ms",
+      "ping.loss",
+    ]);
+    if (!metricKeys.includes("ping.latency_ms")) return null;
     const baseMetricParams = {
       metric_keys: metricKeys,
       entity_id: uuid,
@@ -681,13 +686,24 @@ class ApiService {
       aggregation: "avg",
     };
     const queryMaxPoints = this.metricQueryMaxPoints(hours, range);
-    const [metricData, taskList, statsData] = await Promise.all([
-      this.queryMetrics({
+    const queryPingMetrics = async () => {
+      const params = {
         ...baseMetricParams,
         max_points: queryMaxPoints,
         downsample: true,
         fill_empty: true,
-      }),
+      };
+      const data = await this.queryMetrics(params);
+      if (data || !metricKeys.includes("ping.loss")) return data;
+
+      // Komari versions without ping.loss reject the whole multi-metric query.
+      return this.queryMetrics({
+        ...params,
+        metric_keys: ["ping.latency_ms"],
+      });
+    };
+    const [metricData, taskList, statsData] = await Promise.all([
+      queryPingMetrics(),
       this.getPingTasks(),
       this.rpcCall<any>(
         "public:getPingMetricStats",
@@ -706,10 +722,15 @@ class ApiService {
       const seriesList = Array.isArray(data?.series) ? data.series : [];
       if (seriesList.length === 0) return null;
 
-      const records: PingHistoryRecord[] = [];
+      const latencyRecords = new Map<string, PingHistoryRecord>();
+      const lossByPoint = new Map<string, number | null>();
       const taskIds = new Set<number>();
       const intervalByTask = new Map<number, number>();
       for (const series of seriesList) {
+        const metricKey = String(series.metric_key || series.name || "");
+        if (metricKey !== "ping.latency_ms" && metricKey !== "ping.loss") {
+          continue;
+        }
         const seriesInterval = Number(series.interval_seconds);
         for (const point of series.points || []) {
           const tags = this.metricTags(point) || this.metricTags(series);
@@ -717,7 +738,13 @@ class ApiService {
           const time = new Date(point.time).getTime();
           if (!Number.isFinite(taskId) || !Number.isFinite(time)) continue;
           const value = this.metricValue(point.value);
-          if (value === null) continue;
+          const timestamp = new Date(time).toISOString();
+          const pointKey = `${taskId}\u0000${timestamp}`;
+          if (metricKey === "ping.loss") {
+            lossByPoint.set(pointKey, value);
+            continue;
+          }
+
           taskIds.add(taskId);
           if (Number.isFinite(seriesInterval) && seriesInterval > 0) {
             intervalByTask.set(
@@ -725,14 +752,23 @@ class ApiService {
               Math.max(intervalByTask.get(taskId) || 0, seriesInterval)
             );
           }
-          records.push({
+          latencyRecords.set(pointKey, {
             task_id: taskId,
-            time: new Date(time).toISOString(),
+            time: timestamp,
             value,
             client: uuid,
           } as PingHistoryRecord);
         }
       }
+
+      const records = Array.from(latencyRecords.entries()).map(
+        ([pointKey, record]) => {
+          const loss = lossByPoint.get(pointKey);
+          return loss !== undefined && loss !== null && loss > 0
+            ? { ...record, value: null }
+            : record;
+        }
+      );
       return { records, taskIds, intervalByTask };
     };
 
@@ -883,13 +919,14 @@ class ApiService {
       );
       if (metricHistory) return metricHistory;
 
-      if (range) return null;
-
       const recordsHistory = await this.getLoadHistoryFromRecordFallbacks(
         uuid,
-        hours
+        hours,
+        range
       );
       if (recordsHistory) return recordsHistory;
+
+      if (range) return null;
     }
     const response = await this.get<{
       count: number;
@@ -911,14 +948,6 @@ class ApiService {
     range?: HistoryQueryRange | null
   ): Promise<PingHistoryResponse | null> {
     if (this.useRpc) {
-      if (!range && hours > 0 && hours <= 4) {
-        const recordsHistory = await this.getPingHistoryFromRecordFallbacks(
-          uuid,
-          hours
-        );
-        if (recordsHistory) return recordsHistory;
-      }
-
       const metricHistory = await this.getPingHistoryFromMetrics(
         uuid,
         hours,
@@ -926,13 +955,14 @@ class ApiService {
       );
       if (metricHistory) return metricHistory;
 
-      if (range) return null;
-
       const recordsHistory = await this.getPingHistoryFromRecordFallbacks(
         uuid,
-        hours
+        hours,
+        range
       );
       if (recordsHistory) return recordsHistory;
+
+      if (range) return null;
     }
     const response = await this.get<PingHistoryResponse>(
       `/api/records/ping?uuid=${uuid}&hours=${hours}`

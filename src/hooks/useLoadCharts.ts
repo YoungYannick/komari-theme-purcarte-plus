@@ -4,7 +4,10 @@ import type { HistoryRecord, NodeData } from "@/types/node";
 import type { HistoryQueryRange } from "@/services/api";
 import type { RpcNodeStatus } from "@/types/rpc";
 import { useLiveData } from "@/contexts/LiveDataContext";
-import { calculateAutoMaxPoints, lttbDownsample } from "@/utils/downsample";
+import {
+  calculateAutoMaxPoints,
+  lttbDownsamplePreservingGaps,
+} from "@/utils/downsample";
 
 const HISTORY_NUMERIC_KEYS: Array<keyof HistoryRecord> = [
   "cpu",
@@ -47,6 +50,38 @@ const normalizeHistoryRecord = (record: HistoryRecord): HistoryRecord => {
   return normalized as unknown as HistoryRecord;
 };
 
+const createEmptyHistoryRecord = (
+  client: string,
+  time: number
+): HistoryRecord => {
+  const record: Record<string, unknown> = {
+    client,
+    time: new Date(time).toISOString(),
+  };
+  for (const key of HISTORY_NUMERIC_KEYS) record[key] = null;
+  return record as unknown as HistoryRecord;
+};
+
+const resolveHistoryBounds = (
+  hours: number,
+  rangeStart?: string,
+  rangeEnd?: string
+) => {
+  const startTime = rangeStart ? new Date(rangeStart).getTime() : NaN;
+  const endTime = rangeEnd ? new Date(rangeEnd).getTime() : NaN;
+  if (
+    Number.isFinite(startTime) &&
+    Number.isFinite(endTime) &&
+    endTime > startTime
+  ) {
+    return { start: startTime, end: endTime };
+  }
+
+  if (!Number.isFinite(hours) || hours <= 0) return null;
+  const end = Date.now();
+  return { start: end - hours * 3_600_000, end };
+};
+
 const insertBreakPoints = (records: HistoryRecord[], hours: number) => {
   if (records.length < 2) return records;
 
@@ -71,10 +106,12 @@ const insertBreakPoints = (records: HistoryRecord[], hours: number) => {
       Number.isFinite(nextTime) &&
       nextTime - currentTime > maxGapMs
     ) {
-      result.push({
-        client: current.client,
-        time: new Date(currentTime + expectedIntervalSeconds * 1000).toISOString(),
-      } as HistoryRecord);
+      result.push(
+        createEmptyHistoryRecord(
+          current.client,
+          currentTime + expectedIntervalSeconds * 1000
+        )
+      );
     }
   }
 
@@ -95,6 +132,8 @@ export const useLoadCharts = (
   const [isDataEmpty, setIsDataEmpty] = useState(false);
 
   const isRealtime = hours === 0;
+  const rangeStart = range?.start;
+  const rangeEnd = range?.end;
 
   // Fetch historical data
   useEffect(() => {
@@ -104,7 +143,11 @@ export const useLoadCharts = (
       setLoading(true);
       setError(null);
       try {
-        const data = await getLoadHistory(node.uuid, hours, range);
+        const queryRange =
+          rangeStart && rangeEnd
+            ? { start: rangeStart, end: rangeEnd }
+            : null;
+        const data = await getLoadHistory(node.uuid, hours, queryRange);
         const records = (data?.records || []).map(normalizeHistoryRecord);
         setHistoricalData(records);
         setIsDataEmpty(records.length === 0);
@@ -118,7 +161,7 @@ export const useLoadCharts = (
     };
 
     fetchHistoricalData();
-  }, [node?.uuid, hours, range?.start, range?.end, getLoadHistory, isRealtime]);
+  }, [node?.uuid, hours, rangeStart, rangeEnd, getLoadHistory, isRealtime]);
 
   // Fetch initial real-time data and handle WebSocket updates
   useEffect(() => {
@@ -198,16 +241,44 @@ export const useLoadCharts = (
       .filter((d) => Number.isFinite(d.time))
       .sort((a, b) => a.time - b.time);
 
+    const bounds = resolveHistoryBounds(hours, rangeStart, rangeEnd);
+    const boundedData = bounds
+      ? sortedData.filter((d) => d.time >= bounds.start && d.time <= bounds.end)
+      : sortedData;
+    const stringifiedData = boundedData.map((d) => ({
+      ...d,
+      time: new Date(d.time).toISOString(),
+    })) as HistoryRecord[];
+
+    if (bounds) {
+      const client = node?.uuid || stringifiedData[0]?.client || "";
+      const timestamps = new Set(boundedData.map((item) => item.time));
+      if (!timestamps.has(bounds.start)) {
+        stringifiedData.push(createEmptyHistoryRecord(client, bounds.start));
+      }
+      if (!timestamps.has(bounds.end)) {
+        stringifiedData.push(createEmptyHistoryRecord(client, bounds.end));
+      }
+      stringifiedData.sort(
+        (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+      );
+    }
+
     return insertBreakPoints(
-      sortedData.map((d) => ({
-        ...d,
-        time: new Date(d.time).toISOString(),
-      })) as HistoryRecord[],
+      stringifiedData,
       hours
     )
       .map((d) => ({ ...d, time: new Date(d.time!).getTime() }))
       .filter((d) => Number.isFinite(d.time));
-  }, [isRealtime, realtimeData, historicalData, hours, range?.end]);
+  }, [
+    isRealtime,
+    realtimeData,
+    historicalData,
+    hours,
+    rangeStart,
+    rangeEnd,
+    node?.uuid,
+  ]);
 
   const sampledChartData = useMemo(() => {
     if (isRealtime || chartData.length === 0) return chartData;
@@ -218,7 +289,7 @@ export const useLoadCharts = (
     );
     if (maxPoints <= 0 || chartData.length <= maxPoints) return chartData;
 
-    return lttbDownsample(
+    return lttbDownsamplePreservingGaps(
       chartData,
       maxPoints,
       HISTORY_NUMERIC_KEYS as string[]
@@ -228,9 +299,15 @@ export const useLoadCharts = (
   const memoryChartData = useMemo(() => {
     return sampledChartData.map((item) => ({
       ...item,
-      ram: ((item.ram ?? 0) / (node?.mem_total ?? 1)) * 100,
+      ram:
+        typeof item.ram === "number" && Number.isFinite(item.ram)
+          ? (item.ram / (node?.mem_total || 1)) * 100
+          : null,
       ram_raw: item.ram,
-      swap: ((item.swap ?? 0) / (node?.swap_total ?? 1)) * 100,
+      swap:
+        typeof item.swap === "number" && Number.isFinite(item.swap)
+          ? (item.swap / (node?.swap_total || 1)) * 100
+          : null,
       swap_raw: item.swap,
     }));
   }, [sampledChartData, node?.mem_total, node?.swap_total]);

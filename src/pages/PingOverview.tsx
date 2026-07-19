@@ -36,6 +36,7 @@ import {
   cutPeakValues,
   calculateTaskStats,
   interpolateNullsLinear,
+  insertSeriesGapRows,
 } from "@/utils/RecordHelper";
 import { useAppConfig } from "@/config";
 import { ScrollableTooltip } from "@/components/ui/tooltip";
@@ -51,7 +52,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/utils";
-import { lttbDownsample, calculateAutoMaxPoints } from "@/utils/downsample";
+import {
+  lttbDownsamplePreservingGaps,
+  calculateAutoMaxPoints,
+} from "@/utils/downsample";
 import { apiService } from "@/services/api";
 import {
   buildMetricQuickRangeDays,
@@ -183,55 +187,6 @@ const generateCombinedColor = (
     return oklchColor;
   }
   return hslFallback;
-};
-
-const insertOverviewBreakRows = (rows: any[], lines: CombinedLineInfo[]) => {
-  if (rows.length < 2 || lines.length === 0) return rows;
-
-  const intervalByKey = new Map(
-    lines.map((line) => [
-      line.key,
-      Math.max(30, Number(line.interval) || 60) * 1000,
-    ])
-  );
-  const keys = lines.map((line) => line.key);
-  const result: any[] = [];
-
-  for (let i = 0; i < rows.length; i++) {
-    const current = rows[i];
-    result.push(current);
-
-    const next = rows[i + 1];
-    if (!next) continue;
-
-    const currentTime = current.__ts ?? new Date(current.time).getTime();
-    const nextTime = next.__ts ?? new Date(next.time).getTime();
-    if (!Number.isFinite(currentTime) || !Number.isFinite(nextTime)) continue;
-
-    for (const key of keys) {
-      const currentValue = current[key];
-      const nextValue = next[key];
-      if (
-        typeof currentValue !== "number" ||
-        !Number.isFinite(currentValue) ||
-        typeof nextValue !== "number" ||
-        !Number.isFinite(nextValue)
-      ) {
-        continue;
-      }
-
-      const intervalMs = intervalByKey.get(key) ?? 60_000;
-      if (nextTime - currentTime <= intervalMs * 2.5) continue;
-
-      result.push({
-        time: new Date(currentTime + intervalMs).toISOString(),
-        __ts: currentTime + intervalMs,
-        [key]: null,
-      });
-    }
-  }
-
-  return result.sort((a, b) => (a.__ts ?? 0) - (b.__ts ?? 0));
 };
 
 // 组件
@@ -879,6 +834,14 @@ const PingOverview = memo(() => {
     if (!activeLineKeys.length || !full.length) return [];
 
     const keys = activeLineKeys;
+    const intervalByKey = new Map(
+      activeLines.map((line) => [
+        line.key,
+        Math.max(30, Number(line.interval) || 60) * 1000,
+      ])
+    );
+    full = insertSeriesGapRows(full, intervalByKey);
+
     const autoMax = calculateAutoMaxPoints(full.length, keys.length);
     const effectiveMax = pingChartMaxPoints > 0 ? pingChartMaxPoints : autoMax;
     const preProcessMax =
@@ -889,10 +852,8 @@ const PingOverview = memo(() => {
         ...d,
         time: d.__ts ?? new Date(d.time).getTime(),
       }));
-      full = lttbDownsample(withTs, preProcessMax, keys);
+      full = lttbDownsamplePreservingGaps(withTs, preProcessMax, keys);
     }
-
-    full = insertOverviewBreakRows(full, activeLines);
 
     if (cutPeak) {
       full = cutPeakValues(full, keys);
@@ -931,7 +892,7 @@ const PingOverview = memo(() => {
         ...d,
         time: d.__ts ?? new Date(d.time).getTime(),
       }));
-      return lttbDownsample(withTs, effectiveMax, keys);
+      return lttbDownsamplePreservingGaps(withTs, effectiveMax, keys);
     }
 
     return full.map((d: any) => ({

@@ -1,4 +1,4 @@
-import { memo, useRef } from "react";
+import { memo } from "react";
 import {
   AreaChart,
   Area,
@@ -17,7 +17,7 @@ import { Flex } from "@radix-ui/themes";
 import Loading from "@/components/loading";
 import { useLoadCharts } from "@/hooks/useLoadCharts";
 import { CustomTooltip } from "@/components/ui/tooltip";
-import { lableFormatter, loadChartTimeFormatter } from "@/utils/chartHelper";
+import { lableFormatter } from "@/utils/chartHelper";
 import type { RpcNodeStatus } from "@/types/rpc";
 import { useLocale } from "@/config/hooks";
 import type { HistoryQueryRange } from "@/services/api";
@@ -49,9 +49,6 @@ const LoadCharts = memo(
     const { loading, error, chartData, memoryChartData, isDataEmpty } =
       useLoadCharts(node, hours, range);
     const { t } = useLocale();
-
-    const chartDataLengthRef = useRef(0);
-    chartDataLengthRef.current = chartData.length;
 
     // 样式和颜色
     const cn = "flex flex-col w-full overflow-hidden";
@@ -281,7 +278,10 @@ const LoadCharts = memo(
                     vertical={false}
                   />
                   <XAxis
+                    type="number"
                     dataKey="time"
+                    domain={["dataMin", "dataMax"]}
+                    scale="time"
                     tickLine={false}
                     axisLine={{
                       stroke: "var(--theme-text-muted-color)",
@@ -289,14 +289,9 @@ const LoadCharts = memo(
                     tick={{
                       fill: "var(--theme-text-muted-color)",
                     }}
-                    tickFormatter={(value, index) =>
-                      loadChartTimeFormatter(
-                        value,
-                        index,
-                        chartDataLengthRef.current
-                      )
-                    }
-                    interval={0}
+                    tickFormatter={(value) => lableFormatter(value, hours)}
+                    tickCount={2}
+                    interval="preserveStartEnd"
                     height={20}
                   />
                   <YAxis
