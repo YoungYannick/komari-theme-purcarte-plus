@@ -4,6 +4,8 @@ import type {
   ApiResponse,
   PublicInfo,
   HistoryRecord,
+  HistoryRangeMetadata,
+  LoadHistoryResponse,
   PingHistoryResponse,
   PingHistoryRecord,
   PingTask,
@@ -219,10 +221,24 @@ class ApiService {
     );
   }
 
+  private normalizeHistoryTime(value: unknown): string | undefined {
+    const time = new Date(value as any).getTime();
+    return Number.isFinite(time) ? new Date(time).toISOString() : undefined;
+  }
+
+  private historyRangeMetadata(data: any): HistoryRangeMetadata {
+    const from = this.normalizeHistoryTime(data?.from ?? data?.start);
+    const to = this.normalizeHistoryTime(data?.to ?? data?.end);
+    return {
+      ...(from ? { from } : {}),
+      ...(to ? { to } : {}),
+    };
+  }
+
   private normalizeLoadHistory(
     data: any,
     uuid: string
-  ): { count: number; records: HistoryRecord[] } | null {
+  ): LoadHistoryResponse | null {
     if (!data) return null;
     const records = Array.isArray(data.records)
       ? data.records
@@ -230,6 +246,7 @@ class ApiService {
     return {
       count: data.count ?? records.length,
       records,
+      ...this.historyRangeMetadata(data),
     };
   }
 
@@ -250,7 +267,22 @@ class ApiService {
           })
           .filter(Boolean)
       : [];
-    let tasks: PingTask[] = Array.isArray(data.tasks) ? data.tasks : [];
+    let tasks: PingTask[] = Array.isArray(data.tasks)
+      ? data.tasks
+          .map((task: any) => {
+            const id = Number(task.id);
+            if (!Number.isFinite(id)) return null;
+
+            const loss = this.metricValue(task.loss);
+            return {
+              ...task,
+              id,
+              loss:
+                loss !== null && loss >= 0 ? Math.min(100, loss) : undefined,
+            };
+          })
+          .filter((task: PingTask | null): task is PingTask => task !== null)
+      : [];
 
     if (tasks.length === 0 && records.length > 0) {
       const taskIdSet = new Set<number>();
@@ -259,22 +291,12 @@ class ApiService {
         if (Number.isFinite(taskId)) taskIdSet.add(taskId);
       });
 
-      const basicInfo: Array<{ loss?: number }> = Array.isArray(data.basic_info)
-        ? data.basic_info
-        : [];
-      const avgLoss =
-        basicInfo.length > 0
-          ? basicInfo.reduce((sum, item) => sum + (item.loss || 0), 0) /
-            basicInfo.length
-          : 0;
-
       tasks = Array.from(taskIdSet)
         .sort((a, b) => a - b)
         .map((id) => ({
           id,
           name: `Task ${id}`,
           interval: 30,
-          loss: Math.round(avgLoss * 100) / 100,
         }));
     }
 
@@ -282,6 +304,7 @@ class ApiService {
       count: data.count ?? records.length,
       records,
       tasks,
+      ...this.historyRangeMetadata(data),
     };
   }
 
@@ -362,7 +385,8 @@ class ApiService {
     records: PingHistoryRecord[],
     statsData: any
   ) {
-    if (!this.hasFinitePingValue(records)) return false;
+    if (records.length === 0) return false;
+    if (!this.hasFinitePingValue(records)) return true;
 
     const statsList = Array.isArray(statsData?.stats) ? statsData.stats : [];
     if (statsList.length === 0) return true;
@@ -399,7 +423,7 @@ class ApiService {
     uuid: string,
     hours: number,
     range?: HistoryQueryRange | null
-  ): Promise<{ count: number; records: HistoryRecord[] } | null> {
+  ): Promise<LoadHistoryResponse | null> {
     const commonParams = {
       uuid,
       type: "load",
@@ -468,7 +492,7 @@ class ApiService {
       );
       if (response.status !== "success" || !response.data) continue;
       const normalized = this.normalizePingHistory(response.data);
-      if (normalized && this.hasFinitePingValue(normalized.records)) {
+      if (normalized && normalized.records.length > 0) {
         return normalized;
       }
     }
@@ -596,7 +620,7 @@ class ApiService {
     uuid: string,
     hours: number,
     range?: HistoryQueryRange | null
-  ): Promise<{ count: number; records: HistoryRecord[] } | null> {
+  ): Promise<LoadHistoryResponse | null> {
     const metricToRecordKey: Record<string, keyof HistoryRecord> = {
       "cpu.usage": "cpu",
       "gpu.usage": "gpu",
@@ -644,8 +668,7 @@ class ApiService {
           (a, b) =>
             new Date(a.time || 0).getTime() - new Date(b.time || 0).getTime()
         )
-        .map((row) => ({ client: uuid, ...row } as HistoryRecord))
-        .filter((record) => this.hasFiniteMetricValue([record as any]));
+        .map((row) => ({ client: uuid, ...row } as HistoryRecord));
 
       return records.length > 0 ? records : null;
     };
@@ -665,7 +688,11 @@ class ApiService {
     const records = buildRecords(data);
 
     return records && this.hasFiniteMetricValue(records as any[])
-      ? { count: records.length, records }
+      ? {
+          count: records.length,
+          records,
+          ...this.historyRangeMetadata(data),
+        }
       : null;
   }
 
@@ -723,7 +750,10 @@ class ApiService {
       if (seriesList.length === 0) return null;
 
       const latencyRecords = new Map<string, PingHistoryRecord>();
-      const lossByPoint = new Map<string, number | null>();
+      const lossByPoint = new Map<
+        string,
+        { ratio: number | null; sampleCount?: number }
+      >();
       const taskIds = new Set<number>();
       const intervalByTask = new Map<number, number>();
       for (const series of seriesList) {
@@ -741,7 +771,13 @@ class ApiService {
           const timestamp = new Date(time).toISOString();
           const pointKey = `${taskId}\u0000${timestamp}`;
           if (metricKey === "ping.loss") {
-            lossByPoint.set(pointKey, value);
+            const sampleCount = Number(point.count);
+            lossByPoint.set(pointKey, {
+              ratio: value,
+              ...(Number.isFinite(sampleCount) && sampleCount > 0
+                ? { sampleCount }
+                : {}),
+            });
             continue;
           }
 
@@ -763,10 +799,18 @@ class ApiService {
 
       const records = Array.from(latencyRecords.entries()).map(
         ([pointKey, record]) => {
-          const loss = lossByPoint.get(pointKey);
-          return loss !== undefined && loss !== null && loss > 0
-            ? { ...record, value: null }
-            : record;
+          const lossPoint = lossByPoint.get(pointKey);
+          if (!lossPoint) return record;
+
+          const lossRatio = lossPoint.ratio;
+          return {
+            ...record,
+            ...(lossRatio !== null ? { loss_ratio: lossRatio } : {}),
+            ...(lossPoint.sampleCount !== undefined
+              ? { loss_sample_count: lossPoint.sampleCount }
+              : {}),
+            ...(lossRatio !== null && lossRatio > 0 ? { value: null } : {}),
+          };
         }
       );
       return { records, taskIds, intervalByTask };
@@ -788,7 +832,6 @@ class ApiService {
         name: task.name || `Task ${id}`,
         interval: Number(task.interval) || 60,
         data_interval: intervalByTask.get(id),
-        loss: 0,
       });
     }
 
@@ -797,12 +840,17 @@ class ApiService {
       const id = Number(stat.task_id);
       if (!Number.isFinite(id) || !taskIds.has(id)) continue;
       const existing = taskMap.get(id);
+      const loss = this.metricValue(stat.loss);
       taskMap.set(id, {
         id,
         name: stat.name || existing?.name || `Task ${id}`,
         interval: Number(stat.interval) || existing?.interval || 60,
         data_interval: intervalByTask.get(id) || existing?.data_interval,
-        loss: Number(stat.loss) || 0,
+        ...(loss !== null && loss >= 0
+          ? { loss: Math.min(100, loss) }
+          : existing?.loss !== undefined
+            ? { loss: existing.loss }
+            : {}),
       });
     }
 
@@ -813,7 +861,6 @@ class ApiService {
           name: `Task ${id}`,
           interval: 60,
           data_interval: intervalByTask.get(id),
-          loss: 0,
         });
       }
     }
@@ -826,6 +873,7 @@ class ApiService {
       count: records.length,
       records,
       tasks: Array.from(taskMap.values()).sort((a, b) => a.id - b.id),
+      ...this.historyRangeMetadata(metricData),
     };
   }
 
@@ -910,7 +958,7 @@ class ApiService {
     uuid: string,
     hours: number = 24,
     range?: HistoryQueryRange | null
-  ): Promise<{ count: number; records: HistoryRecord[] } | null> {
+  ): Promise<LoadHistoryResponse | null> {
     if (this.useRpc) {
       const metricHistory = await this.getLoadHistoryFromMetrics(
         uuid,
@@ -969,7 +1017,7 @@ class ApiService {
     );
     if (response.status === "success" && response.data?.records?.length) {
       const normalized = this.normalizePingHistory(response.data);
-      return normalized && this.hasFinitePingValue(normalized.records)
+      return normalized && normalized.records.length > 0
         ? normalized
         : null;
     }

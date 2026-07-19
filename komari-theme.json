@@ -1336,11 +1336,11 @@
                 "type": "number",
                 "default": 0,
                 "help": {
-                    "zh-CN": "设置延迟图表最大渲染点数，0 表示自动计算，正整数表示强制上限",
-                    "zh-TW": "設定延遲圖表最大繪製點數，0 表示自動計算，正整數表示強制上限",
-                    "en": "Set the maximum rendered ping-chart points. 0 selects it automatically; a positive value is a hard cap",
-                    "ja": "Pingチャートの最大描画点数を設定します。0は自動、正数は上限です",
-                    "id": "Atur jumlah maksimum titik grafik Ping. 0 memilih otomatis; angka positif menjadi batas tetap"
+                    "zh-CN": "设置延迟图表普通数据点的最大渲染数量，0 表示自动计算；查询边界和断点标记始终保留，最终点数可能少量超过该值",
+                    "zh-TW": "設定延遲圖表一般資料點的最大繪製數量，0 表示自動計算；查詢邊界與斷點標記一律保留，最終點數可能略微超過此值",
+                    "en": "Set the maximum regular data points rendered in ping charts. 0 selects it automatically; range boundaries and gap markers are always preserved, so the final count may be slightly higher",
+                    "ja": "Pingチャートの通常データ点の最大描画数を設定します。0は自動です。範囲境界と切断点は常に保持されるため、最終点数がわずかに超える場合があります",
+                    "id": "Atur jumlah maksimum titik data biasa pada grafik Ping. 0 memilih otomatis; batas rentang dan penanda jeda selalu dipertahankan sehingga jumlah akhir dapat sedikit lebih tinggi"
                 }
             },
             {

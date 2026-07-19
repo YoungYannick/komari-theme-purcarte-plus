@@ -37,6 +37,8 @@ import {
   calculateTaskStats,
   interpolateNullsLinear,
   insertSeriesGapRows,
+  resolveHistoryBounds,
+  type HistoryBounds,
 } from "@/utils/RecordHelper";
 import { useAppConfig } from "@/config";
 import { ScrollableTooltip } from "@/components/ui/tooltip";
@@ -144,7 +146,7 @@ interface CombinedLineInfo {
   taskName: string;
   serverName: string;
   interval: number;
-  loss: number;
+  loss?: number;
 }
 
 // 合并线条的颜色生成（按服务器分色相，同服务器内按监测节点偏移色相+亮度+饱和度）
@@ -307,6 +309,8 @@ const PingOverview = memo(() => {
   );
   const isCustomRange = hours === CUSTOM_RANGE_HOURS;
   const queryRange = isCustomRange ? customQuery : null;
+  const queryStart = queryRange?.start;
+  const queryEnd = queryRange?.end;
   const chartHours = isCustomRange ? rangeHours(customQuery) : hours;
   const customQuickRanges = useMemo(
     () => buildMetricQuickRangeDays(maxPingRecordPreserveTime),
@@ -345,6 +349,9 @@ const PingOverview = memo(() => {
   >(new Map());
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [historyBounds, setHistoryBounds] = useState<HistoryBounds | null>(null);
+  const historyStart = historyBounds?.start;
+  const historyEnd = historyBounds?.end;
   const fetchRequestIdRef = useRef(0);
   const hasLoadedPingDataRef = useRef(false);
   const [hasLoadedPingData, setHasLoadedPingData] = useState(false);
@@ -352,6 +359,12 @@ const PingOverview = memo(() => {
   const fetchAllPingData = useCallback(async () => {
     if (!nodes || nodes.length === 0) return;
     const requestId = ++fetchRequestIdRef.current;
+    const requestedRange =
+      queryStart && queryEnd ? { start: queryStart, end: queryEnd } : null;
+    const requestTime = Date.now();
+    setHistoryBounds(
+      resolveHistoryBounds(chartHours, requestedRange, null, requestTime)
+    );
     if (maxPingRecordPreserveTime <= 0) {
       setAllPingData(new Map());
       setTimeRange(null);
@@ -382,7 +395,7 @@ const PingOverview = memo(() => {
               const data = await getPingHistory(
                 node.uuid,
                 chartHours,
-                queryRange
+                requestedRange
               );
               return { uuid: node.uuid, data };
             } catch {
@@ -404,16 +417,17 @@ const PingOverview = memo(() => {
       if (requestId !== fetchRequestIdRef.current) return;
       setDataError(err.message || "Failed to fetch ping data");
     } finally {
-      if (requestId !== fetchRequestIdRef.current) return;
-      hasLoadedPingDataRef.current = true;
-      setHasLoadedPingData(true);
-      setDataLoading(false);
+      if (requestId === fetchRequestIdRef.current) {
+        hasLoadedPingDataRef.current = true;
+        setHasLoadedPingData(true);
+        setDataLoading(false);
+      }
     }
   }, [
     nodes,
     chartHours,
-    queryRange?.start,
-    queryRange?.end,
+    queryStart,
+    queryEnd,
     getPingHistory,
     maxPingRecordPreserveTime,
   ]);
@@ -745,7 +759,7 @@ const PingOverview = memo(() => {
 
   // 合并所有记录到统一时间线
   const midData = useMemo(() => {
-    if (allPingData.size === 0 || activeLines.length === 0) return [];
+    if (allPingData.size === 0 && historyStart === undefined) return [];
 
     // 计算最小间隔用于容差
     const intervals = activeLines
@@ -800,6 +814,18 @@ const PingOverview = memo(() => {
       }
     }
 
+    if (historyStart !== undefined && historyEnd !== undefined) {
+      for (const time of [historyStart, historyEnd]) {
+        if (!grouped[time]) {
+          grouped[time] = {
+            time: new Date(time).toISOString(),
+            __ts: time,
+            __rangeAnchor: true,
+          };
+        }
+      }
+    }
+
     const merged = Object.values(grouped).sort(
       (a: any, b: any) => a.__ts - b.__ts
     );
@@ -807,10 +833,8 @@ const PingOverview = memo(() => {
     if (!merged.length) return [];
 
     const lastTs = (merged as any[])[(merged as any[]).length - 1].__ts;
-    const fromTs = queryRange
-      ? new Date(queryRange.start).getTime()
-      : lastTs - chartHours * 3600_000;
-    const toTs = queryRange ? new Date(queryRange.end).getTime() : Infinity;
+    const fromTs = historyStart ?? lastTs - chartHours * 3600_000;
+    const toTs = historyEnd ?? Infinity;
     let startIdx = 0;
     for (let i = 0; i < (merged as any[]).length; i++) {
       if ((merged as any[])[i].__ts >= fromTs) {
@@ -824,23 +848,29 @@ const PingOverview = memo(() => {
     activeLines,
     activeLineKeySet,
     chartHours,
-    queryRange?.start,
-    queryRange?.end,
+    historyStart,
+    historyEnd,
   ]);
 
   // 图表数据处理
   const chartData = useMemo(() => {
     let full = midData;
-    if (!activeLineKeys.length || !full.length) return [];
+    if (!full.length) return [];
 
     const keys = activeLineKeys;
+    if (!keys.length) {
+      return full.map((d: any) => ({
+        ...d,
+        time: d.__ts ?? new Date(d.time).getTime(),
+      }));
+    }
     const intervalByKey = new Map(
       activeLines.map((line) => [
         line.key,
         Math.max(30, Number(line.interval) || 60) * 1000,
       ])
     );
-    full = insertSeriesGapRows(full, intervalByKey);
+    full = insertSeriesGapRows(full, intervalByKey, 1.5);
 
     const autoMax = calculateAutoMaxPoints(full.length, keys.length);
     const effectiveMax = pingChartMaxPoints > 0 ? pingChartMaxPoints : autoMax;
@@ -900,6 +930,17 @@ const PingOverview = memo(() => {
       time: d.__ts ?? new Date(d.time).getTime(),
     }));
   }, [midData, cutPeak, activeLineKeys, activeLines, pingChartMaxPoints]);
+
+  const hasVisiblePingData = useMemo(
+    () =>
+      chartData.some((row) =>
+        activeLineKeys.some((key) => {
+          const value = row[key];
+          return typeof value === "number" && Number.isFinite(value);
+        })
+      ),
+    [chartData, activeLineKeys]
+  );
 
   // 线条颜色（按服务器分色相，同服务器内按监测节点变化）
   const lineColors = useMemo(() => {
@@ -1542,7 +1583,7 @@ const PingOverview = memo(() => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0 flex-grow flex flex-col"
+        <CardContent className="relative pt-0 flex-grow flex flex-col"
          ref={chartContentRef}
         >
           {chartData.length > 0 ? (
@@ -1559,7 +1600,12 @@ const PingOverview = memo(() => {
                 <XAxis
                   type="number"
                   dataKey="time"
-                  domain={timeRange || ["dataMin", "dataMax"]}
+                  domain={
+                    timeRange ||
+                    (historyStart !== undefined && historyEnd !== undefined
+                      ? [historyStart, historyEnd]
+                      : ["dataMin", "dataMax"])
+                  }
                   tickFormatter={(time) => {
                     const date = new Date(time);
                     return date.toLocaleString([], {
@@ -1658,6 +1704,11 @@ const PingOverview = memo(() => {
             </ResponsiveContainer>
           ) : (
             <div className="min-h-90 flex items-center justify-center">
+              <p>{t("pingOverview.noData")}</p>
+            </div>
+          )}
+          {!isLoading && !hasVisiblePingData && chartData.length > 0 && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <p>{t("pingOverview.noData")}</p>
             </div>
           )}

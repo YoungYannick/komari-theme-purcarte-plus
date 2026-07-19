@@ -46,8 +46,14 @@ const formatPercent = (value: unknown, decimals = 2) =>
 
 const LoadCharts = memo(
   ({ node, hours, range, liveData, isOnline }: LoadChartsProps) => {
-    const { loading, error, chartData, memoryChartData, isDataEmpty } =
-      useLoadCharts(node, hours, range);
+    const {
+      loading,
+      error,
+      chartData,
+      memoryChartData,
+      isDataEmpty,
+      historyBounds,
+    } = useLoadCharts(node, hours, range);
     const { t } = useLocale();
 
     // 样式和颜色
@@ -264,9 +270,9 @@ const LoadCharts = memo(
             </div>
           </CardHeader>
           <div
-            className="h-[150px] w-full px-2 pb-2 align-bottom"
+            className="relative h-[150px] w-full px-2 pb-2 align-bottom"
             style={{ minHeight: 0 }}>
-            {!loading && !isDataEmpty && (
+            {!loading && (
               <ChartContainer config={chartConfig} className="h-full w-full">
                 <ChartComponent
                   data={config.data}
@@ -280,7 +286,11 @@ const LoadCharts = memo(
                   <XAxis
                     type="number"
                     dataKey="time"
-                    domain={["dataMin", "dataMax"]}
+                    domain={
+                      historyBounds
+                        ? [historyBounds.start, historyBounds.end]
+                        : ["dataMin", "dataMax"]
+                    }
                     scale="time"
                     tickLine={false}
                     axisLine={{
@@ -342,6 +352,11 @@ const LoadCharts = memo(
                   )}
                 </ChartComponent>
               </ChartContainer>
+            )}
+            {!loading && isDataEmpty && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                <p>{t("chart.noData")}</p>
+              </div>
             )}
           </div>
         </Card>

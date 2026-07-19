@@ -45,7 +45,10 @@ interface PingChartProps {
 
 const PingChart = memo(({ node, hours, range }: PingChartProps) => {
   const { enableCutPeak, enableConnectBreaks, pingChartMaxPoints, monitorNodeSortMode, monitorNodeCustomOrder } = useAppConfig();
-  const { loading, error, pingHistory } = usePingChart(node, hours, range);
+  const { loading, error, pingHistory, historyBounds, isDataEmpty } =
+    usePingChart(node, hours, range);
+  const historyStart = historyBounds?.start;
+  const historyEnd = historyBounds?.end;
   const [visiblePingTasks, setVisiblePingTasks] = useState<number[]>([]);
   const [timeRange, setTimeRange] = useState<[number, number] | null>(null);
   const [brushIndices, setBrushIndices] = useState<{
@@ -99,7 +102,7 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
   const midData = useMemo(() => {
     const data = pingHistory?.records || [];
     const tasks = pingHistory?.tasks || [];
-    if (!data.length || !tasks.length) return [];
+    if (!data.length && historyStart === undefined) return [];
 
     const taskIntervals = tasks
       .map((t) => t.data_interval || t.interval)
@@ -146,6 +149,18 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
           : null;
     }
 
+    if (historyStart !== undefined && historyEnd !== undefined) {
+      for (const time of [historyStart, historyEnd]) {
+        if (!grouped[time]) {
+          grouped[time] = {
+            time: new Date(time).toISOString(),
+            __ts: time,
+            __rangeAnchor: true,
+          };
+        }
+      }
+    }
+
     const merged = Object.values(grouped).sort(
       (a: any, b: any) => a.__ts - b.__ts
     );
@@ -153,10 +168,8 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
     if (!merged.length) return [];
 
     const lastTs = (merged as any[])[(merged as any[]).length - 1].__ts;
-    const fromTs = range?.start
-      ? new Date(range.start).getTime()
-      : lastTs - hours * 3600_000;
-    const toTs = range?.end ? new Date(range.end).getTime() : Infinity;
+    const fromTs = historyStart ?? lastTs - hours * 3600_000;
+    const toTs = historyEnd ?? Infinity;
     let startIdx = 0;
     for (let i = 0; i < (merged as any[]).length; i++) {
       if ((merged as any[])[i].__ts >= fromTs) {
@@ -165,16 +178,21 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
       }
     }
     return (merged as any[]).slice(startIdx).filter((row) => row.__ts <= toTs);
-  }, [pingHistory, hours, range?.start, range?.end]);
+  }, [pingHistory, hours, historyStart, historyEnd]);
 
   const chartData = useMemo(() => {
     let full = midData;
     const tasks = pingHistory?.tasks || [];
-    if (!tasks.length || !full.length) return [];
+    if (!full.length) return [];
     const activeTasks = tasks.filter(
       (task) => visiblePingTasks.length === 0 || visiblePingTasks.includes(task.id)
     );
-    if (!activeTasks.length) return [];
+    if (!activeTasks.length) {
+      return full.map((d: any) => ({
+        ...d,
+        time: d.__ts ?? new Date(d.time).getTime(),
+      }));
+    }
     const keys = activeTasks.map((t) => String(t.id));
     const intervalByKey = new Map(
       activeTasks.map((task) => [
@@ -186,7 +204,7 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
       ])
     );
 
-    full = insertSeriesGapRows(full, intervalByKey);
+    full = insertSeriesGapRows(full, intervalByKey, 1.5);
 
     const autoMax = calculateAutoMaxPoints(full.length, keys.length);
     const effectiveMax = pingChartMaxPoints > 0 ? pingChartMaxPoints : autoMax;
@@ -542,8 +560,8 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0 flex-grow flex flex-col" ref={chartContentRef}>
-          {pingHistory?.tasks && pingHistory.tasks.length > 0 ? (
+        <CardContent className="relative pt-0 flex-grow flex flex-col" ref={chartContentRef}>
+          {chartData.length > 0 ? (
             <ResponsiveContainer
               width="100%"
               height="100%"
@@ -557,7 +575,12 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
                 <XAxis
                   type="number"
                   dataKey="time"
-                  domain={timeRange || ["dataMin", "dataMax"]}
+                  domain={
+                    timeRange ||
+                    (historyStart !== undefined && historyEnd !== undefined
+                      ? [historyStart, historyEnd]
+                      : ["dataMin", "dataMax"])
+                  }
                   tickFormatter={(time) => {
                     const date = new Date(time);
                     if (hours === 0) {
@@ -668,6 +691,11 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
             </ResponsiveContainer>
           ) : (
             <div className="min-h-90 flex items-center justify-center">
+              <p>{t("chart.noData")}</p>
+            </div>
+          )}
+          {!loading && isDataEmpty && chartData.length > 0 && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <p>{t("chart.noData")}</p>
             </div>
           )}

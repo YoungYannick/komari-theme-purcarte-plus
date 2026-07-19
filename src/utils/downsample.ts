@@ -90,8 +90,6 @@ export function lttbDownsamplePreservingGaps<
 >(data: T[], targetPoints: number, valueKeys: string[]): T[] {
   const len = data.length;
   if (targetPoints >= len || targetPoints <= 0) return data;
-  if (targetPoints === 1) return [data[0]];
-  if (targetPoints === 2) return [data[0], data[len - 1]];
 
   const required = new Set<number>([0, len - 1]);
   for (const key of valueKeys) {
@@ -109,7 +107,6 @@ export function lttbDownsamplePreservingGaps<
 
   let requiredIndices = Array.from(required).sort((a, b) => a - b);
   if (requiredIndices.length >= targetPoints) {
-    requiredIndices = sampleIndicesEvenly(requiredIndices, targetPoints);
     return requiredIndices.map((index) => data[index]);
   }
 
@@ -125,19 +122,6 @@ export function lttbDownsamplePreservingGaps<
     .sort((a, b) => a - b)
     .slice(0, targetPoints)
     .map((index) => data[index]);
-}
-
-function sampleIndicesEvenly(indices: number[], target: number): number[] {
-  if (target >= indices.length) return indices;
-  if (target <= 1) return [indices[0]];
-
-  const result: number[] = [];
-  for (let i = 0; i < target; i++) {
-    const position = Math.round((i * (indices.length - 1)) / (target - 1));
-    const index = indices[position];
-    if (result[result.length - 1] !== index) result.push(index);
-  }
-  return result;
 }
 
 /**

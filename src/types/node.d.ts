@@ -90,29 +90,41 @@ export interface PublicInfo {
 export interface HistoryRecord {
   client: string;
   time: string;
-  cpu: number;
-  gpu: number;
-  ram: number;
-  ram_total: number;
-  swap: number;
-  swap_total: number;
-  load: number;
-  temp: number;
-  disk: number;
-  disk_total: number;
-  net_in: number;
-  net_out: number;
-  net_total_up: number;
-  net_total_down: number;
-  process: number;
-  connections: number;
-  connections_udp: number;
+  cpu: number | null;
+  gpu: number | null;
+  ram: number | null;
+  ram_total: number | null;
+  swap: number | null;
+  swap_total: number | null;
+  load: number | null;
+  temp: number | null;
+  disk: number | null;
+  disk_total: number | null;
+  net_in: number | null;
+  net_out: number | null;
+  net_total_up: number | null;
+  net_total_down: number | null;
+  process: number | null;
+  connections: number | null;
+  connections_udp: number | null;
+}
+
+export interface HistoryRangeMetadata {
+  from?: string;
+  to?: string;
+}
+
+export interface LoadHistoryResponse extends HistoryRangeMetadata {
+  count: number;
+  records: HistoryRecord[];
 }
 
 export interface PingHistoryRecord {
   task_id: number;
   time: string;
   value: number | null;
+  loss_ratio?: number | null;
+  loss_sample_count?: number;
 }
 
 export interface PingTask {
@@ -120,7 +132,7 @@ export interface PingTask {
   interval: number;
   data_interval?: number;
   name: string;
-  loss: number;
+  loss?: number;
 }
 
 export interface PingTaskFull {
@@ -133,7 +145,7 @@ export interface PingTaskFull {
   interval: number;
 }
 
-export interface PingHistoryResponse {
+export interface PingHistoryResponse extends HistoryRangeMetadata {
   count: number;
   records: PingHistoryRecord[];
   tasks: PingTask[];

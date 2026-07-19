@@ -306,73 +306,85 @@ const InstancePage = () => {
       {enableInstanceDetail && node && <Instance node={node} />}
 
       <div className="flex flex-col items-center w-full space-y-4">
-        <Card className="p-2">
-          <div className="flex justify-center space-x-2">
-            <Button
-              variant={chartType === "load" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => handleChartTypeChange("load")}>
-              {t("instancePage.optionLoad")}
-            </Button>
-            {enablePingChart && (
+        <div
+          className={`flex w-full ${
+            isMobile
+              ? "flex-col items-center space-y-4"
+              : "items-center justify-center gap-4"
+          }`}
+        >
+          <Card className="flex-shrink-0 p-2">
+            <div className="flex justify-center space-x-2">
               <Button
-                variant={chartType === "ping" ? "default" : "ghost"}
+                variant={chartType === "load" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => handleChartTypeChange("ping")}>
-                {t("instancePage.optionPing")}
+                onClick={() => handleChartTypeChange("load")}>
+                {t("instancePage.optionLoad")}
               </Button>
-            )}
-          </div>
-        </Card>
-        <Card className={`justify-center p-2 ${isMobile ? "w-full" : ""}`}>
-          {chartType === "load" ? (
-            <div className="flex space-x-2 overflow-x-auto whitespace-nowrap">
-              {loadTimeRanges.map((range) => (
+              {enablePingChart && (
                 <Button
-                  key={range.label}
-                  variant={loadHours === range.hours ? "default" : "ghost"}
+                  variant={chartType === "ping" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => setLoadHours(range.hours)}>
-                  {range.label}
+                  onClick={() => handleChartTypeChange("ping")}>
+                  {t("instancePage.optionPing")}
                 </Button>
-              ))}
-              {maxRecordPreserveTime > 0 && (
+              )}
+            </div>
+          </Card>
+          <Card
+            className={`min-w-0 max-w-full justify-center p-2 ${
+              isMobile ? "w-full" : ""
+            }`}
+          >
+            {chartType === "load" ? (
+              <div className="flex space-x-2 overflow-x-auto whitespace-nowrap">
+                {loadTimeRanges.map((range) => (
+                  <Button
+                    key={range.label}
+                    variant={loadHours === range.hours ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setLoadHours(range.hours)}>
+                    {range.label}
+                  </Button>
+                ))}
+                {maxRecordPreserveTime > 0 && (
+                  <Button
+                    variant={
+                      loadHours === CUSTOM_RANGE_HOURS ? "default" : "ghost"
+                    }
+                    size="sm"
+                    onClick={handleCustomSelect}>
+                    {t("instancePage.customRange")}
+                  </Button>
+                )}
+              </div>
+            ) : maxPingRecordPreserveTime <= 0 ? (
+              <div className="px-2 py-1 text-sm text-secondary-foreground">
+                {t("pingOverview.noData")}
+              </div>
+            ) : (
+              <div className="flex space-x-2 overflow-x-auto whitespace-nowrap">
+                {pingTimeRanges.map((range) => (
+                  <Button
+                    key={range.label}
+                    variant={pingHours === range.hours ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setPingHours(range.hours)}>
+                    {range.label}
+                  </Button>
+                ))}
                 <Button
                   variant={
-                    loadHours === CUSTOM_RANGE_HOURS ? "default" : "ghost"
+                    pingHours === CUSTOM_RANGE_HOURS ? "default" : "ghost"
                   }
                   size="sm"
                   onClick={handleCustomSelect}>
                   {t("instancePage.customRange")}
                 </Button>
-              )}
-            </div>
-          ) : maxPingRecordPreserveTime <= 0 ? (
-            <div className="px-2 py-1 text-sm text-secondary-foreground">
-              {t("pingOverview.noData")}
-            </div>
-          ) : (
-            <div className="flex space-x-2 overflow-x-auto whitespace-nowrap">
-              {pingTimeRanges.map((range) => (
-                <Button
-                  key={range.label}
-                  variant={pingHours === range.hours ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setPingHours(range.hours)}>
-                  {range.label}
-                </Button>
-              ))}
-              <Button
-                variant={
-                  pingHours === CUSTOM_RANGE_HOURS ? "default" : "ghost"
-                }
-                size="sm"
-                onClick={handleCustomSelect}>
-                {t("instancePage.customRange")}
-              </Button>
-            </div>
-          )}
-        </Card>
+              </div>
+            )}
+          </Card>
+        </div>
         {isCustomRange && activeMaxRecordHours > 0 && (
           <Card className="w-full p-3">
             <div className="flex flex-col gap-3 @md:flex-row @md:flex-wrap @md:items-end">

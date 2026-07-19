@@ -246,6 +246,139 @@ export function interpolateNullsLinear<T extends { [key: string]: any }>(
   return out;
 }
 
+export interface HistoryBounds {
+  start: number;
+  end: number;
+}
+
+type RequestedHistoryRange = {
+  start?: string;
+  end?: string;
+};
+
+type ResponseHistoryRange = {
+  from?: string;
+  to?: string;
+};
+
+const parseHistoryBounds = (
+  startValue?: string,
+  endValue?: string
+): HistoryBounds | null => {
+  const start = startValue ? new Date(startValue).getTime() : NaN;
+  const end = endValue ? new Date(endValue).getTime() : NaN;
+  return Number.isFinite(start) && Number.isFinite(end) && end > start
+    ? { start, end }
+    : null;
+};
+
+export function resolveHistoryBounds(
+  hours: number,
+  requested?: RequestedHistoryRange | null,
+  response?: ResponseHistoryRange | null,
+  now: number = Date.now()
+): HistoryBounds | null {
+  const requestedBounds = parseHistoryBounds(
+    requested?.start,
+    requested?.end
+  );
+  if (requestedBounds) return requestedBounds;
+
+  const responseBounds = parseHistoryBounds(response?.from, response?.to);
+  if (responseBounds) return responseBounds;
+
+  return Number.isFinite(hours) && hours > 0
+    ? { start: now - hours * 3_600_000, end: now }
+    : null;
+}
+
+/** Insert one null marker for each locally irregular gap in every series. */
+export function insertAdaptiveSeriesGapRows<
+  T extends { [key: string]: any }
+>(
+  rows: T[],
+  keys: readonly string[],
+  fallbackIntervalMs: number,
+  gapMultiplier: number = 1.5,
+  neighborWindow: number = 3
+): T[] {
+  if (rows.length < 2 || keys.length === 0) return rows;
+
+  const sortedRows = rows
+    .map((row) => ({
+      row,
+      time: Number(
+        row.__ts ?? new Date(row.time ?? row.updated_at ?? "").getTime()
+      ),
+    }))
+    .filter((item) => Number.isFinite(item.time))
+    .sort((left, right) => left.time - right.time);
+  if (sortedRows.length < 2) return rows;
+
+  const rowByTime = new Map<number, { [key: string]: any }>(
+    sortedRows.map(({ row, time }) => [time, { ...row }])
+  );
+
+  for (const key of keys) {
+    const values = sortedRows
+      .map(({ row, time }, rowIndex) => ({
+        rowIndex,
+        time,
+        value: row[key],
+      }))
+      .filter(
+        (item) =>
+          typeof item.value === "number" && Number.isFinite(item.value)
+      );
+    if (values.length < 2) continue;
+
+    const deltas = values.slice(1).map((item, index) => ({
+      index,
+      value: item.time - values[index].time,
+    }));
+
+    for (const delta of deltas) {
+      const previous = values[delta.index];
+      const current = values[delta.index + 1];
+      const hasExplicitGap = sortedRows
+        .slice(previous.rowIndex + 1, current.rowIndex)
+        .some(({ row }) => row[key] === null);
+      if (hasExplicitGap) continue;
+
+      const neighboringDeltas = deltas
+        .slice(
+          Math.max(0, delta.index - neighborWindow),
+          Math.min(deltas.length, delta.index + neighborWindow + 1)
+        )
+        .filter((item) => item.index !== delta.index && item.value > 0)
+        .map((item) => item.value)
+        .sort((left, right) => left - right);
+      const expectedInterval = neighboringDeltas.length
+        ? neighboringDeltas[Math.floor(neighboringDeltas.length / 2)]
+        : fallbackIntervalMs;
+      if (
+        !Number.isFinite(expectedInterval) ||
+        expectedInterval <= 0 ||
+        delta.value <= expectedInterval * gapMultiplier
+      ) {
+        continue;
+      }
+
+      const gapTime = previous.time + expectedInterval;
+      const gapRow = rowByTime.get(gapTime) || {
+        time: new Date(gapTime).toISOString(),
+        __ts: gapTime,
+      };
+      if (gapRow[key] === undefined) gapRow[key] = null;
+      rowByTime.set(gapTime, gapRow);
+    }
+  }
+
+  return Array.from(rowByTime.entries())
+    .sort(([left], [right]) => left - right)
+    .map(([, row]) => row as T);
+}
+
 /** Insert one explicit null row for real timestamp gaps, per series. */
 export function insertSeriesGapRows<T extends { [key: string]: any }>(
   rows: T[],
@@ -505,11 +638,17 @@ export function sampleDataByRetention(
  * @param records - ping 历史记录数组。
  * @param taskId - 要计算的任务 ID。
  * @param timeRange - 用于筛选记录的可选时间范围 [开始, 结束]。
- * @param authoritativeLoss - 服务端返回的任务丢包率百分比。
+ * @param authoritativeLoss - 服务端返回的完整查询范围任务丢包率百分比。
  * @returns 包含丢包率和最新值的对象。
  */
 export function calculateTaskStats(
-  records: { time: string; task_id: number; value: number | null }[],
+  records: {
+    time: string;
+    task_id: number;
+    value: number | null;
+    loss_ratio?: number | null;
+    loss_sample_count?: number;
+  }[],
   taskId: number,
   timeRange: [number, number] | null,
   authoritativeLoss?: number
@@ -533,13 +672,43 @@ export function calculateTaskStats(
       Number.isFinite(rec.value) &&
       rec.value >= 0
   );
+  const metricLossRecords = sortedTaskRecords.filter(
+    (rec) =>
+      typeof rec.loss_ratio === "number" && Number.isFinite(rec.loss_ratio)
+  );
+  const metricLossWeight = metricLossRecords.reduce(
+    (sum, rec) =>
+      sum +
+      (typeof rec.loss_sample_count === "number" &&
+      Number.isFinite(rec.loss_sample_count) &&
+      rec.loss_sample_count > 0
+        ? rec.loss_sample_count
+        : 1),
+    0
+  );
+  const metricLoss =
+    metricLossWeight > 0
+      ? (metricLossRecords.reduce((sum, rec) => {
+          const weight =
+            typeof rec.loss_sample_count === "number" &&
+            Number.isFinite(rec.loss_sample_count) &&
+            rec.loss_sample_count > 0
+              ? rec.loss_sample_count
+              : 1;
+          return sum + Math.max(0, Math.min(1, rec.loss_ratio!)) * weight;
+        }, 0) /
+          metricLossWeight) *
+        100
+      : null;
   const reportedLoss = Number(authoritativeLoss);
   const loss =
-    Number.isFinite(reportedLoss) && reportedLoss >= 0
+    timeRange === null && Number.isFinite(reportedLoss) && reportedLoss >= 0
       ? Math.min(100, reportedLoss)
-      : sortedTaskRecords.length > 0
-        ? (1 - successfulPings.length / sortedTaskRecords.length) * 100
-        : 0;
+      : metricLoss !== null
+        ? metricLoss
+        : sortedTaskRecords.length > 0
+          ? (1 - successfulPings.length / sortedTaskRecords.length) * 100
+          : 0;
 
   let latestValue: number | null = null;
   let latestTime: string | null = null;

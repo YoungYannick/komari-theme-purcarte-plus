@@ -8,6 +8,11 @@ import {
   calculateAutoMaxPoints,
   lttbDownsamplePreservingGaps,
 } from "@/utils/downsample";
+import {
+  insertAdaptiveSeriesGapRows,
+  resolveHistoryBounds,
+  type HistoryBounds,
+} from "@/utils/RecordHelper";
 
 const HISTORY_NUMERIC_KEYS: Array<keyof HistoryRecord> = [
   "cpu",
@@ -62,62 +67,6 @@ const createEmptyHistoryRecord = (
   return record as unknown as HistoryRecord;
 };
 
-const resolveHistoryBounds = (
-  hours: number,
-  rangeStart?: string,
-  rangeEnd?: string
-) => {
-  const startTime = rangeStart ? new Date(rangeStart).getTime() : NaN;
-  const endTime = rangeEnd ? new Date(rangeEnd).getTime() : NaN;
-  if (
-    Number.isFinite(startTime) &&
-    Number.isFinite(endTime) &&
-    endTime > startTime
-  ) {
-    return { start: startTime, end: endTime };
-  }
-
-  if (!Number.isFinite(hours) || hours <= 0) return null;
-  const end = Date.now();
-  return { start: end - hours * 3_600_000, end };
-};
-
-const insertBreakPoints = (records: HistoryRecord[], hours: number) => {
-  if (records.length < 2) return records;
-
-  const minute = 60;
-  const hour = minute * 60;
-  const expectedIntervalSeconds =
-    hours > 0 && hours <= 4 ? minute : hours > 120 ? hour : minute * 15;
-  const maxGapMs = expectedIntervalSeconds * 2 * 1000;
-  const result: HistoryRecord[] = [];
-
-  for (let i = 0; i < records.length; i++) {
-    const current = records[i];
-    result.push(current);
-
-    const next = records[i + 1];
-    if (!next) continue;
-
-    const currentTime = new Date(current.time).getTime();
-    const nextTime = new Date(next.time).getTime();
-    if (
-      Number.isFinite(currentTime) &&
-      Number.isFinite(nextTime) &&
-      nextTime - currentTime > maxGapMs
-    ) {
-      result.push(
-        createEmptyHistoryRecord(
-          current.client,
-          currentTime + expectedIntervalSeconds * 1000
-        )
-      );
-    }
-  }
-
-  return result;
-};
-
 export const useLoadCharts = (
   node: NodeData | null,
   hours: number,
@@ -130,6 +79,7 @@ export const useLoadCharts = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDataEmpty, setIsDataEmpty] = useState(false);
+  const [historyBounds, setHistoryBounds] = useState<HistoryBounds | null>(null);
 
   const isRealtime = hours === 0;
   const rangeStart = range?.start;
@@ -142,15 +92,27 @@ export const useLoadCharts = (
     const fetchHistoricalData = async () => {
       setLoading(true);
       setError(null);
+      const requestedRange =
+        rangeStart && rangeEnd ? { start: rangeStart, end: rangeEnd } : null;
+      const requestTime = Date.now();
+      setHistoryBounds(
+        resolveHistoryBounds(hours, requestedRange, null, requestTime)
+      );
       try {
-        const queryRange =
-          rangeStart && rangeEnd
-            ? { start: rangeStart, end: rangeEnd }
-            : null;
-        const data = await getLoadHistory(node.uuid, hours, queryRange);
+        const data = await getLoadHistory(node.uuid, hours, requestedRange);
         const records = (data?.records || []).map(normalizeHistoryRecord);
         setHistoricalData(records);
-        setIsDataEmpty(records.length === 0);
+        setIsDataEmpty(
+          !records.some((record) =>
+            HISTORY_NUMERIC_KEYS.some((key) => {
+              const value = record[key];
+              return typeof value === "number" && Number.isFinite(value);
+            })
+          )
+        );
+        setHistoryBounds(
+          resolveHistoryBounds(hours, requestedRange, data, requestTime)
+        );
 
         setRealtimeData([]); // Clear realtime data
       } catch (err: any) {
@@ -172,8 +134,11 @@ export const useLoadCharts = (
       setError(null);
       try {
         const data = await getRecentLoadHistory(node.uuid);
-        setRealtimeData((data?.records || []).slice(-MAX_REALTIME_POINTS));
+        const records = (data?.records || []).slice(-MAX_REALTIME_POINTS);
+        setRealtimeData(records);
         setHistoricalData([]); // Clear historical data
+        setHistoryBounds(null);
+        setIsDataEmpty(records.length === 0);
       } catch (err: any) {
         setError(err.message || "Failed to fetch initial real-time data");
       } finally {
@@ -189,6 +154,7 @@ export const useLoadCharts = (
     if (!isRealtime || !node?.uuid || !liveData || !liveData[node.uuid]) return;
 
     const stats: RpcNodeStatus = liveData[node.uuid];
+    setIsDataEmpty(false);
     const newRecord: HistoryRecord = {
       client: node.uuid,
       time: new Date(stats.time).toISOString(),
@@ -241,7 +207,7 @@ export const useLoadCharts = (
       .filter((d) => Number.isFinite(d.time))
       .sort((a, b) => a.time - b.time);
 
-    const bounds = resolveHistoryBounds(hours, rangeStart, rangeEnd);
+    const bounds = historyBounds;
     const boundedData = bounds
       ? sortedData.filter((d) => d.time >= bounds.start && d.time <= bounds.end)
       : sortedData;
@@ -264,9 +230,12 @@ export const useLoadCharts = (
       );
     }
 
-    return insertBreakPoints(
+    const fallbackIntervalMs =
+      hours > 120 ? 60 * 60_000 : hours > 4 ? 15 * 60_000 : 60_000;
+    return insertAdaptiveSeriesGapRows(
       stringifiedData,
-      hours
+      HISTORY_NUMERIC_KEYS as string[],
+      fallbackIntervalMs
     )
       .map((d) => ({ ...d, time: new Date(d.time!).getTime() }))
       .filter((d) => Number.isFinite(d.time));
@@ -275,9 +244,8 @@ export const useLoadCharts = (
     realtimeData,
     historicalData,
     hours,
-    rangeStart,
-    rangeEnd,
     node?.uuid,
+    historyBounds,
   ]);
 
   const sampledChartData = useMemo(() => {
@@ -318,5 +286,6 @@ export const useLoadCharts = (
     chartData: sampledChartData,
     memoryChartData,
     isDataEmpty,
+    historyBounds,
   };
 };
