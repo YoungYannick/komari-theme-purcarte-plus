@@ -36,6 +36,29 @@ const HISTORY_NUMERIC_KEYS: Array<keyof HistoryRecord> = [
 
 const MAX_REALTIME_POINTS = 30 * 5;
 
+const mergeRealtimeRecords = (
+  ...recordGroups: HistoryRecord[][]
+): HistoryRecord[] => {
+  const recordsByTime = new Map<number, HistoryRecord>();
+
+  for (const records of recordGroups) {
+    for (const record of records) {
+      const timestamp = new Date(record.time).getTime();
+      if (!Number.isFinite(timestamp)) continue;
+
+      recordsByTime.set(timestamp, {
+        ...record,
+        time: new Date(timestamp).toISOString(),
+      });
+    }
+  }
+
+  return Array.from(recordsByTime.entries())
+    .sort(([leftTime], [rightTime]) => leftTime - rightTime)
+    .slice(-MAX_REALTIME_POINTS)
+    .map(([, record]) => record);
+};
+
 const toFiniteNumber = (value: unknown): number | null => {
   if (typeof value === "number") {
     return Number.isFinite(value) ? value : null;
@@ -129,24 +152,38 @@ export const useLoadCharts = (
   useEffect(() => {
     if (!isRealtime || !node?.uuid) return;
 
+    let cancelled = false;
+    setRealtimeData([]);
+
     const fetchInitialRealtimeData = async () => {
       setLoading(true);
       setError(null);
       try {
         const data = await getRecentLoadHistory(node.uuid);
-        const records = (data?.records || []).slice(-MAX_REALTIME_POINTS);
-        setRealtimeData(records);
+        if (cancelled) return;
+
+        const records = mergeRealtimeRecords(data?.records || []);
+        setRealtimeData((currentRecords) =>
+          mergeRealtimeRecords(
+            records,
+            currentRecords.filter((record) => record.client === node.uuid)
+          )
+        );
         setHistoricalData([]); // Clear historical data
         setHistoryBounds(null);
-        setIsDataEmpty(records.length === 0);
       } catch (err: any) {
+        if (cancelled) return;
         setError(err.message || "Failed to fetch initial real-time data");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchInitialRealtimeData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [node?.uuid, getRecentLoadHistory, isRealtime]);
 
   // Separate effect for WebSocket updates
@@ -154,10 +191,12 @@ export const useLoadCharts = (
     if (!isRealtime || !node?.uuid || !liveData || !liveData[node.uuid]) return;
 
     const stats: RpcNodeStatus = liveData[node.uuid];
-    setIsDataEmpty(false);
+    const timestamp = new Date(stats.time).getTime();
+    if (!Number.isFinite(timestamp)) return;
+
     const newRecord: HistoryRecord = {
       client: node.uuid,
-      time: new Date(stats.time).toISOString(),
+      time: new Date(timestamp).toISOString(),
       cpu: stats.cpu,
       ram: stats.ram,
       disk: stats.disk,
@@ -177,20 +216,14 @@ export const useLoadCharts = (
       connections_udp: stats.connections_udp,
     };
 
-    setRealtimeData((prevHistory) => {
-      if (
-        prevHistory.length > 0 &&
-        new Date(prevHistory[prevHistory.length - 1].time).getTime() ===
-          new Date(newRecord.time).getTime()
-      ) {
-        return prevHistory;
-      }
-      const updatedHistory = [...prevHistory, newRecord];
-      return updatedHistory.length > MAX_REALTIME_POINTS
-        ? updatedHistory.slice(updatedHistory.length - MAX_REALTIME_POINTS)
-        : updatedHistory;
-    });
+    setRealtimeData((prevHistory) =>
+      mergeRealtimeRecords(prevHistory, [newRecord])
+    );
   }, [liveData, node?.uuid, isRealtime]);
+
+  useEffect(() => {
+    if (isRealtime) setIsDataEmpty(realtimeData.length === 0);
+  }, [isRealtime, realtimeData]);
 
   const chartData = useMemo(() => {
     const rawData = isRealtime ? realtimeData : historicalData;
