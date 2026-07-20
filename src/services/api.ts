@@ -40,6 +40,9 @@ const LOAD_HISTORY_METRIC_KEYS = [
 const METRIC_DEFAULT_MAX_POINTS = 700;
 const METRIC_QUERY_MAX_POINTS = 200_000;
 const METRIC_QUERY_POINT_INTERVAL_SECONDS = 30;
+const RPC_WS_CONNECT_TIMEOUT_MS = 5000;
+
+class RpcResponseError extends Error {}
 
 export type HistoryQueryRange = {
   start: string;
@@ -62,6 +65,7 @@ class ApiService {
   public useRpc = false;
   private rpcCallId = 1;
   private rpcWs: WebSocket | null = null;
+  private rpcWsConnectPromise: Promise<void> | null = null;
   private rpcWsPending = new Map<
     number,
     {
@@ -84,14 +88,22 @@ class ApiService {
     options: { silent?: boolean } = {}
   ): Promise<ApiResponse<T>> {
     if (typeof window !== "undefined") {
-      this.ensureRpcWebSocket();
-      if (this.rpcWs?.readyState === WebSocket.OPEN) {
-        try {
-          const result = await this.rpcCallViaWebSocket<T>(method, params);
-          return { status: "success", message: "", data: result };
-        } catch {
-          // Fall through to HTTP, matching the official RPC2 client strategy.
+      try {
+        await this.ensureRpcWebSocket();
+        const result = await this.rpcCallViaWebSocket<T>(method, params);
+        return { status: "success", message: "", data: result };
+      } catch (error) {
+        if (error instanceof RpcResponseError) {
+          if (!options.silent) {
+            console.error(`RPC call to '${method}' failed:`, error);
+          }
+          return {
+            status: "error",
+            message: error.message,
+            data: null as any,
+          };
         }
+        // HTTP is a transport fallback only when WebSocket is unavailable.
       }
     }
 
@@ -132,47 +144,75 @@ class ApiService {
     }
   }
 
-  private ensureRpcWebSocket() {
-    if (
-      this.rpcWs &&
-      (this.rpcWs.readyState === WebSocket.OPEN ||
-        this.rpcWs.readyState === WebSocket.CONNECTING)
-    ) {
-      return;
+  private ensureRpcWebSocket(): Promise<void> {
+    if (this.rpcWs?.readyState === WebSocket.OPEN) {
+      return Promise.resolve();
+    }
+    if (this.rpcWs?.readyState === WebSocket.CONNECTING) {
+      return (
+        this.rpcWsConnectPromise ||
+        Promise.reject(new Error("RPC2 WebSocket connection is unavailable"))
+      );
     }
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this.rpcWs = new WebSocket(`${protocol}//${window.location.host}/api/rpc2`);
+    const ws = new WebSocket(`${protocol}//${window.location.host}/api/rpc2`);
+    this.rpcWs = ws;
 
-    this.rpcWs.onmessage = (event) => {
-      try {
-        const response = JSON.parse(event.data);
-        const pending = this.rpcWsPending.get(response.id);
-        if (!pending) return;
-        clearTimeout(pending.timeout);
-        this.rpcWsPending.delete(response.id);
-        if (response.error) {
-          pending.reject(
-            new Error(
-              `RPC Error: ${response.error.message} (Code: ${response.error.code})`
-            )
-          );
-        } else {
-          pending.resolve(response.result);
+    this.rpcWsConnectPromise = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("RPC2 WebSocket connection timed out"));
+        ws.close();
+      }, RPC_WS_CONNECT_TIMEOUT_MS);
+
+      ws.onopen = () => {
+        clearTimeout(timeout);
+        if (this.rpcWs === ws) this.rpcWsConnectPromise = null;
+        resolve();
+      };
+
+      ws.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error("RPC2 WebSocket connection failed"));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const response = JSON.parse(event.data);
+          const pending = this.rpcWsPending.get(response.id);
+          if (!pending) return;
+          clearTimeout(pending.timeout);
+          this.rpcWsPending.delete(response.id);
+          if (response.error) {
+            pending.reject(
+              new RpcResponseError(
+                `RPC Error: ${response.error.message} (Code: ${response.error.code})`
+              )
+            );
+          } else {
+            pending.resolve(response.result);
+          }
+        } catch (error) {
+          console.error("Failed to parse RPC2 WebSocket message:", error);
         }
-      } catch (error) {
-        console.error("Failed to parse RPC2 WebSocket message:", error);
-      }
-    };
+      };
 
-    this.rpcWs.onclose = () => {
-      this.rpcWs = null;
-      for (const [, pending] of this.rpcWsPending) {
-        clearTimeout(pending.timeout);
-        pending.reject(new Error("RPC2 WebSocket disconnected"));
-      }
-      this.rpcWsPending.clear();
-    };
+      ws.onclose = () => {
+        clearTimeout(timeout);
+        reject(new Error("RPC2 WebSocket disconnected"));
+        if (this.rpcWs === ws) {
+          this.rpcWs = null;
+          this.rpcWsConnectPromise = null;
+        }
+        for (const [, pending] of this.rpcWsPending) {
+          clearTimeout(pending.timeout);
+          pending.reject(new Error("RPC2 WebSocket disconnected"));
+        }
+        this.rpcWsPending.clear();
+      };
+    });
+
+    return this.rpcWsConnectPromise;
   }
 
   private rpcCallViaWebSocket<T>(method: string, params: any = {}): Promise<T> {

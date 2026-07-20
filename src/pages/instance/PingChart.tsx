@@ -372,6 +372,7 @@ const PingChart = memo(({ node, hours, range }: PingChartProps) => {
         const currentPoint = chartData[i];
 
         const isBreak =
+          !currentPoint.__rangeAnchor &&
           (currentPoint[taskKey] === null ||
             currentPoint[taskKey] === undefined) &&
           prevPoint[taskKey] !== null &&

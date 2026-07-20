@@ -1030,6 +1030,7 @@ const PingOverview = memo(() => {
         const currentPoint = chartData[i];
 
         const isBreak =
+          !currentPoint.__rangeAnchor &&
           (currentPoint[lineKey] === null ||
             currentPoint[lineKey] === undefined) &&
           prevPoint[lineKey] !== null &&
