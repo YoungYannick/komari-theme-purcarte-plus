@@ -42,6 +42,76 @@ const DANGEROUS_TAGS = new Set([
   "STYLE",
 ]);
 
+const HTML_NAMESPACE = "http://www.w3.org/1999/xhtml";
+const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+
+const ALLOWED_HTML_TAGS = new Set([
+  "A",
+  "B",
+  "BLOCKQUOTE",
+  "BR",
+  "BUTTON",
+  "CODE",
+  "DEL",
+  "DETAILS",
+  "DIV",
+  "EM",
+  "H1",
+  "H2",
+  "H3",
+  "HR",
+  "I",
+  "IMG",
+  "LI",
+  "OL",
+  "PRE",
+  "S",
+  "SPAN",
+  "STRONG",
+  "SUMMARY",
+  "TABLE",
+  "TBODY",
+  "TD",
+  "TH",
+  "THEAD",
+  "TR",
+  "UL",
+]);
+
+const ALLOWED_SVG_TAGS = new Set(["CIRCLE", "PATH", "SVG"]);
+
+const GLOBAL_ATTRIBUTES = new Set([
+  "aria-hidden",
+  "aria-label",
+  "class",
+  "role",
+  "title",
+]);
+
+const TAG_ATTRIBUTES: Record<string, Set<string>> = {
+  A: new Set(["href", "rel", "target"]),
+  BUTTON: new Set(["type"]),
+  IMG: new Set(["alt", "height", "loading", "src", "width"]),
+  SVG: new Set([
+    "aria-hidden",
+    "aria-label",
+    "class",
+    "fill",
+    "height",
+    "stroke",
+    "stroke-linecap",
+    "stroke-linejoin",
+    "stroke-width",
+    "viewbox",
+    "width",
+    "xmlns",
+  ]),
+  PATH: new Set(["d"]),
+  CIRCLE: new Set(["cx", "cy", "r"]),
+  TH: new Set(["style"]),
+  TD: new Set(["style"]),
+};
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -330,7 +400,7 @@ function markdownBlocksToHtml(text: string): string {
 }
 
 function sanitizeHtml(html: string): string {
-  if (typeof document === "undefined") return html;
+  if (typeof document === "undefined") return escapeHtml(html);
 
   const template = document.createElement("template");
   template.innerHTML = html;
@@ -342,7 +412,17 @@ function sanitizeHtml(html: string): string {
   }
 
   for (const element of elements) {
-    if (DANGEROUS_TAGS.has(element.tagName)) {
+    const tagName = element.tagName.toUpperCase();
+    const namespace = element.namespaceURI;
+    const isHtml = !namespace || namespace === HTML_NAMESPACE;
+    const isSvg = namespace === SVG_NAMESPACE;
+
+    if (
+      DANGEROUS_TAGS.has(tagName) ||
+      (isHtml && !ALLOWED_HTML_TAGS.has(tagName)) ||
+      (isSvg && !ALLOWED_SVG_TAGS.has(tagName)) ||
+      (!isHtml && !isSvg)
+    ) {
       element.remove();
       continue;
     }
@@ -350,22 +430,86 @@ function sanitizeHtml(html: string): string {
     for (const attr of Array.from(element.attributes)) {
       const name = attr.name.toLowerCase();
       const value = attr.value.trim();
-      if (
-        name.startsWith("on") ||
-        name === "srcdoc" ||
-        ((name === "href" || name === "src") && /^javascript:/i.test(value))
-      ) {
+
+      if (!isAllowedAttribute(tagName, name)) {
         element.removeAttribute(attr.name);
+        continue;
+      }
+
+      if (name === "href" && !isSafeUrl(value, new Set(["http:", "https:", "mailto:", "tel:"]))) {
+        element.removeAttribute(attr.name);
+        continue;
+      }
+
+      if (name === "src" && !isSafeUrl(value, new Set(["http:", "https:"]))) {
+        element.removeAttribute(attr.name);
+        continue;
+      }
+
+      if (name === "style") {
+        const safeStyle = sanitizeStyle(tagName, value);
+        if (safeStyle) {
+          element.setAttribute(attr.name, safeStyle);
+        } else {
+          element.removeAttribute(attr.name);
+        }
       }
     }
 
-    if (element.tagName === "A") {
+    if (tagName === "A") {
       element.setAttribute("target", "_blank");
       element.setAttribute("rel", "noopener noreferrer");
     }
   }
 
   return template.innerHTML;
+}
+
+function isAllowedAttribute(tagName: string, name: string): boolean {
+  if (name.startsWith("on") || name.includes(":") || name === "srcdoc") return false;
+  return GLOBAL_ATTRIBUTES.has(name) || TAG_ATTRIBUTES[tagName]?.has(name) === true;
+}
+
+function normalizeUrlForProtocolCheck(value: string): string {
+  return value.replace(/[\u0000-\u001F\u007F\s]+/g, "").toLowerCase();
+}
+
+function isSafeUrl(value: string, allowedProtocols: Set<string>): boolean {
+  const normalized = normalizeUrlForProtocolCheck(value);
+  if (!normalized) return false;
+  if (
+    normalized.startsWith("#") ||
+    normalized.startsWith("/") ||
+    normalized.startsWith("./") ||
+    normalized.startsWith("../")
+  ) {
+    return true;
+  }
+
+  const protocol = /^([a-z][a-z0-9+.-]*:)/.exec(normalized)?.[1];
+  return protocol ? allowedProtocols.has(protocol) : true;
+}
+
+function sanitizeStyle(tagName: string, value: string): string {
+  if (tagName !== "TH" && tagName !== "TD") return "";
+
+  const declarations = value
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const safeDeclarations = declarations.filter((declaration) => {
+    const match = /^text-align\s*:\s*(left|center|right)\s*$/i.exec(declaration);
+    return Boolean(match);
+  });
+
+  return safeDeclarations
+    .map((declaration) => {
+      const align = declaration.split(":")[1]?.trim().toLowerCase();
+      return align ? `text-align:${align}` : "";
+    })
+    .filter(Boolean)
+    .join(";");
 }
 
 function convertPlainLineBreaks(html: string): string {

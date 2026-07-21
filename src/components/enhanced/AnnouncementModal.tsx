@@ -5,6 +5,14 @@ import { apiService } from "@/services/api";
 
 type AnnouncementIconType = "info" | "warning" | "important";
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 const ICON_CONFIG: Record<
   AnnouncementIconType,
   { label: string; children: ReactNode }
@@ -96,11 +104,16 @@ function AnnouncementLogo({
 
 function replaceVersionPlaceholders(
   text: string,
-  versionInfo: { version: string; hash: string } | null
+  versionInfo: { version: string; hash: string } | null,
+  escapeValues = false
 ) {
+  const hash = escapeValues ? escapeHtml(versionInfo?.hash ?? "") : versionInfo?.hash ?? "";
+  const version = escapeValues
+    ? escapeHtml(versionInfo?.version ?? "")
+    : versionInfo?.version ?? "";
   return text
-    .replace(/\$\{hash\}/g, versionInfo?.hash ?? "")
-    .replace(/\$\{version\}/g, versionInfo?.version ?? "");
+    .replace(/\$\{hash\}/g, hash)
+    .replace(/\$\{version\}/g, version);
 }
 
 export function AnnouncementModal() {
@@ -149,7 +162,7 @@ export function AnnouncementModal() {
   );
 
   const resolvedContent = useMemo(
-    () => replaceVersionPlaceholders(announcementContent, versionInfo),
+    () => replaceVersionPlaceholders(announcementContent, versionInfo, true),
     [announcementContent, versionInfo]
   );
 
