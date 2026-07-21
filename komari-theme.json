@@ -1666,18 +1666,18 @@
                 "name": {
                     "zh-CN": "启用公告",
                     "zh-TW": "啟用公告",
-                    "en": "Enable Notice Modal",
+                    "en": "Enable Announcement Modal",
                     "ja": "お知らせモーダルを有効化",
-                    "id": "Aktifkan Modal Pemberitahuan"
+                    "id": "Aktifkan Modal Pengumuman"
                 },
                 "type": "switch",
                 "default": false,
                 "help": {
                     "zh-CN": "启用后进入页面时显示一个带半透明遮罩的公告",
                     "zh-TW": "啟用後進入頁面時顯示一個帶半透明遮罩的公告",
-                    "en": "Show a notice modal with a translucent overlay when the page opens.",
+                    "en": "Show an announcement modal with a translucent overlay when the page opens.",
                     "ja": "ページ表示時に半透明オーバーレイ付きのお知らせモーダルを表示します。",
-                    "id": "Tampilkan modal pemberitahuan dengan overlay transparan saat halaman dibuka."
+                    "id": "Tampilkan modal pengumuman dengan overlay semi-transparan saat halaman dibuka."
                 }
             },
             {
@@ -1685,9 +1685,9 @@
                 "name": {
                     "zh-CN": "公告弹窗 Logo",
                     "zh-TW": "公告彈窗 Logo",
-                    "en": "Notice Modal Logo",
+                    "en": "Announcement Modal Logo",
                     "ja": "お知らせモーダルロゴ",
-                    "id": "Logo Modal Pemberitahuan"
+                    "id": "Logo Modal Pengumuman"
                 },
                 "type": "string",
                 "required": false,
@@ -1695,9 +1695,9 @@
                 "help": {
                     "zh-CN": "公告弹窗标题栏的 Logo 图片链接，留空则不展示；也支持 ${info}、${warning}、${important} 圆形 SVG 占位符",
                     "zh-TW": "公告彈窗標題欄的 Logo 圖片連結，留空則不展示；也支援 ${info}、${warning}、${important} 圓形 SVG 佔位符",
-                    "en": "Logo image URL for the notice modal header. Leave empty to hide. Also supports circular SVG placeholders: ${info}, ${warning}, ${important}.",
+                    "en": "Logo image URL for the announcement modal header. Leave empty to hide. Also supports circular SVG placeholders: ${info}, ${warning}, ${important}.",
                     "ja": "お知らせモーダルヘッダーのロゴ画像URL。空の場合は非表示。${info}、${warning}、${important} の円形SVGプレースホルダーにも対応。",
-                    "id": "URL gambar logo untuk header modal pemberitahuan. Kosongkan untuk menyembunyikan. Juga mendukung placeholder SVG bulat: ${info}, ${warning}, ${important}."
+                    "id": "URL gambar logo untuk header modal pengumuman. Kosongkan untuk menyembunyikan. Juga mendukung placeholder SVG bulat: ${info}, ${warning}, ${important}."
                 }
             },
             {
@@ -1705,9 +1705,9 @@
                 "name": {
                     "zh-CN": "公告弹窗 Logo 样式",
                     "zh-TW": "公告彈窗 Logo 樣式",
-                    "en": "Notice Modal Logo Shape",
+                    "en": "Announcement Modal Logo Shape",
                     "ja": "お知らせモーダルロゴスタイル",
-                    "id": "Bentuk Logo Modal Pemberitahuan"
+                    "id": "Bentuk Logo Modal Pengumuman"
                 },
                 "type": "select",
                 "options": "circle,original",
@@ -1725,18 +1725,18 @@
                 "name": {
                     "zh-CN": "公告标题内容",
                     "zh-TW": "公告標題內容",
-                    "en": "Notice Title",
+                    "en": "Announcement Title",
                     "ja": "お知らせタイトル",
-                    "id": "Judul Pemberitahuan"
+                    "id": "Judul Pengumuman"
                 },
                 "type": "string",
                 "default": "温馨提示",
                 "help": {
                     "zh-CN": "公告弹窗的标题内容，支持 `${hash}` 或 `${version}`",
                     "zh-TW": "公告彈窗的標題內容，支援 `${hash}` 或 `${version}`",
-                    "en": "Title text for the notice modal. Supports `${hash}` or `${version}` placeholders.",
+                    "en": "Title text for the announcement modal. Supports `${hash}` or `${version}` placeholders.",
                     "ja": "お知らせモーダルのタイトルテキスト。`${hash}` または `${version}` プレースホルダーに対応。",
-                    "id": "Teks judul untuk modal pemberitahuan. Mendukung placeholder `${hash}` atau `${version}`."
+                    "id": "Teks judul untuk modal pengumuman. Mendukung placeholder `${hash}` atau `${version}`."
                 }
             },
             {
@@ -1744,18 +1744,18 @@
                 "name": {
                     "zh-CN": "公告主内容",
                     "zh-TW": "公告主內容",
-                    "en": "Notice Main Content",
+                    "en": "Announcement Main Content",
                     "ja": "お知らせ本文",
-                    "id": "Konten Utama Pemberitahuan"
+                    "id": "Konten Utama Pengumuman"
                 },
                 "type": "richtext",
                 "default": "",
                 "help": {
                     "zh-CN": "公告弹窗的主内容，支持普通文字、HTML、`${hash}`/`${version}` 与基础 Markdown（标题、列表、加粗、斜体、删除线、链接、图片、行内代码、代码块、表格、--- 分割线、> 引用、> [!xxx] 提示块、::: details 点击展开 折叠块）",
                     "zh-TW": "公告彈窗的主內容，支援普通文字、HTML、`${hash}`/`${version}` 與基礎 Markdown（標題、列表、粗體、斜體、刪除線、連結、圖片、行內程式碼、程式碼區塊、表格、--- 分隔線、> 引用、> [!xxx] 提示區塊、::: details 點擊展開 折疊區塊）",
-                    "en": "Main notice content. Supports plain text, HTML, `${hash}`/`${version}`, and basic Markdown (headings, lists, bold, italic, strikethrough, links, images, inline code, code blocks, tables, --- dividers, > blockquotes, > [!xxx] alerts, and ::: details expandable blocks).",
+                    "en": "Main announcement content. Supports plain text, HTML, `${hash}`/`${version}`, and basic Markdown (headings, lists, bold, italic, strikethrough, links, images, inline code, code blocks, tables, --- dividers, > blockquotes, > [!xxx] alerts, and ::: details expandable blocks).",
                     "ja": "お知らせ本文。通常テキスト、HTML、`${hash}`/`${version}`、基本的なMarkdown（見出し、リスト、太字、斜体、取り消し線、リンク、画像、インラインコード、コードブロック、表、--- 区切り線、> 引用、> [!xxx] 通知ブロック、::: details クリックして展開 折りたたみブロック）に対応。",
-                    "id": "Konten utama pemberitahuan. Mendukung teks biasa, HTML, `${hash}`/`${version}`, dan Markdown dasar (judul, daftar, tebal, miring, coret, tautan, gambar, kode sebaris, blok kode, tabel, pemisah ---, kutipan >, blok peringatan > [!xxx], dan blok lipat ::: details klik untuk membuka)."
+                    "id": "Konten utama pengumuman. Mendukung teks biasa, HTML, `${hash}`/`${version}`, dan Markdown dasar (judul, daftar, tebal, miring, coret, tautan, gambar, kode sebaris, blok kode, tabel, pemisah ---, kutipan >, blok peringatan > [!xxx], dan blok lipat ::: details klik untuk membuka)."
                 }
             },
             {
