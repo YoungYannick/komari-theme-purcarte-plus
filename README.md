@@ -370,7 +370,7 @@
 - **底栏自定义内容** (`footerCustomContent`)
   - **类型:** `richtext`
   - **默认值:** `(空)`
-  - **说明:** 自定义底栏内容，支持直接换行，也兼容 ${n} 分割多行，支持Markdown格式的链接 `[文本](链接)` 和图片 `![描述](图片链接)`
+  - **说明:** 自定义底栏内容，支持直接换行，也兼容 ${n} 分割多行，支持Markdown格式的链接 `[文本](链接)` 和图片 `![描述](图片链接)`；支持 `${hash}` 或 `${version}`
 
 </details>
 
@@ -495,6 +495,32 @@
   - **默认值:** `true`
   - **说明:** 启用后将在页面右下角显示滚动到顶部/底部辅助按钮
 
+- **启用公告** (`enableAnnouncement`)
+  - **类型:** `switch`
+  - **默认值:** `false`
+  - **说明:** 启用后进入页面时显示一个带半透明遮罩的公告弹窗
+
+- **公告弹窗 Logo** (`announcementLogoUrl`)
+  - **类型:** `string`
+  - **默认值:** `/assets/logo.png`
+  - **说明:** 公告弹窗标题栏的 Logo 图片链接，留空则不展示；也支持 `${info}`、`${warning}`、`${important}` 圆形 SVG 占位符
+
+- **公告弹窗 Logo 样式** (`announcementLogoShape`)
+  - **类型:** `select`
+  - **可选项:** `circle`, `original`
+  - **默认值:** `circle`
+  - **说明:** circle: 圆形固定缩放（32×32）；original: 原图等比缩放（高32px，宽度自适应）。特殊 SVG 占位符始终以圆形展示
+
+- **公告标题内容** (`announcementTitle`)
+  - **类型:** `string`
+  - **默认值:** `温馨提示`
+  - **说明:** 公告弹窗的标题内容，支持 `${hash}` 或 `${version}`
+
+- **公告主内容** (`announcementContent`)
+  - **类型:** `richtext`
+  - **默认值:** `(空)`
+  - **说明:** 公告弹窗的主内容，支持普通文字、HTML、`${hash}`/`${version}` 与基础 Markdown（标题、列表、加粗、斜体、删除线、链接、图片、行内代码、代码块、表格、`---` 分割线、`>` 引用、`> [!xxx]` 提示块、`::: details 点击展开 ... :::` 折叠块）
+
 - **启用访客保护** (`enableProtection`)
   - **类型:** `switch`
   - **默认值:** `true`
@@ -613,6 +639,7 @@ komari-theme-purcarte-plus/
 │   │       ├── FinanceWidget.tsx             # 资产统计面板（服务器总价值、月均支出、剩余价值，入口在标题栏）
 │   │       ├── FinancePriceTag.tsx           # 首页金额标签资产 Tooltip 与服务器交易入口
 │   │       ├── ServerTradeModal.tsx          # 服务器交易计算弹窗
+│   │       ├── AnnouncementModal.tsx         # 公告弹窗（遮罩、Logo、富文本内容）
 │   │       ├── AdvancedSearchModal.tsx       # 高级搜索模态框（多条件筛选、URL同步）
 │   │       ├── AdvancedSearchModal.css       # 高级搜索模态框样式
 │   │       ├── EarthGlobe.tsx               # 3D 地球组件入口（懒加载，入口在标题栏）
@@ -675,6 +702,7 @@ komari-theme-purcarte-plus/
 │       ├── converters.ts                    # 类型转换工具（NodeStats ↔ RpcNodeStatus）
 │       ├── regionHelper.ts                  # 地区 Emoji → 名称映射
 │       ├── localeUtils.ts                   # 国际化工具（深度对象合并、扁平化还原）
+│       ├── contentRender.ts                 # 普通文本/HTML/基础 Markdown 内容渲染工具
 │       ├── tagHelper.ts                     # 标签解析与免费标签匹配工具
 │       ├── osImageHelper.ts                 # 操作系统 Logo 查找工具
 │       ├── downsample.ts                    # LTTB 降采样算法与自动降采样点数计算

@@ -497,6 +497,10 @@
       "totalServers": "Total Server",
       "loading": "Memuat komponen globe..."
     },
+    "announcement": {
+      "defaultTitle": "Pemberitahuan",
+      "close": "Tutup pemberitahuan"
+    },
     "protection": {
       "warning": "Peringatan",
       "contextMenu": "Menu Konteks",

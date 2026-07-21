@@ -497,6 +497,10 @@
       "totalServers": "Total Servers",
       "loading": "Loading globe..."
     },
+    "announcement": {
+      "defaultTitle": "Notice",
+      "close": "Close notice"
+    },
     "protection": {
       "warning": "Warning",
       "contextMenu": "Context Menu",

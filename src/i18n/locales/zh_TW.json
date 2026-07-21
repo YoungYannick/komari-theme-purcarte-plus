@@ -497,6 +497,10 @@
       "totalServers": "伺服器總數",
       "loading": "載入地球元件中..."
     },
+    "announcement": {
+      "defaultTitle": "溫馨提示",
+      "close": "關閉公告"
+    },
     "protection": {
       "warning": "警告",
       "contextMenu": "右鍵選單",

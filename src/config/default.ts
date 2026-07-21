@@ -91,6 +91,11 @@ export interface ConfigOptions {
   earthDarkGlobeImage: string; // 地球组件暗色模式地球贴图
   enableSoloPlay: boolean; // 是否启用伪点亮全球效果
   enableScrollHelpers: boolean; // 是否启用滚动辅助按钮
+  enableAnnouncement: boolean; // 是否启用公告弹窗
+  announcementLogoUrl: string; // 公告弹窗Logo图片URL或特殊占位符
+  announcementLogoShape: LogoShapeType; // 公告弹窗Logo样式
+  announcementTitle: string; // 公告标题
+  announcementContent: string; // 公告主内容
   enableProtection: boolean; // 是否启用自定义警告保护
   protectionLogoUrl: string; // 访客保护弹窗Logo图片URL
   protectionLogoShape: LogoShapeType; // 访客保护弹窗Logo样式
@@ -191,6 +196,11 @@ export const DEFAULT_CONFIG: ConfigOptions = {
   earthDarkGlobeImage: "//upload.wikimedia.org/wikipedia/commons/b/b3/Solarsystemscope_texture_8k_earth_nightmap.jpg",
   enableSoloPlay: false,
   enableScrollHelpers: true,
+  enableAnnouncement: false,
+  announcementLogoUrl: "/assets/logo.png",
+  announcementLogoShape: "circle",
+  announcementTitle: "温馨提示",
+  announcementContent: "",
   enableProtection: true,
   protectionLogoUrl: "/assets/logo.png",
   protectionLogoShape: "circle",

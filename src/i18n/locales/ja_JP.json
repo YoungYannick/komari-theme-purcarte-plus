@@ -497,6 +497,10 @@
       "totalServers": "サーバー総数",
       "loading": "地球コンポーネント読み込み中..."
     },
+    "announcement": {
+      "defaultTitle": "お知らせ",
+      "close": "お知らせを閉じる"
+    },
     "protection": {
       "warning": "警告",
       "contextMenu": "右クリックメニュー",

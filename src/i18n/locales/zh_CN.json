@@ -497,6 +497,10 @@
       "totalServers": "服务器总数",
       "loading": "加载地球组件中..."
     },
+    "announcement": {
+      "defaultTitle": "温馨提示",
+      "close": "关闭公告"
+    },
     "protection": {
       "warning": "警告",
       "contextMenu": "右键菜单",

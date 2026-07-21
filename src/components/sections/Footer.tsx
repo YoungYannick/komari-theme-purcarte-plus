@@ -4,6 +4,7 @@ import { Card } from "../ui/card";
 import { cn } from "@/utils";
 import { useIsMobile } from "@/hooks/useMobile";
 import { Clock } from "lucide-react";
+import { apiService } from "@/services/api";
 
 /**
  * 简易 Markdown 解析：将 ![alt](url) 转为 img，[text](url) 转为 a 标签
@@ -85,6 +86,10 @@ const Footer = forwardRef<
     footerCustomContent,
   } = useAppConfig();
   const isMobile = useIsMobile();
+  const [versionInfo, setVersionInfo] = useState<{
+    version: string;
+    hash: string;
+  } | null>(null);
 
   // 解析启动时间
   const startTime = useMemo(
@@ -108,13 +113,48 @@ const Footer = forwardRef<
     return () => clearInterval(timer);
   }, [enableServerUptime, startTime, serverUptimeTemplate, t]);
 
+  const hasVersionPlaceholder = useMemo(
+    () => /\$\{(?:hash|version)\}/.test(footerCustomContent),
+    [footerCustomContent]
+  );
+
+  useEffect(() => {
+    if (!hasVersionPlaceholder) {
+      setVersionInfo(null);
+      return;
+    }
+
+    let cancelled = false;
+    apiService
+      .getVersion()
+      .then((data) => {
+        if (!cancelled) setVersionInfo(data);
+      })
+      .catch(() => {
+        if (!cancelled) setVersionInfo({ version: "unknown", hash: "unknown" });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasVersionPlaceholder]);
+
+  const resolvedFooterCustomContent = useMemo(() => {
+    if (!footerCustomContent) return "";
+    if (!hasVersionPlaceholder) return footerCustomContent;
+
+    return footerCustomContent
+      .replace(/\$\{hash\}/g, versionInfo?.hash ?? "")
+      .replace(/\$\{version\}/g, versionInfo?.version ?? "");
+  }, [footerCustomContent, hasVersionPlaceholder, versionInfo]);
+
   // 解析自定义内容（支持实际换行符和 ${n} 两种分隔方式）
   const customLines = useMemo(() => {
-    if (!footerCustomContent) return [];
-    return footerCustomContent
+    if (!resolvedFooterCustomContent) return [];
+    return resolvedFooterCustomContent
       .split(/\$\{n\}|\n/)
       .filter((line) => line.trim() !== "");
-  }, [footerCustomContent]);
+  }, [resolvedFooterCustomContent]);
 
   // 判断是否有任何内容需要显示
   const hasContent =

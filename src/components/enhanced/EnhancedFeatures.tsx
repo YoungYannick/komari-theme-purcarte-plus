@@ -5,6 +5,7 @@ import { FinanceWidget } from "./FinanceWidget";
 import { EarthGlobe } from "./EarthGlobe";
 import { ScrollHelpers } from "./ScrollHelpers";
 import { Protection } from "./Protection";
+import { AnnouncementModal } from "./AnnouncementModal";
 import { fetchGeoInfo } from "./useUserGeo";
 import "./enhanced.css";
 
@@ -15,6 +16,7 @@ export function EnhancedFeatures() {
     enableEarthGlobe,
     enableScrollHelpers,
     enableProtection,
+    enableAnnouncement,
   } = useAppConfig();
 
   // 当欢迎气泡关闭但地球组件开启时，预获取用户位置
@@ -31,6 +33,7 @@ export function EnhancedFeatures() {
       {enableFinanceWidget && <FinanceWidget />}
       {enableEarthGlobe && <EarthGlobe />}
       {enableScrollHelpers && <ScrollHelpers />}
+      {enableAnnouncement && <AnnouncementModal />}
       {enableProtection && <Protection />}
     </>
   );
@@ -38,10 +41,15 @@ export function EnhancedFeatures() {
 
 /**
  * 用于 private-unauthenticated 状态下的简化版本
- * 只渲染 Protection 组件
+ * 只渲染公告与 Protection 组件
  */
 export function EnhancedFeaturesPrivate() {
-  const { enableProtection } = useAppConfig();
+  const { enableAnnouncement, enableProtection } = useAppConfig();
 
-  return <>{enableProtection && <Protection />}</>;
+  return (
+    <>
+      {enableAnnouncement && <AnnouncementModal />}
+      {enableProtection && <Protection />}
+    </>
+  );
 }

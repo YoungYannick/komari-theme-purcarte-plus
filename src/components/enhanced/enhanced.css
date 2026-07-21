@@ -2,6 +2,7 @@
 /* 气泡/模态框通用容器样式 */
 .welcome-bubble,
 .custom-alert-modal,
+.announcement-modal,
 .finance-widget,
 .finance-price-tooltip {
   background-color: var(--purcarte-card-color);
@@ -631,6 +632,7 @@
 }
 
 /* ========== 自定义警告模态框 ========== */
+.announcement-overlay,
 .custom-alert-overlay {
   position: fixed;
   top: 0;
@@ -648,6 +650,13 @@
   transition: opacity 0.3s ease;
 }
 
+.announcement-overlay {
+  display: flex;
+  opacity: 1;
+  animation: announcementOverlayFadeIn 0.25s ease-out forwards;
+}
+
+.announcement-modal,
 .custom-alert-modal {
   padding: 0;
   border-radius: 16px;
@@ -659,6 +668,372 @@
   flex-direction: column;
 }
 
+.announcement-modal {
+  max-width: min(520px, 92vw);
+  max-height: min(80vh, 720px);
+  transform: scale(1);
+  animation: announcementModalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.announcement-content {
+  overflow: auto;
+}
+
+.announcement-body {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--gray-12);
+  overflow-wrap: anywhere;
+}
+
+.announcement-body-empty {
+  min-height: 0.5rem;
+}
+
+.announcement-body h1,
+.announcement-body h2,
+.announcement-body h3 {
+  color: var(--accent-11);
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0.5rem 0;
+}
+
+.announcement-body h1 {
+  font-size: 1.35rem;
+}
+
+.announcement-body h2 {
+  font-size: 1.2rem;
+}
+
+.announcement-body h3 {
+  font-size: 1.05rem;
+}
+
+.announcement-body p {
+  margin: 0.5rem 0;
+}
+
+.announcement-body ul,
+.announcement-body ol {
+  margin: 0.5rem 0;
+  padding-left: 1.6rem;
+  list-style-position: outside;
+}
+
+.announcement-body ul {
+  list-style-type: disc;
+}
+
+.announcement-body ol {
+  list-style-type: decimal;
+}
+
+.announcement-body ul ul {
+  list-style-type: circle;
+}
+
+.announcement-body ul ul ul {
+  list-style-type: square;
+}
+
+.announcement-body ol ol {
+  list-style-type: lower-alpha;
+}
+
+.announcement-body ol ol ol {
+  list-style-type: lower-roman;
+}
+
+.announcement-body li {
+  display: list-item;
+  margin: 0.2rem 0;
+  padding-left: 0.15rem;
+}
+
+.announcement-body li > ul,
+.announcement-body li > ol {
+  margin: 0.25rem 0;
+}
+
+.announcement-body a {
+  color: var(--accent-11);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.announcement-body del {
+  color: var(--gray-10);
+}
+
+.announcement-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  vertical-align: middle;
+}
+
+.announcement-body code {
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: var(--gray-a4);
+  color: var(--accent-11);
+}
+
+.announcement-body pre {
+  margin: 0;
+  overflow: auto;
+  padding: 0.9rem 1rem 1rem;
+}
+
+.announcement-body .markdown-code-block {
+  margin: 0.75rem 0;
+  border: 1px solid var(--gray-a5);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--gray-a2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.announcement-body .markdown-code-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--gray-a5);
+  background: var(--gray-a3);
+}
+
+.announcement-body .markdown-code-lang {
+  font-size: 0.8rem;
+  color: var(--gray-11);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.announcement-body .markdown-code-copy {
+  position: relative;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--gray-12);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.72;
+  transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.announcement-body .markdown-code-copy:hover {
+  color: var(--accent-11);
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.announcement-body .markdown-code-copy svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.announcement-body .markdown-code-copy .markdown-copy-check {
+  display: none;
+}
+
+.announcement-body .markdown-code-copy[data-copied="true"] .markdown-copy-icon {
+  display: none;
+}
+
+.announcement-body .markdown-code-copy[data-copied="true"] .markdown-copy-check {
+  display: block;
+}
+
+.announcement-body .markdown-code-block code {
+  display: block;
+  padding: 0;
+  background: transparent;
+  color: var(--gray-12);
+  white-space: pre;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.announcement-body .markdown-table-wrapper {
+  width: 100%;
+  margin: 0.75rem 0;
+  overflow: hidden;
+  border: 1px solid var(--gray-a5);
+  border-radius: 10px;
+}
+
+.announcement-body .markdown-table-wrapper {
+  overflow-x: auto;
+}
+
+.announcement-body table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.announcement-body thead {
+  background: var(--gray-a3);
+}
+
+.announcement-body th,
+.announcement-body td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--gray-a5);
+  border-right: 1px solid var(--gray-a4);
+  vertical-align: top;
+  text-align: left;
+}
+
+.announcement-body tr:last-child td {
+  border-bottom: 0;
+}
+
+.announcement-body th:last-child,
+.announcement-body td:last-child {
+  border-right: 0;
+}
+
+.announcement-body .markdown-alert-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: var(--accent-11);
+  flex-shrink: 0;
+}
+
+.announcement-body .markdown-alert-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.announcement-body hr {
+  border: 0;
+  border-top: 1px solid var(--gray-a6);
+  height: 0;
+  line-height: 0;
+  margin: 0.35rem 0;
+}
+
+.announcement-body blockquote {
+  margin: 0.75rem 0;
+  padding: 0.2rem 0 0.2rem 0.85rem;
+  border-left: 3px solid var(--accent-8);
+  color: var(--gray-11);
+}
+
+.announcement-body details,
+.announcement-body .markdown-details {
+  margin: 0.75rem 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--gray-a5);
+  border-radius: 10px;
+  background: var(--gray-a2);
+  overflow: hidden;
+}
+
+.announcement-body summary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  color: var(--accent-11);
+  font-weight: 700;
+}
+
+.announcement-body summary::before {
+  content: "";
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.22s ease;
+  flex-shrink: 0;
+}
+
+.announcement-body details[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.announcement-body summary::marker,
+.announcement-body summary::-webkit-details-marker {
+  display: none;
+  content: "";
+}
+
+.announcement-body .markdown-details-body {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-top: 0;
+  transition: height 0.28s ease, opacity 0.2s ease, margin-top 0.24s ease;
+}
+
+.announcement-body details[open] > .markdown-details-body {
+  height: auto;
+  opacity: 1;
+  margin-top: 0.6rem;
+}
+
+.announcement-body .markdown-alert {
+  margin: 0.75rem 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--accent-a6);
+  border-left: 4px solid var(--accent-9);
+  border-radius: 10px;
+  background: var(--accent-a2);
+}
+
+.announcement-body .markdown-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-11);
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.announcement-body .markdown-alert-title-text {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.announcement-body .markdown-alert-content > :first-child {
+  margin-top: 0;
+}
+
+.announcement-body .markdown-alert-content > :last-child {
+  margin-bottom: 0;
+}
+
+.announcement-logo-svg {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-11);
+  flex-shrink: 0;
+}
+
+.announcement-logo-svg svg {
+  display: block;
+}
+
 .alert-reason-text {
   font-size: 1.2rem;
   font-weight: bold;
@@ -668,6 +1043,22 @@
 
 .custom-alert-modal .bubble-content svg {
   color: var(--red-9);
+}
+
+@keyframes announcementOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes announcementModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ========== 地球组件 ========== */
