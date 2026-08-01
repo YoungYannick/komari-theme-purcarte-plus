@@ -41,6 +41,7 @@ const METRIC_DEFAULT_MAX_POINTS = 700;
 const METRIC_QUERY_MAX_POINTS = 200_000;
 const METRIC_QUERY_POINT_INTERVAL_SECONDS = 30;
 const RPC_WS_CONNECT_TIMEOUT_MS = 5000;
+const RPC_HTTP_TIMEOUT_MS = 10000;
 
 class RpcResponseError extends Error {}
 
@@ -63,6 +64,10 @@ const toNonNegativeNumber = (value: unknown): number | null => {
 class ApiService {
   private baseUrl: string;
   public useRpc = false;
+  private preferRpcWebSocket = true;
+  private rpcWebSocketFailures = 0;
+  private rpcTransportFailures = 0;
+  private readonly maxRpcTransportFailures = 5;
   private rpcCallId = 1;
   private rpcWs: WebSocket | null = null;
   private rpcWsConnectPromise: Promise<void> | null = null;
@@ -82,18 +87,91 @@ class ApiService {
     this.baseUrl = "";
   }
 
+  enableRpc() {
+    this.useRpc = true;
+    this.preferRpcWebSocket = true;
+    this.rpcWebSocketFailures = 0;
+    this.rpcTransportFailures = 0;
+  }
+
+  disableRpc() {
+    this.useRpc = false;
+    this.preferRpcWebSocket = true;
+    this.rpcWebSocketFailures = 0;
+    this.rpcTransportFailures = 0;
+    this.metricDefinitionsPromise = null;
+    this.rpcWsConnectPromise = null;
+
+    const ws = this.rpcWs;
+    this.rpcWs = null;
+    if (ws) {
+      ws.close();
+    }
+
+    for (const [, pending] of this.rpcWsPending) {
+      clearTimeout(pending.timeout);
+      pending.reject(new Error("RPC2 has been disabled"));
+    }
+    this.rpcWsPending.clear();
+  }
+
+  private recordRpcWebSocketFailure(error: unknown) {
+    this.rpcWebSocketFailures++;
+    if (this.rpcWebSocketFailures < this.maxRpcTransportFailures) return;
+
+    console.warn(
+      "RPC2 WebSocket transport is unavailable; using HTTP RPC2 instead.",
+      error
+    );
+    this.preferRpcWebSocket = false;
+    this.rpcWebSocketFailures = 0;
+
+    const ws = this.rpcWs;
+    this.rpcWs = null;
+    this.rpcWsConnectPromise = null;
+    if (ws) ws.close();
+  }
+
+  private recordRpcTransportFailure(error: unknown) {
+    this.rpcTransportFailures++;
+    console.warn(
+      `RPC2 transport failed (${this.rpcTransportFailures}/${this.maxRpcTransportFailures}):`,
+      error
+    );
+
+    if (this.rpcTransportFailures < this.maxRpcTransportFailures) return;
+
+    console.warn(
+      "RPC2 transport is unavailable; disabling RPC and falling back to legacy APIs."
+    );
+    this.disableRpc();
+    getWsService().disableRpcAndFallback();
+  }
+
   private async rpcCall<T>(
     method: string,
     params: any = {},
     options: { silent?: boolean } = {}
   ): Promise<ApiResponse<T>> {
-    if (typeof window !== "undefined") {
+    if (!this.useRpc) {
+      return {
+        status: "error",
+        message: "RPC2 is disabled",
+        data: null as any,
+      };
+    }
+
+    if (typeof window !== "undefined" && this.preferRpcWebSocket) {
       try {
         await this.ensureRpcWebSocket();
         const result = await this.rpcCallViaWebSocket<T>(method, params);
+        this.rpcWebSocketFailures = 0;
+        this.rpcTransportFailures = 0;
         return { status: "success", message: "", data: result };
       } catch (error) {
         if (error instanceof RpcResponseError) {
+          this.rpcWebSocketFailures = 0;
+          this.rpcTransportFailures = 0;
           if (!options.silent) {
             console.error(`RPC call to '${method}' failed:`, error);
           }
@@ -103,13 +181,25 @@ class ApiService {
             data: null as any,
           };
         }
+        this.recordRpcWebSocketFailure(error);
         // HTTP is a transport fallback only when WebSocket is unavailable.
       }
     }
 
+    if (!this.useRpc) {
+      return {
+        status: "error",
+        message: "RPC2 is disabled",
+        data: null as any,
+      };
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), RPC_HTTP_TIMEOUT_MS);
     try {
       const response = await fetch(`${this.baseUrl}/api/rpc2`, {
         method: "POST",
+        signal: controller.signal,
         headers: {
           "Content-Type": "application/json",
         },
@@ -126,13 +216,30 @@ class ApiService {
       }
 
       const rpcResponse = await response.json();
+      if (
+        !rpcResponse ||
+        typeof rpcResponse !== "object" ||
+        (!("result" in rpcResponse) && !("error" in rpcResponse))
+      ) {
+        throw new Error("Invalid RPC2 HTTP response");
+      }
+      if (this.useRpc) this.rpcTransportFailures = 0;
       if (rpcResponse.error) {
-        throw new Error(
+        const error = new RpcResponseError(
           `RPC Error: ${rpcResponse.error.message} (Code: ${rpcResponse.error.code})`
         );
+        if (!options.silent) {
+          console.error(`RPC call to '${method}' failed:`, error);
+        }
+        return {
+          status: "error",
+          message: error.message,
+          data: null as any,
+        };
       }
       return { status: "success", message: "", data: rpcResponse.result };
     } catch (error) {
+      if (this.useRpc) this.recordRpcTransportFailure(error);
       if (!options.silent) {
         console.error(`RPC call to '${method}' failed:`, error);
       }
@@ -141,6 +248,8 @@ class ApiService {
         message: error instanceof Error ? error.message : "Unknown RPC error",
         data: null as any,
       };
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
@@ -189,6 +298,8 @@ class ApiService {
                 `RPC Error: ${response.error.message} (Code: ${response.error.code})`
               )
             );
+          } else if (!("result" in response)) {
+            pending.reject(new Error("Invalid RPC2 WebSocket response"));
           } else {
             pending.resolve(response.result);
           }
@@ -251,6 +362,7 @@ class ApiService {
         return response;
       }
       lastResponse = response;
+      if (!this.useRpc) break;
     }
     return (
       lastResponse || {
@@ -1234,6 +1346,8 @@ export class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectInterval = 5000;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private manuallyDisconnected = false;
   private listeners: Set<(data: any) => void> = new Set();
   private url: string;
   private statusInterval: ReturnType<typeof setInterval> | null = null;
@@ -1244,9 +1358,38 @@ export class WebSocketService {
     this.url = url;
   }
 
+  enableRpc() {
+    if (this.useRpc) return;
+
+    this.useRpc = true;
+    this.reconnectAttempts = 0;
+    this.stopStatusUpdates();
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    const ws = this.ws;
+    this.ws = null;
+    if (ws) {
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.close();
+    }
+
+    if (this.listeners.size > 0) this.connect();
+  }
+
   connect() {
     if (this.ws && this.ws.readyState < 2) {
       return;
+    }
+
+    this.manuallyDisconnected = false;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
 
     const endpoint = this.useRpc ? "/api/rpc2" : "/api/clients";
@@ -1257,16 +1400,17 @@ export class WebSocketService {
       }${endpoint}`;
 
     try {
-      this.ws = new WebSocket(wsUrl);
+      const ws = new WebSocket(wsUrl);
+      this.ws = ws;
 
-      this.ws.onopen = () => {
+      ws.onopen = () => {
         console.log(`WebSocket connected to ${endpoint}`);
         this.reconnectAttempts = 0;
         this.sendUpdateRequest();
         this.startStatusUpdates();
       };
 
-      this.ws.onmessage = (event) => {
+      ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           if (this.useRpc) {
@@ -1298,31 +1442,76 @@ export class WebSocketService {
         }
       };
 
-      this.ws.onclose = () => {
+      ws.onclose = () => {
         console.log("WebSocket disconnected");
+        if (this.ws === ws) this.ws = null;
         this.stopStatusUpdates();
+        if (this.manuallyDisconnected) return;
+        this.reconnectAttempts++;
         this.reconnect();
       };
 
-      this.ws.onerror = (error) => {
+      ws.onerror = (error) => {
         console.error("WebSocket error:", error);
       };
     } catch (error) {
       console.error("Failed to connect WebSocket:", error);
+      this.reconnectAttempts++;
       this.reconnect();
     }
   }
 
   private reconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      console.log(
-        `Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
-      );
-      setTimeout(() => this.connect(), this.reconnectInterval);
-    } else {
-      console.error("Max reconnection attempts reached");
+    if (this.manuallyDisconnected || this.reconnectTimer) return;
+
+    if (this.useRpc && this.reconnectAttempts >= this.maxReconnectAttempts) {
+      this.fallbackToLegacyWebSocket();
+      return;
     }
+
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error(
+        `Max WebSocket connection attempts reached for ${this.useRpc ? "/api/rpc2" : "/api/clients"}`
+      );
+      return;
+    }
+
+    console.log(
+      `WebSocket connection failed (${this.reconnectAttempts}/${this.maxReconnectAttempts}), retrying...`
+    );
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, this.reconnectInterval);
+  }
+
+  private fallbackToLegacyWebSocket() {
+    console.warn(
+      `RPC2 WebSocket unavailable after ${this.maxReconnectAttempts} attempts; falling back to /api/clients.`
+    );
+    this.useRpc = false;
+    this.reconnectAttempts = 0;
+    this.stopStatusUpdates();
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    const ws = this.ws;
+    this.ws = null;
+    if (ws) {
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.close();
+    }
+
+    if (this.listeners.size > 0) this.connect();
+  }
+
+  disableRpcAndFallback() {
+    if (!this.useRpc) return;
+    this.fallbackToLegacyWebSocket();
   }
 
   private send(data: string) {
@@ -1342,6 +1531,7 @@ export class WebSocketService {
     } else {
       this.send("get");
     }
+
   }
 
   subscribe(listener: (data: any) => void) {
@@ -1350,10 +1540,18 @@ export class WebSocketService {
   }
 
   disconnect() {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-      this.stopStatusUpdates();
+    this.manuallyDisconnected = true;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.stopStatusUpdates();
+
+    const ws = this.ws;
+    this.ws = null;
+    if (ws) {
+      ws.onclose = null;
+      ws.close();
     }
   }
 
