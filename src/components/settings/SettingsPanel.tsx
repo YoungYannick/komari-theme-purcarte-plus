@@ -31,6 +31,7 @@ const SettingsPanel = ({ isOpen, onClose }: SettingsPanelProps) => {
   const isMobile = useIsMobile();
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const toastId = useRef<string | number | null>(null);
+  const isSyncingConfig = useRef(true);
 
   useEffect(() => {
     const fetchSettingsConfig = async () => {
@@ -51,10 +52,17 @@ const SettingsPanel = ({ isOpen, onClose }: SettingsPanelProps) => {
   }, [publicSettings?.theme]);
 
   useEffect(() => {
+    isSyncingConfig.current = true;
     setEditingConfig(publicSettings?.theme_settings || {});
+    setHasUnsavedChanges(false);
   }, [publicSettings?.theme_settings]);
 
   useEffect(() => {
+    if (isSyncingConfig.current) {
+      isSyncingConfig.current = false;
+      return;
+    }
+
     const hasChanges =
       JSON.stringify(editingConfig) !==
       JSON.stringify(publicSettings?.theme_settings || {});
