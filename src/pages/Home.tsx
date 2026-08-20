@@ -101,6 +101,7 @@ const HomePage: React.FC<HomePageProps> = ({
           setDisplayOptions={setStatusCardsVisibility}
           stats={stats}
           loading={loading}
+          financeNodes={filteredNodes}
           isShowStatsInHeader={isShowStatsInHeader}
           enableGroupedBar={enableGroupedBar}
           groups={groups}

@@ -89,6 +89,7 @@ const AppRoutes = ({
     setDisplayOptions: setStatusCardsVisibility,
     stats,
     loading,
+    financeNodes: filteredNodes,
     enableGroupedBar,
     groups,
     selectedGroup,

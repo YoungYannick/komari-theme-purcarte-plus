@@ -33,6 +33,7 @@ export const StatsBar = (props: StatsBarProps) => {
     setDisplayOptions,
     stats,
     loading,
+    financeNodes,
     groups,
     selectedGroup,
     onSelectGroup,
@@ -80,6 +81,7 @@ export const StatsBar = (props: StatsBarProps) => {
   const isMobile = useIsMobile();
   const { t } = useLocale();
   const { nodes } = useNodeData();
+  const nodesForFinance = financeNodes ?? nodes;
   const [financeCurrency, setFinanceCurrency] = useState(
     () => localStorage.getItem("fin_currency") || "CNY"
   );
@@ -151,7 +153,7 @@ export const StatsBar = (props: StatsBarProps) => {
       return { totalPrice, monthlyExpense, totalRemainingValue, specialCases };
     }
 
-    for (const node of nodes) {
+    for (const node of nodesForFinance) {
       const isFreeTag = hasDelimitedTag(node.tags, configuredFreeTag);
       const values = calculateFinanceNodeValues(node, rates, now);
 
@@ -178,7 +180,7 @@ export const StatsBar = (props: StatsBarProps) => {
   }, [
     configuredFreeTag,
     excludeFree,
-    nodes,
+    nodesForFinance,
     rates,
     showFinanceStats,
     t,
