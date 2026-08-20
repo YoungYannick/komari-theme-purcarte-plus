@@ -121,7 +121,7 @@
 
 @layer base {
   * {
-    @apply border-(--accent-4)/50 outline-ring/50;
+    @apply border-(--gray-a5) outline-ring/50;
     scrollbar-width: thin;
     scrollbar-color: var(--gray-a6) transparent;
   }
@@ -204,7 +204,7 @@ body[data-scroll-locked] {
   }
 
   .theme-card-style {
-    @apply rounded-lg shadow-sm shadow-(color:--accent-12)/50 box-border border border-(--accent-12)/50;
+    @apply rounded-lg shadow-sm shadow-(color:--gray-a4) box-border border border-(--gray-a5);
   }
 
   .theme-text-muted {

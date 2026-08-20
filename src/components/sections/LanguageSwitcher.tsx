@@ -60,7 +60,7 @@ export const LanguageSwitcher = ({ isMobile }: { isMobile?: boolean }) => {
               "Language"}
           </span>
         </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent className="purcarte-blur border-(--accent-4)/50 rounded-xl">
+        <DropdownMenuSubContent className="purcarte-blur border-(--gray-a5) rounded-xl">
           <LanguageMenuItems
             currentLang={i18n.language}
             changeLanguage={(lang) => i18n.changeLanguage(lang)}
@@ -79,7 +79,7 @@ export const LanguageSwitcher = ({ isMobile }: { isMobile?: boolean }) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="purcarte-blur mt-[.5rem] border-(--accent-4)/50 rounded-xl">
+        className="purcarte-blur mt-[.5rem] border-(--gray-a5) rounded-xl">
         <LanguageMenuItems
           currentLang={i18n.language}
           changeLanguage={(lang) => i18n.changeLanguage(lang)}

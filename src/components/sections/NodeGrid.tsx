@@ -127,7 +127,7 @@ export const NodeGrid = ({
           />
           <FinancePriceTag node={node} triggerElement={priceTagElement} />
         </div>
-        <div className="border-t border-(--accent-4)/50 my-2"></div>
+        <div className="border-t border-(--gray-a4) my-2"></div>
         {isShowHWBarInCard && (
           <div className="flex items-center justify-around whitespace-nowrap">
             <div className="flex items-center gap-1">
@@ -272,7 +272,7 @@ export const NodeGrid = ({
             </div>
           </div>
         )}
-        <div className="border-t border-(--accent-4)/50 my-2"></div>
+        <div className="border-t border-(--gray-a4) my-2"></div>
         <div data-section="traffic">
           <div className="flex justify-between text-xs">
             <span>{t("node.network")}</span>
@@ -352,7 +352,7 @@ export const NodeGrid = ({
                 </div>
               )}
               {showExpiry && showUptime && (
-                <div className="border-l border-(--accent-4)/50 mx-2"></div>
+                <div className="border-l border-(--gray-a4) mx-2"></div>
               )}
               {showUptime && (
                 <div className={`flex w-full ${showExpiry ? "justify-end" : "justify-start"}`}>

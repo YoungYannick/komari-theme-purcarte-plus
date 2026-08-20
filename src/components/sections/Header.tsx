@@ -124,7 +124,7 @@ const ViewModeSwitcher = ({ isMobile }: { isMobile?: boolean }) => {
           <Icon className="size-4 mr-2 text-primary" />
           <span>{t("header.toggleView")}</span>
         </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent className="purcarte-blur border-(--accent-4)/50 rounded-xl">
+        <DropdownMenuSubContent className="purcarte-blur border-(--gray-a5) rounded-xl">
           <ViewMenuItems setViewMode={setViewMode} />
         </DropdownMenuSubContent>
       </DropdownMenuSub>
@@ -140,7 +140,7 @@ const ViewModeSwitcher = ({ isMobile }: { isMobile?: boolean }) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="purcarte-blur mt-[.5rem] border-(--accent-4)/50 rounded-xl">
+        className="purcarte-blur mt-[.5rem] border-(--gray-a5) rounded-xl">
         <ViewMenuItems setViewMode={setViewMode} />
       </DropdownMenuContent>
     </DropdownMenu>
@@ -162,7 +162,7 @@ const ThemeSwitcher = ({ isMobile }: { isMobile?: boolean }) => {
           <Icon className="size-4 mr-2 text-primary" />
           <span>{t("header.toggleTheme")}</span>
         </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent className="purcarte-blur border-(--accent-4)/50 rounded-xl">
+        <DropdownMenuSubContent className="purcarte-blur border-(--gray-a5) rounded-xl">
           <ThemeMenuItems setAppearance={setAppearance} />
         </DropdownMenuSubContent>
       </DropdownMenuSub>
@@ -178,7 +178,7 @@ const ThemeSwitcher = ({ isMobile }: { isMobile?: boolean }) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="purcarte-blur mt-[.5rem] border-(--accent-4)/50 rounded-xl">
+        className="purcarte-blur mt-[.5rem] border-(--gray-a5) rounded-xl">
         <ThemeMenuItems setAppearance={setAppearance} />
       </DropdownMenuContent>
     </DropdownMenu>
@@ -341,7 +341,7 @@ const SearchBar = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="purcarte-blur border-(--accent-4)/50 rounded-xl w-[90vw] translate-x-[5vw] mt-[.5rem] max-w-screen-2xl">
+              className="purcarte-blur border-(--gray-a5) rounded-xl w-[90vw] translate-x-[5vw] mt-[.5rem] max-w-screen-2xl">
               <div className="p-2">
                 <Input
                   type="search"
@@ -498,7 +498,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>((props, ref) => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="purcarte-blur mt-[.5rem] border-(--accent-4)/50 rounded-xl">
+                    className="purcarte-blur mt-[.5rem] border-(--gray-a5) rounded-xl">
                     {!isSubPage && <ViewModeSwitcher isMobile />}
                     <FinanceWidgetButton isMobile />
                     <EarthGlobeButton isMobile />
